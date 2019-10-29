@@ -27,7 +27,7 @@ if [ -d "$HOME/.local/bin" ] ; then
 fi
 
 alias vi=vim
-alias em='emacsclient -nw'
+alias em='emacsclient'
 
 if [ -z $XCAPE_SET ]; then xcape -e 'Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'; fi
 export XCAPE_SET=t
