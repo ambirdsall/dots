@@ -1,0 +1,69 @@
+#!/bin/sh
+":"; exec emacs --quick --script "$0" # -*- mode: emacs-lisp; lexical-binding: t; -*-
+
+;; This script requires at least emacs 25. On linux you should be good, but on
+;; macOS you might need to run `brew install emacs' or equivalent
+
+;; (lunar-phases) logs its business with (message) and in scripts, (message) prints to stderr.
+;; No thanks.
+(setq inhibit-message t)
+
+(defun stdout (string &optional newline)
+  "Prints STRING to stdout, optionally appending a newline."
+  (princ string)
+  (and newline (princ "\n")))
+
+(require 'seq)
+
+(setq phase-emojis '(("New" . "🌑")
+                     ("Waxing Crescent" . "🌒")
+                     ("First Quarter" . "🌓")
+                     ("Waxing Gibbous" . "🌔")
+                     ("Full" . "🌕")
+                     ("Waning Gibbous" . "🌖")
+                     ("Last Quarter" . "🌗")
+                     ("Waning Crescent" . "🌘")))
+
+(lunar-phases)
+(switch-to-buffer "*Phases of Moon*")
+
+(let* ((date (calendar-current-date))
+       (year (number-to-string (calendar-extract-year date)))
+       (current-month (calendar-month-name (calendar-extract-month date)))
+       (last-month (calendar-month-name (1- (calendar-extract-month date))))
+       (current-day (number-to-string (calendar-extract-day (calendar-current-date))))
+
+       (phase-list (split-string (buffer-string) "\n"))
+       ;; TODO interpolate dates to add in waxing/waning crescent/gibbous
+       (current-month-phases (seq-filter (lambda (phase-string)
+                                           (string-match current-month phase-string))
+                                         phase-list))
+       (current-phase-with-date (or
+                                 ;; maybe today is one of the listed dates?
+                                 (seq-find (lambda (phase)
+                                             (let ((date-matcher (concat " " current-day ", " year)))
+                                               (string-match date-matcher phase)))
+                                           current-month-phases)
+
+                                 ;; if not, maybe the last-specified phase was this month?
+                                 (let ((earlier-phases-this-month
+                                        (seq-filter (lambda (phase)
+                                                      (let ((phase-date (string-to-number
+                                                                         (and (string-match "[0-9]+" phase)
+                                                                              (match-string 0 phase)))))
+                                                        (< phase-date (string-to-number current-day))))
+                                                    current-month-phases)))
+                                   (car (last earlier-phases-this-month)))
+
+                                 ;; if not, get last phase of last month
+                                 (car (last (seq-filter (lambda (phase-string)
+                                                          (string-match last-month phase-string))
+                                                        phase-list)))
+                                 ))
+
+       (current-phase-name (substring (car (split-string
+                                            (cadr (split-string current-phase-with-date ":"))
+                                            " Moon"))
+                                      1))
+       (current-phase (cdr (assoc current-phase-name phase-emojis))))
+  (stdout current-phase))
