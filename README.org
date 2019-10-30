@@ -1,20 +1,21 @@
 #+TITLE: dotfiles
 These are my linux configuration files. They're tracked in a git repository separate from the
 working tree, which is just my home directory; this replaces an ongoing symlink song and dance for a
-little upfront setup effort, which frankly is a pretty great tradeoff.
+little upfront setup effort. Given that the upfront work can be copy-pasted, it's a pretty great
+tradeoff.
 * to install on a new computer
 #+BEGIN_SRC sh
   git clone --separate-git-dir=$HOME/.dots https://github.com/ambirdsall/dots.git tmpdotfiles
   rsync --recursive --verbose --exclude '.git' tmpdotfiles/ $HOME/
   rm -r tmpdotfiles
+
+  git --git-dir=$HOME/.dots/ --work-tree=$HOME config --local status.showUntrackedFiles no
+
+  make install
 #+END_SRC
 * managing this git directory
-#+BEGIN_SRC sh
-  cd
-  dots config --local status.showUntrackedFiles no
-#+END_SRC
-
-The =dots= command is defined in the =~/aliases.zsh= file (at the time of writing) as
+The =~/aliases.zsh= file defines a =dots= command to handle all interaction with the git repo. At the
+time of writing, it is defined as
 #+BEGIN_SRC sh
 dots () {
   if [[ $# -gt 0 ]]; then
@@ -24,6 +25,4 @@ dots () {
   fi
 }
 #+END_SRC sh
-So it's simply a wrapper for ~git~, but if you don't give any subcommand, it just gives you the
-status, which is so much more useful as a default that honestly, I'm not sure why it's not the
-official ~git~ behavior.
+So it's simply a wrapper for ~git~, but with saner default behavior if given no subcommand.
