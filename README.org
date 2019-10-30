@@ -4,11 +4,6 @@ working tree, which is just my home directory; this replaces an ongoing symlink 
 little upfront setup effort, which frankly is a pretty great tradeoff.
 * to install on a new computer
 #+BEGIN_SRC sh
-  git clone --separate-git-dir=$HOME/.dots https://github.com/ambirdsall/dots.git ~
-#+END_SRC
-  
-if there's a name collision with some default config file,
-#+BEGIN_SRC sh
   git clone --separate-git-dir=$HOME/.dots https://github.com/ambirdsall/dots.git tmpdotfiles
   rsync --recursive --verbose --exclude '.git' tmpdotfiles/ $HOME/
   rm -r tmpdotfiles
@@ -19,7 +14,7 @@ if there's a name collision with some default config file,
   dots config --local status.showUntrackedFiles no
 #+END_SRC
 
-the =dots= command is defined in the =~/aliases.zsh= file (at the time of writing) as
+The =dots= command is defined in the =~/aliases.zsh= file (at the time of writing) as
 #+BEGIN_SRC sh
 dots () {
   if [[ $# -gt 0 ]]; then
@@ -29,3 +24,6 @@ dots () {
   fi
 }
 #+END_SRC sh
+So it's simply a wrapper for ~git~, but if you don't give any subcommand, it just gives you the
+status, which is so much more useful as a default that honestly, I'm not sure why it's not the
+official ~git~ behavior.
