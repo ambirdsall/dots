@@ -22,15 +22,6 @@ cdc () {
 }
 compdef '_files -W ~/c' cdc
 
-
-# Dotfiles
-dots () {
-  if [[ $# -gt 0 ]]; then
-    EDITOR='emacsclient -nw --alternate-editor=vim' git --git-dir=$HOME/.dots/ --work-tree=$HOME ${@}
-  else
-    git --git-dir=$HOME/.dots/ --work-tree=$HOME status
-  fi
-}
 alias ea="em ~/aliases.zsh"
 alias el="em ~/.local-aliases.zsh"
 alias sdf="source ~/aliases.zsh"
