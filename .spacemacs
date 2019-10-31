@@ -547,6 +547,7 @@ dump."
     (setq mac-command-modifier 'meta)
     (setq mac-option-modifier 'super)
     (setq ns-function-modifier 'hyper)
+    (setq insert-directory-program (executable-find "gls"))
     (setq browse-url-browser-function 'browse-url-default-macosx-browser))
 
 ;; ** better defaults
@@ -556,8 +557,6 @@ dump."
   (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b"))))
   (setq fill-column 100)
   (setq-default truncate-lines t)
-;; *** dired
-  (setq insert-directory-program (executable-find "gls"))
 ;; *** helm
   (setq helm-info-default-sources '(helm-source-info-emacs helm-source-info-elisp helm-source-info-org helm-source-info-magit))
   (setq helm-grep-ag-command "rg --color=always --colors 'match:fg:black' --colors 'match:bg:yellow' --smart-case --no-heading --line-number %s %s %s --ignore-file '*/dist-*' ")
