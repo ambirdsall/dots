@@ -42,6 +42,9 @@ setopt auto_cd PROMPT_SUBST
 bindkey -v
 EDITOR='emacsclient -nw'
 
+# while I'm vimming things up, it's a damn fine MANPAGER, too
+export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
+
 # repeated invocations of an xcape mapping without killing in between causes
 # xcape to send multiples of the new mappings, which is terrible.
 ps aux | grep -i '[x]cape' >/dev/null && killall -9 xcape
