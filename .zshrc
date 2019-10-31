@@ -93,7 +93,5 @@ dirty_check () {
 PS1='$(reverse_dir_stack)%F{cyan}%~%f $(current_branch)%F{136}$(current_commit)%f$(dirty_check) $(~/bin/moon-phase)
 %(?.%F{239}.%F{196})ᐇ%f '
 
-source /home/linuxbrew/.linuxbrew/opt/chruby/share/chruby/auto.sh
-source /home/linuxbrew/.linuxbrew/opt/chruby/share/chruby/chruby.sh
 # Aliases
 [[ -a ~/aliases.zsh ]] && source ~/aliases.zsh
