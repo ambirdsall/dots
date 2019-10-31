@@ -7,9 +7,11 @@
 [[ -n $TMUX ]] && printf "\n"
 [[ -z $TMUX ]] && printf "No tmux sessions right now!\n\n"
 
-echo "Today in history:"
-grep $(date +'%m/%d') < /usr/share/calendar/calendar.history | shuf | head -n 1
-printf "\n"
+if [[ -f /usr/share/calendar/calendar.history ]]; then
+    echo "Today in history:"
+    grep $(date +'%m/%d') < /usr/share/calendar/calendar.history | shuf | head -n 1
+    printf "\n"
+fi
 
 #
 # Actual config
