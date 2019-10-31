@@ -18,7 +18,22 @@ printf "\n"
 # how on earth am I supposed to use a url bar I can't jump around with emacs shortcuts
 gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
 
+## Configure zsh features
+# Lines configured by zsh-newuser-install
+HISTFILE=~/.histfile
+HISTSIZE=10000
+SAVEHIST=100000
 export HISTCONTROL=ignorespace
+setopt autocd extendedglob notify
+unsetopt beep
+bindkey -v
+# End of lines configured by zsh-newuser-install
+# The following lines were added by compinstall
+zstyle :compinstall filename '/home/amb/.zshrc'
+
+autoload -Uz compinit
+compinit
+# End of lines added by compinstall
 # allow mv actions on multiple files, see:
 autoload -U zmv
 setopt auto_cd PROMPT_SUBST
