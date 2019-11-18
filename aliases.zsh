@@ -14,8 +14,8 @@ emv () {
 
 # * pb{copy,paste}
 # it's just a better clipboard API, tbh; plus muscle memoory
-alias pbcopy='xsel --clipboard --input'
-alias pbpaste='xsel --clipboard --output'
+alias pbcopy='xclip -i'
+alias pbpaste='xclip -o'
 
 
 # * cd to within code directory from anywhere
