@@ -30,8 +30,12 @@ fi
 alias vi=vim
 alias em='emacsclient'
 
-if [ -z $XCAPE_SET ]; then xcape -e 'Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'; fi
+local XCAPE_OPTS='Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'
+if [ -z $XCAPE_SET ]; then xcape -e $XCAPE_OPTS; fi
 export XCAPE_SET=t
+
+if [ -z $XMODMAP_SET ]; then xmodmap ~/.Xmodmap; fi
+export XMODMAP_SET=t
 
 export PATH="$HOME/.cargo/bin:$PATH"
 export PATH='/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin':"$PATH"
