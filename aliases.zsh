@@ -1,18 +1,24 @@
-# emacsen
+# * emacsen
 em () {
-    /usr/bin/emacsclient -nw --alternate-editor=emacs "$@"
-    # if [[ $# -gt 0 ]]; then
-    #     /usr/bin/emacsclient -t --alternate-editor=emacs "$@"
-    # else
-    #     /usr/bin/emacsclient -t --alternate-editor=emacs $(um)
-    # fi
+    /usr/bin/emacsclient -nw --alternate-editor=emacs ${@}
+}
+emm () {
+    em $(um)
 }
 rem () {
     em . -eval "(require 'projectile)(dired (directile-project-root))"
 }
+emv () {
+    /usr/bin/emacsclient -nw --alternate-editor=vim ${@}
+}
+
+# * pb{copy,paste}
+# it's just a better clipboard API, tbh; plus muscle memoory
+alias pbcopy='xsel --clipboard --input'
+alias pbpaste='xsel --clipboard --output'
 
 
-# Current projects
+# * cd to within code directory from anywhere
 cdc () {
   if [[ $# -gt 0 ]]; then
     cdd ~/c/${@}
@@ -21,27 +27,22 @@ cdc () {
   fi
 }
 compdef '_files -W ~/c' cdc
+tnc () {
+  cdd ~/c/${@} && tn
+}
+compdef '_files -W ~/c' tnc
 
-alias ea="em ~/aliases.zsh"
-alias el="em ~/.local-aliases.zsh"
-alias sdf="source ~/aliases.zsh"
-alias zrc="em ~/.zshrc"
+# * quick edit/source shell config files
+alias ea="emv ~/aliases.zsh"
+alias el="emv ~/.local-aliases.zsh"
+alias sdf="source ~/aliases.zsh && echo sourced ~/aliases.zsh && [[ -f ~/.local-aliases.zsh ]] && source ~/.local-aliases.zsh && echo sourced ~/.local-aliases.zsh || true"
+alias zrc="emv ~/.zshrc"
 alias rc="source ~/.zshrc"
 
-
-# Background jobs & processes
-alias j=jobs
-# Typing the percent sign gets annoying fast when you run `kill` all the time with `%n`-style arguments on suspended `jobs`
-k () {
-  kill %"$1"
-}
-
-
-# serve local files
+# * serve local files
 alias serve="python -m SimpleHTTPServer"
 
-
-# Tmux
+# ** tmux
 alias t=tmux
 alias tt="tmux attach -t"
 alias tk="tmux kill-session -t"
@@ -57,17 +58,21 @@ tn () {
 alias tda="tmux detach -a"
 alias tls="tmux list-sessions"
 
-# When clearing screen:
-#   if `$TMUX` is defined: just clear the screen, in a tmux session already
-#   else:                  clear, then list sessions atop screen
+# ** clear
 alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
 
+# ** background jobs & processes
+# these play nicely with fg (especially with vim/emacsclient)
+alias j=jobs
+# Typing the percent sign gets annoying fast when you run `kill` all the time with `%n`-style arguments on suspended `jobs`
+k () {
+    kill %"$1"
+}
 
-# awk
+# ** awk
 alias awkcsv='awk -F "\"*,\"*"'
 
-
-# `=`
+# ** `=` :: less
 = () {
   # iff there are 0 arguments given, assume input from stdin (i.e. a pipe)
   if [[ $# -gt 0 ]]; then
@@ -77,41 +82,16 @@ alias awkcsv='awk -F "\"*,\"*"'
   fi
 }
 
-
-# `cd`
-alias 'cd-'="cd -"
-alias ..="cdd .."
-alias ...="cdd ../.."
-alias ....="cdd ../../.."
-alias .....="cdd ../../../.."
-alias ......="cdd ../../../../.."
-alias .......="cdd ../../../../../.."
-alias ........="cdd ../../../../../../.."
-alias .........="cdd ../../../../../../../.."
-
-mcd () {
-  mkdir $1
-  cd $1
-}
-
-cdd () {
-  cd $1
-  ls -GF
-}
-
-
-
-# `chmod`
+# ** chmod
 alias cx='chmod +x'
 
-
-
-# `echo`
+# ** echo
 alias e=echo
 
 
 
-# fzf
+# * first you have to be able to get where you're going
+# ** jump around
 # DEPENDENCY: gem install rouge
 alias um="find . -type f | grep -vE '.tmp-*|.git|node_modules|bower_components' | fzf --multi --preview 'rougify {}'"
 cdf() {
@@ -122,6 +102,7 @@ cdf() {
 #   cols=$(( COLUMNS / 3 ))
 #   sep='{::}'
 
+# TODO: find chrome history's location on linux
 #   cp -f ~/Library/Application\ Support/Google/Chrome/Default/History /tmp/h
 
 #   sqlite3 -separator $sep /tmp/h \
@@ -133,36 +114,52 @@ cdf() {
 
 
 
-# `ls`
+# * shortcuts for common commands
+# ** `cd` by any name would smell as sweet
+alias 'cd-'="cd -"
+alias ..="cdd .."
+alias ...="cdd ../.."
+alias ....="cdd ../../.."
+alias .....="cdd ../../../.."
+alias ......="cdd ../../../../.."
+alias .......="cdd ../../../../../.."
+alias ........="cdd ../../../../../../.."
+alias .........="cdd ../../../../../../../.."
+
+mcd () {
+    mkdir $1
+    cd $1
+}
+
+cdd () {
+    cd $1
+    ls -GF
+}
+
+
+
+# ** `ls`
 alias ls="ls -GF"
 alias la="ls -A"
+alias ll="ls -l"
 
 
-
-# `mkdir`
+# ** `mkdir`
 alias mkdir="mkdir -pv"
 
-
-
-# `rm`
+# ** `rm`
 alias fuck="rm -rf"
 
-
-
-# `tail`
+# ** `tail`
 tailfh () {
   tail -f $1 | ack -i 'error' --passthru
 }
 alias tsslog='tail -f /tmp/tss.log'
 
-
-
-# `zmv`
+# ** `mv`
 alias mmv='noglob zmv -W'
 
-
-
-# Vim and fam
+# ** Vim and fam
 vi () {
   if [[ $# -gt 0 ]]; then
     vim "$@"
@@ -171,14 +168,11 @@ vi () {
   fi
 }
 alias ci=vi
-alias vis="vi -S Session.vim"
 bo () {
-  vi $(bundle show "$1")
+  emv $(bundle show "$1")
 }
 
-
-
-# Git
+# ** Git
 # alias hub as git
 # eval "$(hub alias -s)"
 
@@ -219,7 +213,7 @@ cob () {
 
 d () {
   # git diff --word-diff "$@"
-  git diff --diff-algorithm=minimal --color "$@" | diff-so-fancy | less --tabs=4
+  git diff --diff-algorithm=minimal --color "$@" | diff-so-fancy | bat
 }
 alias gdc="d --cached"
 alias gdo="git diff \$(git rev-parse --abbrev-ref HEAD 2> /dev/null)..origin/\$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
@@ -283,9 +277,7 @@ alias pop="git stash pop"
 alias shipit='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~" && git push origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
 alias SHIPIT='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~" && git push --force-with-lease origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
 
-
-
-# Self-expanding shell abbreviations
+# * Self-expanding shell abbreviations
 # cf. http://zshwiki.org/home/examples/zleiab
 typeset -Ag abbreviations
 abbreviations=(
@@ -323,15 +315,9 @@ bindkey "^x " no-magic-abbrev-expand
 bindkey -M isearch " " self-insert
 
 
-
-# Image processing
-alias imageoptim=/Applications/ImageOptim.app/Contents/MacOS/ImageOptim
-
-
-
-# Unicode arts and farts
+# * Unicode arts and farts
 alias idk="echo -n '¯\_(ツ)_/¯' | xclip && echo 'Copied \"¯\_(ツ)_/¯\" to clipboard'"
-# Backslashes and underscores must be escaped if the text will be parsed as markdown
+# Backslashes and underscores must be doubly escaped if the text will be parsed as markdown
 alias idke="echo -n '¯\\\\\\_(ツ)\_/¯' | xclip && echo 'Copied \"¯\\\\\_(ツ)\_/¯\" to clipboard'"
 alias om="echo -n '¯\_( ˘͡ ˘̯)_/¯' | xclip && echo 'Copied \"¯\_( ˘͡ ˘̯)_/¯\" to clipboard'"
 alias tableflip="echo -n '(╯°□°）╯︵ ┻━┻' | xclip && echo 'Copied \"(╯°□°）╯︵ ┻━┻\" to clipboard'"
