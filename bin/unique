@@ -1,0 +1,2 @@
+#!/bin/sh
+perl -ne '$H{$_}++ or print'
