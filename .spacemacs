@@ -556,7 +556,7 @@ dump."
   (setq-default major-mode 'org-mode)
   (setq auto-save-default nil)
   (setq frame-title-format '((:eval (if (buffer-file-name) (abbreviate-file-name (buffer-file-name)) "%b"))))
-  (setq fill-column 100)
+  (setq-default fill-column 80)
   (setq-default truncate-lines t)
 ;; *** helm
   (setq helm-info-default-sources '(helm-source-info-emacs helm-source-info-elisp helm-source-info-org helm-source-info-magit))
@@ -738,10 +738,6 @@ Works with vim-style motions."
     (interactive)
     (let ((select-enable-clipboard t))
       (call-interactively 'evil-yank)))
-
-  (defun amb/dired-mode-setup ()
-    "to be run as hook for `dired-mode'."
-    (dired-hide-details-mode 1))
 
   (defun amb/prettify-region ()
     "Invoke the shell command prettier on region, replacing
@@ -943,6 +939,7 @@ used interactively."
     (scroll-down 1))
 ;; ** git
 ;; *** general magit UI
+  
   (defadvice magit-status (around magit-fullscreen activate)
     (window-configuration-to-register :magit-fullscreen)
     ad-do-it
@@ -957,34 +954,9 @@ used interactively."
   (with-eval-after-load 'magit-status
     (define-key magit-status-mode-map (kbd "q") 'magit-quit-session))
 
-;; *** github enterprise tho
-  ;; Make magit-gh-pulls look at the correct URL for GHE
-  ;; This is an incomplete solution; it appears the library hardcodes the github URL
-  (setq gh-profile-alist '(("github"
-                            :url "https://git.sigfig.com/api/v3"
-                            :remote-regexp "^\\(?:git@git\\.sigfig\\.com:\\|\\(?:git\\|https?\\|ssh\\)://.*@?git\\.sigfig\\.com/\\)\\(.*\\)/\\(.*\\)\\(?:\\.git\\)?")))
-
-  (defun amb/visit-pull-request-url ()
-    "Visit the current branch's PR on Github."
-    (interactive)
-    (browse-url
-     (format "https://git.sigfig.com/%s/pull/new/%s"
-             (replace-regexp-in-string
-              "\\`.+git\\.sigfig\\.com:\\(.+\\)\\.git\\'" "\\1"
-              (magit-get "remote"
-                         (magit-get-push-remote)
-                         "url"))
-             (magit-get-current-branch))))
-
-  (with-eval-after-load 'forge
-    (push '("git.sigfig.com" "git.sigfig.com/api"
-                                      "git.sigfig.com" forge-github-repository) forge-alist))
-
-  ;; use emacs for command line git stuff
-  (global-git-commit-mode)
-
+;; *** projectile
+  (setq projectile-project-search-path '("~/c"))
 ;; ** hooks
-  (add-hook 'dired-mode-hook 'amb/dired-mode-setup)
   (add-hook 'org-babel-after-execute-hook 'amb/fix-inline-images)
   (add-hook 'outline-minor-mode-hook 'outshine-mode)
   (add-hook 'prog-mode-hook 'outline-minor-mode)
@@ -1657,7 +1629,8 @@ This function is called at the very end of Spacemacs initialization."
      ("FIXME" . "#dc752f")
      ("XXX" . "#dc752f")
      ("XXXX" . "#dc752f"))))
- '(js-indent-level 2 t)
+ '(js-indent-level 2)
+ '(js2-strict-missing-semi-warning nil)
  '(magit-diff-use-overlays nil)
  '(max-specpdl-size 9000)
  '(nrepl-message-colors
