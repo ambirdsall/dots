@@ -105,8 +105,8 @@ PS1_self_implemented='$(reverse_dir_stack)%F{cyan}%~%f $(current_branch)%F{136}$
 # ** but for real
 source /usr/lib/zsh-git-prompt/zshrc.sh
 
-PS1='$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-work-tree &>/dev/null && git_super_status || echo -e "\b") $(~/bin/moon-phase)
-%(?.%F{239}.%F{196})ᐇ%f '
+PS1='%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-work-tree &>/dev/null && git_super_status || echo -e "\b") $(~/bin/moon-phase) %F{3}$(current_commit 2>/dev/null)%f
+%F{239}└%f%(?.%F{239}.%F{196})➣%f '
 
 # * Aliases
 [[ -a ~/aliases.zsh ]] && source ~/aliases.zsh
