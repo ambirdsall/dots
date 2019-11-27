@@ -1644,6 +1644,8 @@ This function is called at the very end of Spacemacs initialization."
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(pos-tip-background-color "#eee8d5")
  '(pos-tip-foreground-color "#586e75")
+ '(projectile-git-submodule-command
+   "git submodule --quiet foreach 'echo $path' 2>/dev/null | tr '\\n' '\\0'")
  '(safe-local-variable-values
    (quote
     ((projectile-tags-file-name . "~/workspace/ngts/.git/ETAGS")
