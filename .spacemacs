@@ -888,7 +888,7 @@ If called with a prefix arg, restricts to open buffers; by default, any file."
                                     (if current-prefix-arg (split-window-right-and-focus))
                                     (find-file c)))))))
 
-  (fset 'amb/pick-a-note-why-dont-ya (helm-edit-file-from-directory "NOTES" "/Users/abirdsall/notes"))
+  (fset 'amb/pick-a-note-why-dont-ya (helm-edit-file-from-directory "NOTES" "~/notes"))
 
   (defmacro on-string-or-region (fn)
     "Given a string-manipulation function, defines an interactive command which will apply that
@@ -1586,7 +1586,7 @@ This function is called at the very end of Spacemacs initialization."
  '(cua-read-only-cursor-color "#859900")
  '(delete-by-moving-to-trash nil)
  '(evil-want-Y-yank-to-eol t)
- '(fci-rule-color "#eee8d5" t)
+ '(fci-rule-color "#eee8d5")
  '(fill-column 100)
  '(highlight-changes-colors (quote ("#d33682" "#6c71c4")))
  '(highlight-symbol-colors
