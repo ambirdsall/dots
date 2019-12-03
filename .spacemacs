@@ -779,16 +779,19 @@ a reformatted version of itself\"."
              fill-column)))
       (call-interactively #'fill-paragraph)))
 
-  (defun amb/jump-around (restrict-to-open-buffers)
+  (defun amb/jump-around (include-unopened-files)
     "Grab the helm and go to a project file quickly.
 
-If called with a prefix arg, restricts to open buffers; by default, any file."
+By default, restricts the selection buffer to open buffers; with
+prefix arg, runs helm-projectile-find-file instead. I"
     (interactive "P")
-    (if restrict-to-open-buffers
-        (call-interactively #'helm-buffers-list)
-      (if (projectile-project-p)
-          (call-interactively #'helm-projectile-find-file)
-        (call-interactively #'helm-find-files))))
+    (cl-flet ((with-fallback (fn)
+                             (if (projectile-project-p)
+                                 (call-interactively fn)
+                               (call-interactively #'helm-projectile-find-file))))
+      (if include-unopened-files
+          (with-fallback #'helm-projectile-find-file)
+        (with-fallback #'helm-projectile-switch-to-buffer))))
 
   (defun amb/html2org-clipboard ()
     "Convert clipboard contents from HTML to Org and then paste (yank)."
