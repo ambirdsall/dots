@@ -566,6 +566,7 @@ dump."
   (setq company-tooltip-align-annotations t)
 ;; *** dired
   (diredfl-global-mode)
+  (setq dired-listing-switches "-Al")
 ;; *** indentation
   (setq-default indent-tabs-mode nil)
   (setq-default js-indent-level 2)
@@ -1457,15 +1458,15 @@ filesystem root, whichever comes first."
 
 ;; **** org
 (with-eval-after-load 'org
- (define-key org-mode-map (kbd "<up>") #'previous-line)
- (define-key org-mode-map (kbd "<down>") #'next-line)
- ;; (define-key org-mode-map (kbd "<") #'evil-shift-left)
- ;; (define-key org-mode-map (kbd ">") #'evil-shift-right)
- (define-key org-mode-map (kbd "<C-S-return>") #'amb/org-insert-subheading-respect-content)
- (spacemacs/set-leader-keys-for-major-mode 'org-mode
-   "hs" #'amb/org-insert-subheading-respect-content
-   "hi" #'org-insert-heading-after-current
-   "p" #'amb/html2org-clipboard))
+  (define-key org-mode-map (kbd "<up>") #'previous-line)
+  (define-key org-mode-map (kbd "<down>") #'next-line)
+  ;; (define-key org-mode-map (kbd "<") #'evil-shift-left)
+  ;; (define-key org-mode-map (kbd ">") #'evil-shift-right)
+  (define-key org-mode-map (kbd "<C-S-return>") #'amb/org-insert-subheading-respect-content)
+  (spacemacs/set-leader-keys-for-major-mode 'org-mode
+    "hs" #'amb/org-insert-subheading-respect-content
+    "hi" #'org-insert-heading-after-current
+    "p" #'amb/html2org-clipboard))
 
 ;; TODO: if on a mac and GUI, bind `(kbd "s-_")` (i.e. alt-shift-dash, the standard OS-level em-dash binding) to self-insert em-dash
 )
@@ -1590,7 +1591,7 @@ This function is called at the very end of Spacemacs initialization."
  '(delete-by-moving-to-trash nil)
  '(evil-want-Y-yank-to-eol t)
  '(fci-rule-color "#eee8d5")
- '(fill-column 100)
+ '(fill-column 80)
  '(highlight-changes-colors (quote ("#d33682" "#6c71c4")))
  '(highlight-symbol-colors
    (--map
@@ -1657,7 +1658,7 @@ This function is called at the very end of Spacemacs initialization."
  '(smartrep-mode-line-active-bg (solarized-color-blend "#859900" "#eee8d5" 0.2))
  '(term-default-bg-color "#fdf6e3")
  '(term-default-fg-color "#657b83")
- '(typescript-indent-level 2 t)
+ '(typescript-indent-level 2)
  '(vc-annotate-background nil)
  '(vc-annotate-background-mode nil)
  '(vc-annotate-color-map
