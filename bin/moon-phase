@@ -30,7 +30,8 @@
 (let* ((date (calendar-current-date))
        (year (number-to-string (calendar-extract-year date)))
        (current-month (calendar-month-name (calendar-extract-month date)))
-       (last-month (calendar-month-name (1- (calendar-extract-month date))))
+       (last-month (calendar-month-name (let ((month (calendar-extract-month date)))
+                                          (if (= month 1) 12 (1- month)))))
        (current-day (number-to-string (calendar-extract-day (calendar-current-date))))
 
        (phase-list (split-string (buffer-string) "\n"))
