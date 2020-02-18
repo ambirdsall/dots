@@ -1,4 +1,4 @@
-# * printed output when sourcing config
+# * side effects & printed output when sourcing config
 
 if [[ -n $TMUX ]]; then
     echo "Tmux sessions:"
@@ -12,6 +12,8 @@ if [[ -f /usr/share/calendar/calendar.history ]]; then
     grep $(date +'%m/%d') < /usr/share/calendar/calendar.history | shuf | head -n 1
     printf "\n"
 fi
+
+rm ~/Pictures/Screenshot*.png 2>/dev/null
 
 # * Configure zsh features
 # Lines configured by zsh-newuser-install
@@ -45,22 +47,15 @@ EDITOR='emacsclient -nw'
 export PAGER=bat
 export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
 
-# * xcape :: double-duty modifier keys
+# * configure modifier keys
 # repeated invocations of an xcape mapping without killing in between causes
 # xcape to send multiples of the new mappings, which is terrible.
 ps aux | grep -i '[x]cape' >/dev/null && killall -9 xcape
 hash xcape 2>&1 >/dev/null && \
     xcape -e 'Control_L=Escape;Caps_Lock=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0' >/dev/null
 
-# * git
-g () {
-    if [ $# > 0 ]; then
-        git "$@"
-    else
-        git status -s
-    fi
-}
-
+# rebind PrtSc
+xmodmap ~/.Xmodmap
 # * Prompt
 # ** util
 strip_newline () {
