@@ -13,7 +13,7 @@ emv () {
 }
 
 # * pb{copy,paste}
-# it's just a better clipboard API, tbh; plus muscle memoory
+# it's just a better clipboard API, tbh; plus muscle memory
 alias pbcopy='xclip -i'
 alias pbpaste='xclip -o'
 
@@ -38,6 +38,7 @@ alias el="emv ~/.local-aliases.zsh"
 alias sdf="source ~/aliases.zsh && echo sourced ~/aliases.zsh && [[ -f ~/.local-aliases.zsh ]] && source ~/.local-aliases.zsh && echo sourced ~/.local-aliases.zsh || true"
 alias zrc="emv ~/.zshrc"
 alias rc="source ~/.zshrc"
+alias et="emv ~/.tmux.conf"
 
 # * serve local files
 alias serve="python -m SimpleHTTPServer"
@@ -114,7 +115,7 @@ cdf() {
 
 
 
-# * shortcuts for common commands
+# * shortcuts for standard commands and builtins
 # ** `cd` by any name would smell as sweet
 alias 'cd-'="cd -"
 alias ..="cdd .."
@@ -161,21 +162,24 @@ alias mmv='noglob zmv -W'
 
 # ** Vim and fam
 vi () {
-  if [[ $# -gt 0 ]]; then
-    vim "$@"
-  else
-    vim .
-  fi
+    if [[ $# -gt 0 ]]; then
+        vim "$@"
+    else
+        vim .
+    fi
 }
 alias ci=vi
 bo () {
-  emv $(bundle show "$1")
+    emv $(bundle show "$1")
 }
 
-# ** Git
-# alias hub as git
-# eval "$(hub alias -s)"
-
+# * shortcuts for nonstandard commands
+# ** `tree`
+alias tree='tree -I node_modules'
+# * language- or tool-specific shortcuts
+# ** ruby
+alias be='bundle exec'
+# * Git gets its own top-level section
 # No arguments: `git status`
 # With arguments: acts like `git`
 g () {
@@ -206,6 +210,13 @@ co () {
   fi
 }
 alias co-="git co -"
+
+cor () {
+    local BRANCH_OR_REF=$(git recent | fzf)
+    if [ ! -z $BRANCH_OR_REF ]; then
+        git checkout $BRANCH_OR_REF
+    fi
+}
 
 cob () {
   co -b "`echo $* | tr ' ' -`"
