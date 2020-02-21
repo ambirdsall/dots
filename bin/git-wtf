@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+# Runs git pickaxe
+# 1 arg: string matcher, short output
+# 2+ args: args and matcher
+#
+# FLAGS
+# -p: output the whole commit with diff. Overrides --oneline --decorate
+# -r: --pickaxe-regex
+args = ARGV.join(" ").gsub(/(^-r)|( -r)/, " --pickaxe-regex")
+
+if args.empty?
+  # search for contents of clipboard
+  exec 'git log --oneline --decorate -S "$(pbpaste)"'
+else
+  # search for given string
+  exec "git log --oneline --decorate -S '#{args}'"
+end
