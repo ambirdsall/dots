@@ -8,6 +8,8 @@
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
 
+export DOTPROFILE_HAS_RUN=t
+
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
     # include .bashrc if it exists
@@ -31,16 +33,29 @@ if [ -d "$HOME/.yarn/bin" ] ; then
 fi
 
 # a few barebones aliases, for muscle memory's sake
-alias vi=vim
-alias em='emacsclient'
+vi () {
+    if [[ $# -gt 0 ]]; then
+        vim "$@"
+    else
+        vim .
+    fi
+}
+em () {
+    emacsclient -nw --alternate-editor=emacs ${@}
+}
 
-local XCAPE_OPTS='Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'
-if [ -z $XCAPE_SET ]; then xcape -e $XCAPE_OPTS; fi
-export XCAPE_SET=t
+if [ $(uname) != 'Darwin' ]; then
+    local XCAPE_OPTS='Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'
+    if [ -z $XCAPE_SET ]; then xcape -e $XCAPE_OPTS; fi
+    export XCAPE_SET=t
 
-if [ -z $XMODMAP_SET ]; then xmodmap ~/.Xmodmap; fi
-export XMODMAP_SET=t
+    if [ -z $XMODMAP_SET ]; then xmodmap ~/.Xmodmap; fi
+    export XMODMAP_SET=t
 
-export PATH="$HOME/.cargo/bin:$PATH"
-export PATH='/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin':"$PATH"
-export PATH='/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin':"$PATH"
+    export PATH="$HOME/.cargo/bin:$PATH"
+    export PATH='/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin':"$PATH"
+    export PATH='/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin':"$PATH"
+fi
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
