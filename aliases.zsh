@@ -1,7 +1,20 @@
 # * emacsen
-em () {
-    /usr/bin/emacsclient -nw --alternate-editor=emacs ${@}
+
+tmux-session-name () {
+    local tty=$(tty)
+    for s in $(tmux list-sessions -F '#{session_name}' 2>/dev/null); do
+        tmux list-panes -F '#{pane_tty} #{session_name}' -t "$s"
+    done | grep "$tty" | awk '{print $2}'
 }
+
+if ! command -v em > /dev/null; then
+    em () {
+        local tmux_session_name=$(tmux-session-name)
+        local context=${tmux_session_name:-cli}
+
+        emacsclient --alternate-editor="" --socket-name=${context} --tty --quiet ${@}
+    }
+fi
 emm () {
     em $(um)
 }
@@ -9,13 +22,24 @@ rem () {
     em . -eval "(require 'projectile)(dired (directile-project-root))"
 }
 emv () {
-    /usr/bin/emacsclient -nw --alternate-editor=vim ${@}
+    emacsclient -nw --alternate-editor=vim --socket-name=cli ${@}
+}
+
+slay () {
+    # TODO:clean up long filepaths from output
+    local pid=$(ps $(pgrep Emacs) | awk 'NR>1' | fzf | awk '{print $1}')
+    if [[ -n $pid ]]; then
+        echo Killing process ${pid}...
+        kill ${pid}
+    fi
 }
 
 # * pb{copy,paste}
 # it's just a better clipboard API, tbh; plus muscle memory
-alias pbcopy='xclip -i'
-alias pbpaste='xclip -o'
+if [ $(uname) != 'Darwin' ]; then
+    alias pbcopy='xclip -i'
+    alias pbpaste='xclip -o'
+fi
 
 
 # * cd to within code directory from anywhere
@@ -43,53 +67,8 @@ alias et="emv ~/.tmux.conf"
 # * serve local files
 alias serve="python -m SimpleHTTPServer"
 
-# ** tmux
-alias t=tmux
-alias tt="tmux attach -t"
-alias tk="tmux kill-session -t"
-tn () {
-  if [[ $# -gt 0 ]]; then
-    tmux new -s $1; cd; clear
-  else
-    tmux new -s $(basename $(pwd)); cd; clear
-  fi
-}
-# When the tmux session shrinks some and fills the margin with periods, it
-# thinks there's another instance of the session in a smaller terminal. F that.
-alias tda="tmux detach -a"
-alias tls="tmux list-sessions"
-
-# ** clear
-alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
-
-# ** background jobs & processes
-# these play nicely with fg (especially with vim/emacsclient)
-alias j=jobs
-# Typing the percent sign gets annoying fast when you run `kill` all the time with `%n`-style arguments on suspended `jobs`
-k () {
-    kill %"$1"
-}
-
-# ** awk
-alias awkcsv='awk -F "\"*,\"*"'
-
-# ** `=` :: less
-= () {
-  # iff there are 0 arguments given, assume input from stdin (i.e. a pipe)
-  if [[ $# -gt 0 ]]; then
-    /usr/share/vim/vim80/macros/less.sh "$*"
-  else
-    /usr/share/vim/vim80/macros/less.sh "$*" -
-  fi
-}
-
-# ** chmod
-alias cx='chmod +x'
-
-# ** echo
-alias e=echo
-
-
+# * unfuck yourself
+alias sane='stty sane'
 
 # * first you have to be able to get where you're going
 # ** jump around
@@ -116,6 +95,17 @@ cdf() {
 
 
 # * shortcuts for standard commands and builtins
+# ** awk
+alias awkcsv='awk -F "\"*,\"*"'
+
+# ** background jobs & processes
+# these play nicely with fg (especially with vim/emacsclient)
+alias j=jobs
+# Typing the percent sign gets annoying fast when you run `kill` all the time with `%n`-style arguments on suspended `jobs`
+k () {
+    kill %"$1"
+}
+
 # ** `cd` by any name would smell as sweet
 alias 'cd-'="cd -"
 alias ..="cdd .."
@@ -139,11 +129,29 @@ cdd () {
 
 
 
+# ** chmod
+alias cx='chmod +x'
+
+# ** clear
+alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
+
+# ** echo
+alias e=echo
+
+# ** `=` :: less
+= () {
+    # iff there are 0 arguments given, assume input from stdin (i.e. a pipe)
+    if [[ $# -gt 0 ]]; then
+        /usr/share/vim/vim80/macros/less.sh "$*"
+    else
+        /usr/share/vim/vim80/macros/less.sh "$*" -
+    fi
+}
+
 # ** `ls`
 alias ls="ls -GF"
 alias la="ls -A"
 alias ll="ls -l"
-
 
 # ** `mkdir`
 alias mkdir="mkdir -pv"
@@ -161,24 +169,45 @@ alias tsslog='tail -f /tmp/tss.log'
 alias mmv='noglob zmv -W'
 
 # ** Vim and fam
-vi () {
-    if [[ $# -gt 0 ]]; then
-        vim "$@"
-    else
-        vim .
-    fi
-}
+
+if ! [[ $(type vi) =~ 'function' ]]; then
+    vi () {
+        if [[ $# -gt 0 ]]; then
+            vim "$@"
+        else
+            vim .
+        fi
+    }
+fi
 alias ci=vi
 bo () {
     emv $(bundle show "$1")
 }
 
 # * shortcuts for nonstandard commands
+# ** tmux
+alias t=tmux
+alias tt="tmux attach -t"
+alias tk="tmux kill-session -t"
+tn () {
+    if [[ $# -gt 0 ]]; then
+        tmux new -s $1; cd; clear
+    else
+        tmux new -s $(basename $(pwd)); cd; clear
+    fi
+}
+# When the tmux session shrinks some and fills the margin with periods, it
+# thinks there's another instance of the session in a smaller terminal. F that.
+alias tda="tmux detach -a"
+alias tls="tmux list-sessions"
+
 # ** `tree`
 alias tree='tree -I node_modules'
 # * language- or tool-specific shortcuts
 # ** ruby
 alias be='bundle exec'
+# ** js/ts
+alias scripts='jq .scripts < package.json'
 # * Git gets its own top-level section
 # No arguments: `git status`
 # With arguments: acts like `git`
@@ -190,17 +219,27 @@ g () {
   fi
 }
 
+gs () {
+    emacsclient -a "" --socket=magit -nw -e "(progn (or (advice-member-p 'spacemacs/frame-killer 'magit-mode-bury-buffer) (advice-add 'magit-mode-bury-buffer :before 'spacemacs/frame-killer)) (magit-status))"
+}
 # Complete g like git, which is actually `hub`.
 # compdef g=hub
 
 # run `git clone` and `cdd` into dir
+# if no arguments are provided, assumes you have copied a repo url to your clipboard
 gc () {
-  repo=$1
+  if [[ $# -gt 0 ]]; then
+    repo=$(pbpaste)
+  else
+    repo=$1
+  fi
+
   repo_dir_with_trailing_git=${repo##*/}
   repo_dir=${repo_dir_with_trailing_git%.git}
   git clone $repo
   cdd $repo_dir
 }
+
 
 co () {
   if [[ $# -gt 0 ]]; then
@@ -224,7 +263,7 @@ cob () {
 
 d () {
   # git diff --word-diff "$@"
-  git diff --diff-algorithm=minimal --color "$@" | diff-so-fancy | bat
+    git diff --diff-algorithm=minimal --color "$@" | diff-so-fancy | bat
 }
 alias gdc="d --cached"
 alias gdo="git diff \$(git rev-parse --abbrev-ref HEAD 2> /dev/null)..origin/\$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
@@ -287,6 +326,8 @@ alias pop="git stash pop"
 
 alias shipit='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~" && git push origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
 alias SHIPIT='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~" && git push --force-with-lease origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
+# an important part of being a good programmer is making fun of yourself when you make a typo
+alias SHIIT='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~" && echo "      FUUCK"'
 
 # * Self-expanding shell abbreviations
 # cf. http://zshwiki.org/home/examples/zleiab
@@ -298,6 +339,7 @@ abbreviations=(
 "peg"   "| egrep"
 "pgr"   "| groff -s -p -t -e -Tlatin1 -mandoc"
 "pf"    "| fzf"
+"pg"    "| rg"
 "ph"    "| head"
 "pj"    "| jq"
 "pk"    "| keep"
@@ -327,14 +369,14 @@ bindkey -M isearch " " self-insert
 
 
 # * Unicode arts and farts
-alias idk="echo -n '¯\_(ツ)_/¯' | xclip && echo 'Copied \"¯\_(ツ)_/¯\" to clipboard'"
+alias idk="echo -n '¯\_(ツ)_/¯' | pbcopy && echo 'Copied \"¯\_(ツ)_/¯\" to clipboard'"
 # Backslashes and underscores must be doubly escaped if the text will be parsed as markdown
-alias idke="echo -n '¯\\\\\\_(ツ)\_/¯' | xclip && echo 'Copied \"¯\\\\\_(ツ)\_/¯\" to clipboard'"
-alias om="echo -n '¯\_( ˘͡ ˘̯)_/¯' | xclip && echo 'Copied \"¯\_( ˘͡ ˘̯)_/¯\" to clipboard'"
-alias tableflip="echo -n '(╯°□°）╯︵ ┻━┻' | xclip && echo 'Copied \"(╯°□°）╯︵ ┻━┻\" to clipboard'"
-alias muscles="echo -n 'ᕙ(⇀‸↼‶)ᕗ' | xclip && echo 'Copied \"ᕙ(⇀‸↼‶)ᕗ\" to clipboard'"
-alias heyo="echo -n '(╭☞'ω')╭☞' | xclip && echo 'Copied \"(╭☞'ω')╭☞¯\" to clipboard'"
-
+alias idke="echo -n '¯\\\\\\_(ツ)\_/¯' | pbcopy && echo 'Copied \"¯\\\\\_(ツ)\_/¯\" to clipboard'"
+alias om="echo -n '¯\_( ˘͡ ˘̯)_/¯' | pbcopy && echo 'Copied \"¯\_( ˘͡ ˘̯)_/¯\" to clipboard'"
+alias tableflip="echo -n '(╯°□°）╯︵ ┻━┻' | pbcopy && echo 'Copied \"(╯°□°）╯︵ ┻━┻\" to clipboard'"
+alias muscles="echo -n 'ᕙ(⇀‸↼‶)ᕗ' | pbcopy && echo 'Copied \"ᕙ(⇀‸↼‶)ᕗ\" to clipboard'"
+alias heyo="echo -n '(╭☞'ω')╭☞' | pbcopy && echo 'Copied \"(╭☞'ω')╭☞¯\" to clipboard'"
+alias thanks="echo -n '(´▽\`ʃƪ)' | pbcopy && echo 'Copied \"(´▽\`ʃƪ)\" to clipboard'"
 
 
 # Entertainment
