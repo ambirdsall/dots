@@ -27,7 +27,8 @@ This function should only modify configuration layer settings."
    ;; Paths must have a trailing slash (i.e. `~/.mycontribs/')
    dotspacemacs-configuration-layer-path '()
 ;; ** layers
-   dotspacemacs-configuration-layers '(clojure
+   dotspacemacs-configuration-layers '(lua
+                                       clojure
                                        csv
                                        ruby
                                        python
@@ -48,6 +49,7 @@ This function should only modify configuration layer settings."
                                        html
                                        javascript
                                        lsp
+                                       lua
                                        markdown
                                        nginx
                                        (org :variables
@@ -68,6 +70,7 @@ This function should only modify configuration layer settings."
                                               shell-default-position 'fullscreen
                                               shell-default-shell 'eshell)
                                        shell-scripts
+                                       ;; spacemacs-modeline
                                        (spell-checking :variables
                                                        spell-checking-enable-by-default nil)
                                        spotify
@@ -104,6 +107,7 @@ This function should only modify configuration layer settings."
                                       exunit
                                       fireplace
                                       general
+                                      graphql-mode
                                       jasminejs-mode
                                       nvm
                                       outshine
@@ -114,15 +118,14 @@ This function should only modify configuration layer settings."
                                       ox-tufte
                                       sicp
                                       vimish-fold
-                                      vue-mode)
+                                      )
 ;; ** frozen packages
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
 ;; ** excluded packages
    ;; A list of packages that will not be installed and loaded.
    dotspacemacs-excluded-packages '(alchemist
-                                    evil-search-highlight-persist
-                                    spaceline)
+                                    evil-search-highlight-persist)
    ;; Defines the behaviour of Spacemacs when installing packages.
    ;; Possible values are `used-only', `used-but-keep-unused' and `all'.
    ;; `used-only' installs only explicitly used packages and deletes any unused
@@ -130,7 +133,7 @@ This function should only modify configuration layer settings."
    ;; installs only the used packages but won't delete unused ones. `all'
    ;; installs *all* packages supported by Spacemacs and never uninstalls them.
    ;; (default is `used-only')
-   dotspacemacs-install-packages 'used-only))
+   dotspacemacs-install-packages 'used-but-keep-unused))
 
 ;; * dotspacemacs-variables
 (defun dotspacemacs/init ()
@@ -551,7 +554,9 @@ dump."
     (setq mac-option-modifier 'super)
     (setq ns-function-modifier 'hyper)
     (setq insert-directory-program (executable-find "gls"))
-    (setq browse-url-browser-function 'browse-url-default-macosx-browser))
+    (setq browse-url-browser-function 'browse-url-default-macosx-browser)
+    (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+    (add-to-list 'default-frame-alist '(ns-appearance . dark)))
 
 ;; ** better defaults
 ;; *** global defaults
@@ -581,11 +586,14 @@ dump."
   (add-hook 'mmm-mode-hook
             (lambda ()
               (set-face-background 'mmm-default-submode-face nil)))
-;; ** require some generally-useful libraries just in case they're not around yet
+;; ** require some libraries
   (require 'cl)
   (require 'dash)
   (require 's)
   (require 'f)
+  (require 'autoinsert)
+  (require 'yasnippet)
+
 ;; ** terminal
   ;; ITERM2 MOUSE SUPPORT
   (unless window-system
@@ -594,7 +602,15 @@ dump."
     (defun track-mouse (e))
     (setq mouse-sel-mode t)
     (global-set-key (kbd "<mouse-4>") (lambda () (interactive) (scroll-down 1)))
-    (global-set-key (kbd "<mouse-5>") (lambda () (interactive) (scroll-up 1))))
+    (global-set-key (kbd "<mouse-5>") (lambda () (interactive) (scroll-up 1)))
+
+    ;; escaped escape sequences (using CSI u encoding for full, unambiguous keyboard bindings
+    (define-key input-decode-map "\e[58;3u" (kbd "M-:"))
+    (define-key input-decode-map "\e[32;2u" (kbd "S-SPC"))
+    (define-key input-decode-map "\e[98;7u" (kbd "C-M-b"))
+    (define-key input-decode-map "\e[102;7u" (kbd "C-M-f"))
+    (define-key input-decode-map "\e[117;7u" (kbd "C-M-u"))
+    )
 
 ;; ** defuns
   (defun source-dotspacemacs-user-config ()
@@ -612,6 +628,14 @@ dump."
     (interactive "p")
     (evil-open-below count)
     (normal-mode))
+
+  (defun autoinsert-yas-expand()
+    "Replace text in yasnippet template."
+    (yas-expand-snippet (buffer-string) (point-min) (point-max)))
+
+  (defun amb/open-rails-console ()
+    (interactive)
+    (and (get-buffer "*rails*") (switch-to-buffer "*rails*")))
 
   (defun open-line-below ()
     (interactive)
@@ -901,7 +925,7 @@ prefix arg, runs helm-projectile-find-file instead. I"
     (fset 'amb/edit-elisp-notes (find-file-as-command (amb/ "elisp.org"))))
   (fset 'amb/edit-cli-primer (find-file-as-command "~/notes/cli-primer.org"))
   (fset 'amb/open-agenda-file (find-file-as-command "~/notes/agenda.org"))
-  (fset 'amb/edit-sigfig-notes (find-file-as-command "~/notes/sigfig.org"))
+  (fset 'amb/edit-indiegogo-notes (find-file-as-command "~/notes/indiegogo.org"))
   (fset 'amb/edit-org-mode-glossary-notes (find-file-as-command "~/notes/org-mode-glossary.org"))
 
   (defmacro helm-edit-file-from-directory (helm-title dir)
@@ -956,15 +980,27 @@ used interactively."
   (def-text-operator 'lower-words-case #'(lambda (str) (s-join " " (-map #'s-downcase (s-split-words str)))))
 
 ;; *** dead sea scrolling
-  (defun amb/scroll-down ()
+  (defun amb/down-arrow ()
     "scroll down a line, for the definition of \"down\" I find intuitive."
     (interactive)
-    (scroll-up 1))
+    (if (eq major-mode 'org-mode)
+        (next-line)
+      (scroll-up 1)))
 
-  (defun amb/scroll-up ()
+  (defun amb/up-arrow ()
     "scroll up a line, for the definition of \"up\" I find intuitive."
     (interactive)
-    (scroll-down 1))
+    (if (eq major-mode 'org-mode)
+        (previous-line)
+      (scroll-down 1)))
+;; ** auto-insert
+  (unless auto-insert-mode (auto-insert-mode))
+
+  (custom-set-variables
+   '(auto-insert-query nil)
+   '(auto-insert 'other)
+   '(auto-insert-directory "~/autoinsert-templates/")
+   '(auto-insert-alist '((("\\.vue\\'" . "Vue component") . ["template.vue" web-mode autoinsert-yas-expand]))))
 ;; ** git
 ;; *** general magit UI
   
@@ -1119,11 +1155,6 @@ filesystem root, whichever comes first."
     (tooltip-mode    -1)
     (menu-bar-mode   -1)
 
-;; *** frame appearance
-    (when (eq system-type 'darwin)
-      (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
-      (add-to-list 'default-frame-alist '(ns-appearance . dark)))
-
 ;; *** whitespace
     (require 'whitespace)
     (setq whitespace-display-mappings
@@ -1161,9 +1192,11 @@ filesystem root, whichever comes first."
     (advice-add 'spacemacs/cycle-spacemacs-theme :after #'amb/set-tab-color)
 
 ;; *** modeline
-    (require 'doom-modeline)
-    (doom-modeline-init)
-    (setq doom-modeline-height 23)
+    ;; HACK: this shouldn't be needed, but I'm having a devil of a time getting
+    ;; doom-modeline installed on this here computer
+    (if (require 'doom-modeline nil t) ;; third arg prevents error if not found
+        (doom-modeline-init)
+      (setq doom-modeline-height 23))
 
 ;; *** mode-line
   (spacemacs/toggle-mode-line-battery-on)
@@ -1189,7 +1222,7 @@ filesystem root, whichever comes first."
   (sp-local-pair '(react-mode typescript-mode js2-mode) "<" ">" :actions nil)
 
   (add-hook 'js2-mode-hook 'prettier-js-mode)
-  (add-hook 'web-mode-hook 'prettier-js-mode)
+  ;; (add-hook 'web-mode-hook 'prettier-js-mode)
   ;; typescript
   ;; Fix errors resulting from tempfiles in the source directory
   (with-eval-after-load 'typescript-tslint
@@ -1233,7 +1266,12 @@ filesystem root, whichever comes first."
 ;; ** web-mode
   (setq web-mode-engines-alist
         '(("angular" . "\\.html")
+          ("vue" . "\\.vue")
           ("phoenix" . "\\.html.eex")))
+
+  (add-to-list 'auto-mode-alist '("\\.vue" . web-mode))
+;; ** css
+  (add-to-list 'auto-mode-alist '("\\.postcss" . css-mode))
 ;; ** editorconfig
   (use-package editorconfig
     :ensure t
@@ -1245,16 +1283,16 @@ filesystem root, whichever comes first."
   (add-to-list 'auto-mode-alist '("\\.http" . restclient-mode))
 ;; ** mdx
   (add-to-list 'auto-mode-alist '("\\.mdx" . markdown-mode))
-;; ** load keybindings last, in hopes that they won't be overwritten
+;; ** load keybindings last, because getting overridden is more annoying than failing due to error
   (require 'general)
 ;; *** folding systems
 ;; **** org/outshine
 (if (display-graphic-p) ;; org-mode heading keybindings
     (with-eval-after-load 'org
-      (define-key org-mode-map (kbd "C-RET") #'amb/org-new-heading)
-      (define-key org-mode-map (kbd "C-S-RET") #'amb/org-new-subheading)
+      ;; (define-key org-mode-map (kbd "C-S-RET") #'amb/org-new-subheading)
       ;; (define-key evil-org-mode-map (kbd "<down>") #'next-line) ;; keymap overridden :(
       ;; (define-key evil-org-mode-map (kbd "<up>") #'previous-line) ;; keymap overridden :(
+      (define-key org-mode-map [remap evil-org-org-insert-heading-respect-content-below] #'amb/org-new-heading)
       (define-key org-mode-map [remap evil-org-org-insert-todo-heading-respect-content-below] 'amb/org-new-subheading)
       ;; (evil-define-key 'normal org-mode-map
       ;;   (kbd "C-RET") #'amb/org-new-heading
@@ -1300,20 +1338,28 @@ filesystem root, whichever comes first."
 ;; **** vimish-fold
 (require 'vimish-fold)
 (require 'evil-vimish-fold)
-(evil-vimish-fold-mode 1)
+(global-evil-vimish-fold-mode 1)
 ;; *** undo in region in visual mode
 (evil-global-set-key 'visual "u" 'undo-tree-undo)
 ;; *** C-return/C-S-return == vim-style o/O
 (global-set-key (kbd "<C-return>") 'open-line-below)
 (global-set-key (kbd "<C-S-return>") 'open-line-above)
 
+;; *** C-; jump to arbitrary text on screen w/ avy-timer
+(global-set-key (kbd "C-;") 'evil-avy-goto-char-timer)
+
+;; *** C-] jump to definition should dumb-jump, not tags
+(general-define-key
+ :states 'normal
+ "C-]" 'dumb-jump-go)
 ;; *** arrow keys, amirite?
-(evil-global-set-key 'normal (kbd "<down>") 'amb/scroll-down)
-(evil-global-set-key 'visual (kbd "<down>") 'amb/scroll-down)
-(evil-global-set-key 'motion (kbd "<down>") 'amb/scroll-down)
-(evil-global-set-key 'normal (kbd "<up>") 'amb/scroll-up)
-(evil-global-set-key 'visual (kbd "<up>") 'amb/scroll-up)
-(evil-global-set-key 'motion (kbd "<up>") 'amb/scroll-up)
+;; TODO: use general.el to simplify these definitions
+(evil-global-set-key 'normal (kbd "<down>") 'amb/down-arrow)
+(evil-global-set-key 'visual (kbd "<down>") 'amb/down-arrow)
+(evil-global-set-key 'motion (kbd "<down>") 'amb/down-arrow)
+(evil-global-set-key 'normal (kbd "<up>") 'amb/up-arrow)
+(evil-global-set-key 'visual (kbd "<up>") 'amb/up-arrow)
+(evil-global-set-key 'motion (kbd "<up>") 'amb/up-arrow)
 
 ;; *** vim-style tab navigation
 (evil-global-set-key 'normal (kbd "g t") 'centaur-tabs-forward)
@@ -1353,7 +1399,7 @@ filesystem root, whichever comes first."
   "oec" #'amb/edit-cli-primer
   "oee" #'amb/pick-a-note-why-dont-ya
   "oeE" #'amb/edit-elisp-notes
-  "oes" #'amb/edit-sigfig-notes
+  "oei" #'amb/edit-indiegogo-notes
   )
 
 (spacemacs/declare-prefix "ot" "typescript")
@@ -1426,6 +1472,7 @@ filesystem root, whichever comes first."
   "oo"   #'evil-open-below-without-leaving-normal-state
   "oO"   #'evil-open-above-without-leaving-normal-state
   "op"   #'amb/paste-from-clipboard
+  "or"   #'amb/open-rails-console
   "oy"   #'amb/evil-yank-to-clipboard
   "oz"   #'evil-toggle-fold
   "po"   #'org-projectile/goto-todos
@@ -1507,6 +1554,7 @@ filesystem root, whichever comes first."
 
 ;; TODO: if on a mac and GUI, bind `(kbd "s-_")` (i.e. alt-shift-dash, the standard OS-level em-dash binding) to self-insert em-dash
 )
+
 ;; * automatically-inserted shit
 dotspacemacs-configuration-layers
 ;; Do not write anything past this comment. This is where Emacs will
@@ -1619,6 +1667,14 @@ This function is called at the very end of Spacemacs initialization."
  ;; If there is more than one, they won't work right.
  '(ansi-color-faces-vector
    [default bold shadow italic underline bold bold-italic bold])
+ '(auto-insert (quote other))
+ '(auto-insert-alist
+   (quote
+    ((("\\.vue\\'" . "Vue component")
+      .
+      ["template.vue" web-mode autoinsert-yas-expand]))))
+ '(auto-insert-directory "~/autoinsert-templates/")
+ '(auto-insert-query nil)
  '(compilation-message-face (quote default))
  '(cua-global-mark-cursor-color "#2aa198")
  '(cua-normal-cursor-color "#657b83")
@@ -1681,7 +1737,7 @@ This function is called at the very end of Spacemacs initialization."
  '(org-html-doctype "html5")
  '(package-selected-packages
    (quote
-    (utop tuareg caml reason-mode ocp-indent mvn meghanada maven-test-mode lsp-java groovy-imports gradle-mode flycheck-ocaml merlin emojify emoji-cheat-sheet-plus dune company-emoji auto-complete-rst zeal-at-point yaml-mode sql-indent sicp restclient-helm ox-hugo outorg org-mime ob-restclient ob-http nvm nginx-mode lsp-scala lsp-mode jasminejs-mode lv helm-spotify-plus helm-dash dash-docs general flycheck-elm exunit evil-vimish-fold vimish-fold evil-textobj-line evil-textobj-anyblock transient elm-mode reformatter doom-modeline shrink-path all-the-icons memoize dockerfile-mode docker tablist docker-tramp dash-at-point company-restclient restclient know-your-http-well bart-mode angular-snippets add-node-modules-path helm-navi ac-html-angular angular-mode outshine clj-refactor edn clojure-snippets paredit peg cider-eval-sexp-fu cider queue clojure-mode ob-typescript org-category-capture ox-tufte discover cargo toml-mode racer flycheck-rust seq rust-mode racket-mode faceup groovy-mode typit mmt sudoku pacmacs 2048-game yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode helm-pydoc cython-mode company-anaconda anaconda-mode pythonic graphviz-dot-mode fireplace magit-gh-pulls github-search github-clone github-browse-file gist gh marshal logito pcache ht ranger ob-sml sml-mode origami spotify helm-spotify multi powerline rake inflections pcre2el spinner osc log4e gntp skewer-mode simple-httpd json-snatcher json-reformat multiple-cursors hydra parent-mode projectile request haml-mode gitignore-mode fringe-helper git-gutter+ git-gutter flyspell-correct pos-tip flx iedit anzu goto-chg undo-tree highlight f diminish autothemer web-completion-data dash-functional tern bind-map bind-key packed elixir-mode pkg-info epl avy auto-complete popup geiser csv-mode typescript-mode sbt-mode scala-mode inf-ruby company smartparens evil flycheck helm helm-core markdown-mode alert org-plus-contrib magit magit-popup git-commit with-editor async yasnippet php-mode js2-mode dash s define-word zonokai-theme zenburn-theme zen-and-art-theme xterm-color ws-butler winum which-key web-mode web-beautify volatile-highlights vimrc-mode vi-tilde-fringe uuidgen use-package unfill underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme tronesque-theme toxi-theme toc-org tide tao-theme tangotango-theme tango-plus-theme tango-2-theme tagedit sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spaceline spacegray-theme soothe-theme sonic-pi solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme smeargle slim-mode shell-pop seti-theme scss-mode sass-mode rvm ruby-tools ruby-test-mode rubocop rspec-mode robe reverse-theme reveal-in-osx-finder restart-emacs rbenv rainbow-mode rainbow-identifiers rainbow-delimiters railscasts-theme purple-haze-theme pug-mode projectile-rails professional-theme popwin planet-theme phpunit phpcbf php-extras php-auto-yasnippets phoenix-dark-pink-theme phoenix-dark-mono-theme persp-mode pbcopy pastels-on-dark-theme paradox ox-twbs ox-reveal ox-gfm osx-trash osx-dictionary orgit organic-green-theme org-tree-slide org-projectile org-present org-pomodoro org-download org-bullets open-junk-file omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme ob-elixir noflet noctilux-theme niflheim-theme neotree naquadah-theme mwim mustang-theme multi-term move-text monokai-theme monochrome-theme molokai-theme moe-theme mmm-mode minitest minimal-theme material-theme markdown-toc majapahit-theme magit-gitflow madhat2r-theme macrostep lush-theme lorem-ipsum livid-mode linum-relative link-hint light-soap-theme less-css-mode launchctl json-mode js2-refactor js-doc jbeans-theme jazz-theme ir-black-theme insert-shebang inkpot-theme info+ indent-guide hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt heroku-theme hemisu-theme help-fns+ helm-themes helm-swoop helm-projectile helm-mode-manager helm-make helm-gitignore helm-flx helm-descbinds helm-css-scss helm-company helm-c-yasnippet helm-ag hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme google-translate golden-ratio gnuplot gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe git-gutter-fringe+ gh-md gandalf-theme fuzzy flyspell-correct-helm flycheck-pos-tip flycheck-mix flycheck-credo flx-ido flatui-theme flatland-theme fish-mode firebelly-theme fill-column-indicator feature-mode farmhouse-theme fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-replace-with-register evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-args evil-anzu eval-sexp-fu espresso-theme eshell-z eshell-prompt-extras esh-help ensime emmet-mode elisp-slime-nav editorconfig dumb-jump drupal-mode dracula-theme django-theme diff-hl darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme dactyl-mode cyberpunk-theme company-web company-tern company-statistics company-shell column-enforce-mode color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized color-identifiers-mode coffee-mode clues-theme clean-aindent-mode chruby cherry-blossom-theme busybee-theme bundler bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes alchemist aggressive-indent afternoon-theme adaptive-wrap ace-window ace-link ace-jump-helm-line ac-ispell)))
+    (zeal-at-point yaml-mode sql-indent sicp restclient-helm ox-hugo outorg org-mime ob-restclient ob-http nvm nginx-mode lsp-scala lsp-mode jasminejs-mode lv helm-spotify-plus helm-dash dash-docs general flycheck-elm exunit evil-vimish-fold vimish-fold evil-textobj-line evil-textobj-anyblock transient elm-mode reformatter doom-modeline shrink-path all-the-icons memoize dockerfile-mode docker tablist docker-tramp dash-at-point company-restclient restclient know-your-http-well bart-mode angular-snippets add-node-modules-path helm-navi ac-html-angular angular-mode outshine clj-refactor edn clojure-snippets paredit peg cider-eval-sexp-fu cider queue clojure-mode ob-typescript org-category-capture ox-tufte discover cargo toml-mode racer flycheck-rust seq rust-mode racket-mode faceup groovy-mode typit mmt sudoku pacmacs 2048-game yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode helm-pydoc cython-mode company-anaconda anaconda-mode pythonic graphviz-dot-mode fireplace magit-gh-pulls github-search github-clone github-browse-file gist gh marshal logito pcache ht ranger ob-sml sml-mode origami spotify helm-spotify multi powerline rake inflections pcre2el spinner osc log4e gntp skewer-mode simple-httpd json-snatcher json-reformat multiple-cursors hydra parent-mode projectile request haml-mode gitignore-mode fringe-helper git-gutter+ git-gutter flyspell-correct pos-tip flx iedit anzu goto-chg undo-tree highlight f diminish autothemer web-completion-data dash-functional tern bind-map bind-key packed elixir-mode pkg-info epl avy auto-complete popup geiser csv-mode typescript-mode sbt-mode scala-mode inf-ruby company smartparens evil flycheck helm helm-core markdown-mode alert org-plus-contrib magit magit-popup git-commit with-editor async yasnippet php-mode js2-mode dash s define-word zonokai-theme zenburn-theme zen-and-art-theme xterm-color ws-butler winum which-key web-mode web-beautify volatile-highlights vimrc-mode vi-tilde-fringe uuidgen use-package unfill underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme tronesque-theme toxi-theme toc-org tide tao-theme tangotango-theme tango-plus-theme tango-2-theme tagedit sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spaceline spacegray-theme soothe-theme sonic-pi solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme smeargle slim-mode shell-pop seti-theme scss-mode sass-mode rvm ruby-tools ruby-test-mode rubocop rspec-mode robe reverse-theme reveal-in-osx-finder restart-emacs rbenv rainbow-mode rainbow-identifiers rainbow-delimiters railscasts-theme purple-haze-theme pug-mode projectile-rails professional-theme popwin planet-theme phpunit phpcbf php-extras php-auto-yasnippets phoenix-dark-pink-theme phoenix-dark-mono-theme persp-mode pbcopy pastels-on-dark-theme paradox ox-twbs ox-reveal ox-gfm osx-trash osx-dictionary orgit organic-green-theme org-tree-slide org-projectile org-present org-pomodoro org-download org-bullets open-junk-file omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme ob-elixir noflet noctilux-theme niflheim-theme neotree naquadah-theme mwim mustang-theme multi-term move-text monokai-theme monochrome-theme molokai-theme moe-theme mmm-mode minitest minimal-theme material-theme markdown-toc majapahit-theme magit-gitflow madhat2r-theme macrostep lush-theme lorem-ipsum livid-mode linum-relative link-hint light-soap-theme less-css-mode launchctl json-mode js2-refactor js-doc jbeans-theme jazz-theme ir-black-theme insert-shebang inkpot-theme info+ indent-guide hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt heroku-theme hemisu-theme help-fns+ helm-themes helm-swoop helm-projectile helm-mode-manager helm-make helm-gitignore helm-flx helm-descbinds helm-css-scss helm-company helm-c-yasnippet helm-ag hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme google-translate golden-ratio gnuplot gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe git-gutter-fringe+ gh-md gandalf-theme fuzzy flyspell-correct-helm flycheck-pos-tip flycheck-mix flycheck-credo flx-ido flatui-theme flatland-theme fish-mode firebelly-theme fill-column-indicator feature-mode farmhouse-theme fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-replace-with-register evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-args evil-anzu eval-sexp-fu espresso-theme eshell-z eshell-prompt-extras esh-help ensime emmet-mode elisp-slime-nav editorconfig dumb-jump drupal-mode dracula-theme django-theme diff-hl darktooth-theme darkokai-theme darkmine-theme darkburn-theme dakrone-theme dactyl-mode cyberpunk-theme company-web company-tern company-statistics company-shell column-enforce-mode color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized color-identifiers-mode coffee-mode clues-theme clean-aindent-mode chruby cherry-blossom-theme busybee-theme bundler bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes alchemist aggressive-indent afternoon-theme adaptive-wrap ace-window ace-link ace-jump-helm-line ac-ispell)))
  '(paradox-github-token t)
  '(pdf-view-midnight-colors (quote ("#DCDCCC" . "#383838")))
  '(pos-tip-background-color "#eee8d5")
@@ -1690,12 +1746,17 @@ This function is called at the very end of Spacemacs initialization."
    "git submodule --quiet foreach 'echo $path' 2>/dev/null | tr '\\n' '\\0'")
  '(safe-local-variable-values
    (quote
-    ((elixir-enable-compilation-checking . t)
+    ((prettier-js-command . "~/c/monorail/js/vue/node_modules/.bin/prettier")
+     (typescript-backend . tide)
+     (typescript-backend . lsp)
+     (javascript-backend . tern)
+     (javascript-backend . lsp)
+     (elixir-enable-compilation-checking . t)
      (elixir-enable-compilation-checking))))
  '(smartrep-mode-line-active-bg (solarized-color-blend "#859900" "#eee8d5" 0.2))
  '(term-default-bg-color "#fdf6e3")
  '(term-default-fg-color "#657b83")
- '(typescript-indent-level 2 t)
+ '(typescript-indent-level 2)
  '(vc-annotate-background nil)
  '(vc-annotate-background-mode nil)
  '(vc-annotate-color-map
@@ -1731,5 +1792,6 @@ This function is called at the very end of Spacemacs initialization."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ensime-implicit-highlight ((t (:underline nil)))))
+ '(ensime-implicit-highlight ((t (:underline nil))))
+ '(tide-hl-identifier-face ((t (:inherit highlight :background "gray33")))))
 )
