@@ -1424,15 +1424,19 @@ filesystem root, whichever comes first."
   "zoc" #'origami-close-all-nodes
   "zoo" #'origami-open-all-nodes)
 ;; **** parens
-(spacemacs/declare-prefix ")" "paredit ⇨")
+(spacemacs/declare-prefix ")" "smartparens ⇨")
 (spacemacs/set-leader-keys
-  ")s" #'paredit-forward-slurp-sexp
-  ")b" #'paredit-forward-barf-sexp)
+  ")s" #'sp-forward-slurp-sexp
+  ")b" #'sp-forward-barf-sexp
+  ")Y" #'spacemacs/toggle-smartparens-on
+  ")N" #'spacemacs/toggle-smartparens-off)
 
-(spacemacs/declare-prefix "(" "paredit ⇦")
+(spacemacs/declare-prefix "(" "smartparens ⇦")
 (spacemacs/set-leader-keys
-  "(s" #'paredit-backward-slurp-sexp
-  "(b" #'paredit-backward-barf-sexp)
+  "(s" #'sp-backward-slurp-sexp
+  "(b" #'sp-backward-barf-sexp
+  "(Y" #'spacemacs/toggle-smartparens-on
+  "(N" #'spacemacs/toggle-smartparens-off)
 ;; **** 'H'
 (spacemacs/declare-prefix "H" "helm")
 (spacemacs/set-leader-keys
