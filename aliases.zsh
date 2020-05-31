@@ -73,7 +73,7 @@ alias sane='stty sane'
 # * first you have to be able to get where you're going
 # ** jump around
 # DEPENDENCY: gem install rouge
-alias um="find . -type f | grep -vE '.tmp-*|.git|node_modules|bower_components' | fzf --multi --preview 'rougify {}'"
+alias um="find . -type f | grep -vE '.tmp-*|.git|node_modules|bower_components' | fzf --multi --preview 'bat --color=always {}'"
 cdf() {
   pushd $(dirname $(find . -type f | grep -vE '.tmp-*|.git|node_modules|bower_components|DS_Store' | fzf --preview 'rougify {}'))
 }
