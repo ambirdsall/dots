@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [[ $1 != "from" || $3 != "to" ]]; then
+    echo "USAGE: git pickrange from $SHA1 to $SHA2" >&2
+    echo "yes, you literally have to type a boilerplate \"from\" and \"to\"" >&2
+    exit 1
+fi
+
+git cherry-pick $2^..$4
