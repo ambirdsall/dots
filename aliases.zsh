@@ -1,29 +1,36 @@
-# * emacsen
-
-tmux-session-name () {
-    local tty=$(tty)
-    for s in $(tmux list-sessions -F '#{session_name}' 2>/dev/null); do
-        tmux list-panes -F '#{pane_tty} #{session_name}' -t "$s"
-    done | grep "$tty" | awk '{print $2}'
-}
+# * emacsclients
 
 if ! command -v em > /dev/null; then
-    em () {
-        local tmux_session_name=$(tmux-session-name)
-        local context=${tmux_session_name:-cli}
+    tmux-session-name () {
+        local tty=$(tty)
+        for s in $(tmux list-sessions -F '#{session_name}' 2>/dev/null); do
+            tmux list-panes -F '#{pane_tty} #{session_name}' -t "$s"
+        done | grep "$tty" | awk '{print $2}'
+    }
 
-        emacsclient --alternate-editor="" --socket-name=${context} --tty --quiet ${@}
+    emacsclient-context () {
+        local tmux_session_name=$(tmux-session-name)
+        echo ${tmux_session_name:-cli}
+    }
+
+    em () {
+        emacsclient --alternate-editor="" --socket-name=${emacsclient-context} --tty --quiet ${@}
+    }
+
+    # sometimes in life, you don't have emacs installed on a new computer yet.
+    # These also tend to be times when you open config files a lot!
+    emv () {
+        emacsclient --alternate-editor=vim --socket-name=${emacsclient-context} --tty --quiet ${@}
+    }
+
+    emm () {
+        em $(um)
+    }
+
+    rem () {
+        em . -eval "(require 'projectile)(dired (directile-project-root))"
     }
 fi
-emm () {
-    em $(um)
-}
-rem () {
-    em . -eval "(require 'projectile)(dired (directile-project-root))"
-}
-emv () {
-    emacsclient -nw --alternate-editor=vim --socket-name=cli ${@}
-}
 
 slay () {
     # TODO:clean up long filepaths from output
