@@ -191,11 +191,15 @@ PS1='%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-w
 # source /opt/asdf-vm/completions/asdf.bash
 
 # * rbenv
-export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl@1.1)"
-eval "$(rbenv init -)"
+if [ $IS_MAC ]; then
+    export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl@1.1)"
+    eval "$(rbenv init -)"
+fi
 
 # * direnv
-eval "$(direnv hook zsh)"
+if command -v direnv; then
+    eval "$(direnv hook zsh)"
+fi
 
 # * dotfile maintenance
 dots () {
