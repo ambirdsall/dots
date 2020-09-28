@@ -206,5 +206,8 @@ dots () {
     fi
 }
 
+# * local config
+[[ -a ~/.zshrc.local.zsh ]] && source ~/.zshrc.local.zsh
+
 # * Aliases
 [[ -a ~/aliases.zsh ]] && source ~/aliases.zsh
