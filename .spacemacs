@@ -27,7 +27,8 @@ This function should only modify configuration layer settings."
    ;; Paths must have a trailing slash (i.e. `~/.mycontribs/')
    dotspacemacs-configuration-layer-path '()
 ;; ** layers
-   dotspacemacs-configuration-layers '(lua
+   dotspacemacs-configuration-layers '(ruby
+                                       lua
                                        clojure
                                        csv
                                        ruby
@@ -105,9 +106,11 @@ This function should only modify configuration layer settings."
                                       evil-vimish-fold
                                       exec-path-from-shell
                                       exunit
+                                      ;; fira-code-mode
                                       fireplace
                                       general
                                       graphql-mode
+                                      janet-mode
                                       jasminejs-mode
                                       nvm
                                       outshine
@@ -548,6 +551,10 @@ dump."
 
 ;; * user-config
 (defun dotspacemacs/user-config ()
+;; ** define local init file location first
+  (setq local-init-file (concat user-emacs-directory "local-ass-init.el"))
+;; ** workaround for window-purpose bug
+  (require 'window-purpose) ; workaround until https://github.com/bmag/emacs-purpose/issues/158 is fixed
 ;; ** return of the macOS
   (when (eq system-type 'darwin)
     (setq mac-command-modifier 'meta)
@@ -557,6 +564,9 @@ dump."
     (setq browse-url-browser-function 'browse-url-default-macosx-browser)
     (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
     (add-to-list 'default-frame-alist '(ns-appearance . dark)))
+
+  ;; get pretty ligatures when using emacs-mac
+  (and (functionp 'mac-auto-operator-composition-mode) (mac-auto-operator-composition-mode))
 
 ;; ** better defaults
 ;; *** global defaults
@@ -604,12 +614,51 @@ dump."
     (global-set-key (kbd "<mouse-4>") (lambda () (interactive) (scroll-down 1)))
     (global-set-key (kbd "<mouse-5>") (lambda () (interactive) (scroll-up 1)))
 
-    ;; escaped escape sequences (using CSI u encoding for full, unambiguous keyboard bindings
-    (define-key input-decode-map "\e[58;3u" (kbd "M-:"))
-    (define-key input-decode-map "\e[32;2u" (kbd "S-SPC"))
-    (define-key input-decode-map "\e[98;7u" (kbd "C-M-b"))
-    (define-key input-decode-map "\e[102;7u" (kbd "C-M-f"))
-    (define-key input-decode-map "\e[117;7u" (kbd "C-M-u"))
+;; *** work with CSI u mode on iterm2 on macOS plz
+    (when (and (eq system-type 'darwin) (not (display-graphic-p)))
+      (add-hook 'after-make-frame-functions
+                '(lambda 
+                   ;; Take advantage of iterm2's CSI u support (https://gitlab.com/gnachman/iterm2/-/issues/8382).
+                   (xterm--init-modify-other-keys)
+
+                   ;; Courtesy https://emacs.stackexchange.com/a/13957, modified per
+                   ;; https://gitlab.com/gnachman/iterm2/-/issues/8382#note_365264207
+                   (defun character-apply-modifiers (c &rest modifiers)
+                     "Apply modifiers to the character C.
+MODIFIERS must be a list of symbols amongst (meta control shift).
+Return an event vector."
+                     (if (memq 'control modifiers) (setq c (if (and (<= ?a c) (<= c ?z))
+                                                               (logand c ?\x1f)
+                                                             (logior (lsh 1 26) c))))
+                     (if (memq 'meta modifiers) (setq c (logior (lsh 1 27) c)))
+                     (if (memq 'shift modifiers) (setq c (logior (lsh 1 25) c)))
+                     (vector c))
+                   (when (and (boundp 'xterm-extra-capabilities) (boundp 'xterm-function-map))
+                     (let ((c 32))
+                       (while (<= c 126)
+                         (mapc (lambda (x)
+                                 (define-key xterm-function-map (format (car x) c)
+                                   (apply 'character-apply-modifiers c (cdr x))))
+                               '(;; with ?.VT100.formatOtherKeys: 0
+                                 ("\e\[27;3;%d~" meta)
+                                 ("\e\[27;5;%d~" control)
+                                 ("\e\[27;6;%d~" control shift)
+                                 ("\e\[27;7;%d~" control meta)
+                                 ("\e\[27;8;%d~" control meta shift)
+                                 ;; with ?.VT100.formatOtherKeys: 1
+                                 ("\e\[%d;3u" meta)
+                                 ("\e\[%d;5u" control)
+                                 ("\e\[%d;6u" control shift)
+                                 ("\e\[%d;7u" control meta)
+                                 ("\e\[%d;8u" control meta shift)))
+                         (setq c (1+ c)))))
+                   )))
+    ;; ;; escaped escape sequences (using CSI u encoding for full, unambiguous keyboard bindings
+    ;; (define-key input-decode-map "\e[58;3u" (kbd "M-:"))
+    ;; (define-key input-decode-map "\e[32;2u" (kbd "S-SPC"))
+    ;; (define-key input-decode-map "\e[98;7u" (kbd "C-M-b"))
+    ;; (define-key input-decode-map "\e[102;7u" (kbd "C-M-f"))
+    ;; (define-key input-decode-map "\e[117;7u" (kbd "C-M-u"))
     )
 
 ;; ** defuns
@@ -737,6 +786,18 @@ Does not emit any compiled js."
     "Print the name of the face at point."
     (interactive)
     (message "The face at point is: %s" (or (face-at-point t) 'default)))
+
+  (defun amb/set-modeline ()
+    "doom-modeline keeps not being available when I restart
+spacemacs. This reinstalls if necessary then enables the mode,
+being sure not to toggle the global mode off in case of a
+pre-existing buffer with a stale modeline."
+    (interactive)
+    (if (functionp 'doom-modeline-mode)
+        (doom-modeline-mode t)
+      (progn
+        (package-reinstall 'doom-modeline)
+        (doom-modeline-mode t))))
 
   ;; Avoid polluting the system clipboard
   (defun amb/toggle-clipboard ()
@@ -921,8 +982,7 @@ prefix arg, runs helm-projectile-find-file instead. I"
        (if current-prefix-arg (split-window-right-and-focus))
        (find-file ,filename)))
 
-  (cl-flet ((amb/ (lambda (filename) (s-concat user-emacs-directory "amb/" filename))))
-    (fset 'amb/edit-elisp-notes (find-file-as-command (amb/ "elisp.org"))))
+  (fset 'amb/edit-elisp-notes (find-file-as-command (s-concat user-emacs-directory "amb/" "elisp.org")))
   (fset 'amb/edit-cli-primer (find-file-as-command "~/notes/cli-primer.org"))
   (fset 'amb/open-agenda-file (find-file-as-command "~/notes/agenda.org"))
   (fset 'amb/edit-indiegogo-notes (find-file-as-command "~/notes/indiegogo.org"))
@@ -931,14 +991,18 @@ prefix arg, runs helm-projectile-find-file instead. I"
   (defmacro helm-edit-file-from-directory (helm-title dir)
     `(lambda (_prefix)
        (interactive "P")
-       (helm :sources `((name . ,,helm-title)
+       (let ((source1 `((name . ,,helm-title)
                         (candidates . ,(-map (lambda (f)
                                                `(,(f-relative f ,dir) . ,f))
                                              (f-files ,dir
                                                       (lambda (g) (not (s-matches? "\.DS_Store" g))))))
                         (action . (lambda (c)
                                     (if current-prefix-arg (split-window-right-and-focus))
-                                    (find-file c)))))))
+                                    (find-file c)))))
+             (fallback-source `((name . "fallback")
+                               (dummy)
+                               (action . (("open" . (lambda (filename) (message (concat "(find-file "  filename ")")))))))))
+         (helm :sources '(source1 fallback-source)))))
 
   (fset 'amb/pick-a-note-why-dont-ya (helm-edit-file-from-directory "NOTES" "~/notes"))
 
@@ -1269,6 +1333,11 @@ filesystem root, whichever comes first."
           ("vue" . "\\.vue")
           ("phoenix" . "\\.html.eex")))
 
+  ;; (add-hook 'web-mode-hook
+  ;;           (lambda ()
+  ;;             (when (string-equal "vue" (file-name-extension buffer-file-name))
+  ;;               (setup-tide-mode))))
+
   (add-to-list 'auto-mode-alist '("\\.vue" . web-mode))
 ;; ** css
   (add-to-list 'auto-mode-alist '("\\.postcss" . css-mode))
@@ -1283,7 +1352,9 @@ filesystem root, whichever comes first."
   (add-to-list 'auto-mode-alist '("\\.http" . restclient-mode))
 ;; ** mdx
   (add-to-list 'auto-mode-alist '("\\.mdx" . markdown-mode))
-;; ** load keybindings last, because getting overridden is more annoying than failing due to error
+;; ** xwidget-webkit
+  (setq browse-url-browser-function 'xwidget-webkit-browse-url)
+;; ** load keybindings second-last, because getting overridden is more annoying than failing due to error
   (require 'general)
 ;; *** folding systems
 ;; **** org/outshine
@@ -1347,6 +1418,8 @@ filesystem root, whichever comes first."
 
 ;; *** C-; jump to arbitrary text on screen w/ avy-timer
 (global-set-key (kbd "C-;") 'evil-avy-goto-char-timer)
+(with-eval-after-load 'ruby-tools-mode
+  (define-key ruby-tools-mode-map (kbd "C-;") 'evil-avy-goto-char-timer))
 
 ;; *** C-] jump to definition should dumb-jump, not tags
 (general-define-key
@@ -1375,10 +1448,10 @@ filesystem root, whichever comes first."
 
 ;; *** paredit
 ;; limited global paredit
-(global-set-key (kbd "C-)") 'paredit-forward-slurp-sexp)
-(global-set-key (kbd "C-(") 'paredit-backward-slurp-sexp)
-(global-set-key (kbd "C-}") 'paredit-forward-barf-sexp)
-(global-set-key (kbd "C-}") 'paredit-backward-barf-sexp)
+(global-set-key (kbd "C-)") 'sp-forward-slurp-sexp)
+(global-set-key (kbd "C-(") 'sp-backward-slurp-sexp)
+(global-set-key (kbd "C-}") 'sp-forward-barf-sexp)
+(global-set-key (kbd "C-}") 'sp-backward-barf-sexp)
 ;; TODO: whyyyyyy is this not working tho
 ;; (define-key web-mode-map (kbd "C-)") 'tagedit-forward-slurp-tag)
 ;; (define-key web-mode-map (kbd "C-}") 'tagedit-forward-barf-tag)
@@ -1449,7 +1522,7 @@ filesystem root, whichever comes first."
   "Hg" #'helm-grep-do-git-grep)
 ;; **** the catchall spacemacs/set-leader-keys
 (spacemacs/set-leader-keys
-  ":"    #'helm-M-x
+  ":"    #'eval-expression
   "."    (lambda () (interactive) (dired "."))
   "/"    #'spacemacs/helm-project-do-rg
   "SPC"  #'amb/jump-around
@@ -1458,6 +1531,8 @@ filesystem root, whichever comes first."
   "fa"   #'amb/find-alternate-file
   "ft"   #'amb/touch-current-file
   "fer"  #'source-dotspacemacs-user-config
+  "fel"  (find-file-as-command local-init-file)
+  "feL"  #'helm-locate-library
   "fet"  (find-file-as-command "~/.emacs.d/TODOs.org")
   "gg"   #'magit-dispatch ;; adios, gist prefix :/
   "G"    #'magit-status
@@ -1473,10 +1548,13 @@ filesystem root, whichever comes first."
   "of"   #'evil-first-non-blank
   "oF"   #'font-lock-fontify-buffer
   "ol"   #'evil-buffer
+  "om"   #'amb/set-modeline
   "oo"   #'evil-open-below-without-leaving-normal-state
   "oO"   #'evil-open-above-without-leaving-normal-state
   "op"   #'amb/paste-from-clipboard
   "or"   #'amb/open-rails-console
+  "ow"   #'xwidget-webkit-browse-url
+  "oW"   #'web-mode
   "oy"   #'amb/evil-yank-to-clipboard
   "oz"   #'evil-toggle-fold
   "po"   #'org-projectile/goto-todos
@@ -1555,6 +1633,9 @@ filesystem root, whichever comes first."
     "hs" #'amb/org-insert-subheading-respect-content
     "hi" #'org-insert-heading-after-current
     "p" #'amb/html2org-clipboard))
+
+;; ** ...but load local init file actual last
+(and (f-exists? local-init-file) (load local-init-file))
 
 ;; TODO: if on a mac and GUI, bind `(kbd "s-_")` (i.e. alt-shift-dash, the standard OS-level em-dash binding) to self-insert em-dash
 )
