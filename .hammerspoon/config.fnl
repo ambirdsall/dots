@@ -36,63 +36,63 @@
 (bearclaw :h (fn []
                "Move current window to left half of screen"
                (let [win (hs.window.focusedWindow)
-                     f (: win :frame)
-                     screen (: win :screen)
-                     max (: screen :frame)]
+                     f (win:frame)
+                     screen (win:screen)
+                     max (screen:frame)]
 
                  (set f.x max.x )
                  (set f.y max.y)
                  (set f.w (/ max.w 2))
                  (set f.h max.h)
-                 (: win :setFrame f))))
+                 (win:setFrame f))))
 (bearclaw :j (fn []
                "Move current window to bottom half of screen"
                (let [win (hs.window.focusedWindow)
-                     f (: win :frame)
-                     screen (: win :screen)
-                     max (: screen :frame)]
+                     f (win:frame)
+                     screen (win:screen)
+                     max (screen:frame)]
 
                  (set f.x max.x )
                  (set f.y (+ max.y (/ max.h 2)))
                  (set f.w max.w)
                  (set f.h (/ max.h 2))
-                 (: win :setFrame f))))
+                 (win:setFrame f))))
 (bearclaw :k (fn []
                "Move current window to top half of screen"
                (let [win (hs.window.focusedWindow)
-                     f (: win :frame)
-                     screen (: win :screen)
-                     max (: screen :frame)]
+                     f (win:frame)
+                     screen (win:screen)
+                     max (screen:frame)]
 
                  (set f.x max.x)
                  (set f.y max.y)
                  (set f.w max.w)
                  (set f.h (/ max.h 2))
-                 (: win :setFrame f))))
+                 (win:setFrame f))))
 (bearclaw :l (fn []
                "Move current window to right half of screen"
                (let [win (hs.window.focusedWindow)
-                     f (: win :frame)
-                     screen (: win :screen)
-                     max (: screen :frame)]
+                     f (win:frame)
+                     screen (win:screen)
+                     max (screen:frame)]
 
                  (set f.x (+ max.x (/ max.w 2)))
                  (set f.y max.y)
                  (set f.w (/ max.w 2))
                  (set f.h max.h)
-                 (: win :setFrame f))))
+                 (win:setFrame f))))
 (bearclaw :o (fn []
                "Make current window fullscreen"
                (let [win (hs.window.focusedWindow)
-                     f (: win :frame)
-                     screen (: win :screen)
-                     max (: screen :frame)]
+                     f (win:frame)
+                     screen (win:screen)
+                     max (screen:frame)]
 
                  (set f.x max.x)
                  (set f.y max.y)
                  (set f.w max.w)
                  (set f.h max.h)
-                 (: win :setFrame f))))
+                 (win:setFrame f))))
 
 ;; * You're fresh and you know it. Let 'em know.
 (alert "hammer: spooned")
