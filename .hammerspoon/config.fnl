@@ -25,8 +25,15 @@
 (bearclaw :i hs.toggleConsole)
 (bearclaw :r hs.reload)
 
-;; ** random apps
+;; ** app-specific shortcuts
+;; *** spotify
 (bearclaw :s hs.spotify.displayCurrentTrack)
+
+;; *** emacs
+;; because the directory emacs was launched from matters, don't use (hs.application.launchOrFocus "Emacs")
+(bearclaw :e #(let [emacs (hs.application.get "Emacs")]
+                (if emacs (: emacs :setFrontmost)
+                    (alert "Bruh. How do I focus an emacs GUI if you aren't running one."))))
 
 ;; ** window management
 ;; currently, the grid is the default 3x3, so grid can be used for 1/3s and bearclaw + hjkl can be
