@@ -1,6 +1,18 @@
 #!/bin/sh
 
-echo "*swish*
-"
-
-git reset --hard HEAD~
+if [[ "--hard" == $@ ]]; then
+  echo "*swish*"
+  git reset --hard HEAD~
+elif [[ "--jordan" == $@ ]]; then
+  echo "*swish*"
+  git reset --hard HEAD~2
+elif [[ "--steph" == $@ ]]; then
+  echo "*swish*"
+  git reset --hard HEAD~3
+elif [[ $# -gt 0 ]]; then
+  echo "*swish*"
+  git reset $@
+else
+  echo "◈bænk◈"
+  g reset HEAD~
+fi
