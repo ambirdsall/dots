@@ -121,7 +121,8 @@ zle -N zle-line-init
 zle -N zle-keymap-select
 
 # * PAGERs
-export PAGER=bat
+# smh, I used `bat` and it was great, but now they disallow that ish
+export PAGER=less
 export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
 
 # * configure modifier keys
