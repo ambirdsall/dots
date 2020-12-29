@@ -125,17 +125,6 @@ zle -N zle-keymap-select
 export PAGER=less
 export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
 
-# * configure modifier keys
-# repeated invocations of an xcape mapping without killing in between causes
-# xcape to send multiples of the new mappings, which is terrible.
-if command -v xcape; then
-ps aux | grep -i '[x]cape' >/dev/null && killall -9 xcape
-hash xcape 2>&1 >/dev/null && \
-    xcape -e 'Control_L=Escape;Caps_Lock=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0' >/dev/null
-fi
-# rebind PrtSc
-if command -v xmodmap; then xmodmap ~/.Xmodmap; fi
-
 # * Prompt
 # ** util
 strip_newline () {

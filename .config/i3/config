@@ -23,6 +23,10 @@ exec --no-startup-id feh --bg-scale ~/Pictures/crescent-pluto.jpg
 # gotta get that dropbox going to get the org files right
 exec --no-startup-id [ -f ~/.dropbox-dist/dropboxd ] && ~/.dropbox-dist/dropboxd
 
+# get the modifier keys sorted out
+exec xcape -e 'Control_L=Escape;Caps_Lock=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'
+exec xmodmap ~/.Xmodmap
+
 # Use pactl to adjust volume in PulseAudio.
 set $refresh_i3status killall -SIGUSR1 i3status
 bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && $refresh_i3status
