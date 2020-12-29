@@ -101,7 +101,7 @@
 ;; * org-mode config
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
-(setq org-directory "~/notes/")
+(setq org-directory "~/Dropbox/org/")
 ;; TODO: add a second, personal org-roam directory
 (setq org-roam-directory "~/roam/")
 
@@ -109,8 +109,9 @@
 (setq! org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
 ;; TODO verify whether explicitly setting agenda files prevents automatic
 ;; detection of new files in ~/notes/*.org
-(setq! org-agenda-files '("~/notes/todo.org" "~/c/monorail/TODOs.org" "/Users/alex.birdsall/notes/adhd.org" "/Users/alex.birdsall/notes/car.org" "/Users/alex.birdsall/notes/doom.org" "/Users/alex.birdsall/notes/food.org" "/Users/alex.birdsall/notes/indiegogo.org" "/Users/alex.birdsall/notes/linux.org" "/Users/alex.birdsall/notes/nba.org"))
+(setq! org-agenda-files '("~/Dropbox/org/todo.org" "~/c/monorail/todo.org" "/Users/alex.birdsall/Dropbox/org/car.org" "/Users/alex.birdsall/Dropbox/org/doom.org" "/Users/alex.birdsall/Dropbox/org/food.org" "/Users/alex.birdsall/Dropbox/org/indiegogo.org" "/Users/alex.birdsall/Dropbox/org/linux.org" "/Users/alex.birdsall/Dropbox/org/nba.org" "/Users/alex.birdsall/Dropbox/org/house.org"))
 (setq! org-log-into-drawer t)
+(setq! org-refile-use-outline-path 'full-file-path)
 
 (defun org-my-auto-exclude-fn (tag)
   (if (cond

@@ -6,7 +6,7 @@
  '(diary-file "~/notes/diary-google")
  '(fill-column 100)
  '(org-agenda-files
-   '("~/notes/house.org" "~/Library/Mobile Documents/iCloud~is~workflow~my~workflows/Documents/inbox.org" "~/c/monorail/todo.org" "~/notes/todo.org" "/Users/alex.birdsall/notes/adhd.org" "/Users/alex.birdsall/notes/car.org" "/Users/alex.birdsall/notes/doom.org" "/Users/alex.birdsall/notes/food.org" "/Users/alex.birdsall/notes/indiegogo.org" "/Users/alex.birdsall/notes/linux.org" "/Users/alex.birdsall/notes/nba.org"))
+   '("~/c/monorail/todo.org" "~/Dropbox/org/todo.org" "/Users/alex.birdsall/Dropbox/org/car.org" "/Users/alex.birdsall/Dropbox/org/doom.org" "/Users/alex.birdsall/Dropbox/org/food.org" "/Users/alex.birdsall/Dropbox/org/linux.org" "/Users/alex.birdsall/Dropbox/org/nba.org"))
  '(org-agenda-include-diary t)
  '(package-selected-packages '(graphql-mode yaml-mode mixed-pitch))
  '(safe-local-variable-values '((auto-save-default))))
