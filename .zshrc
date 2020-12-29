@@ -12,14 +12,13 @@ else
 fi
 
 # * Configure zsh features
-# Lines configured by zsh-newuser-install
 HISTFILE=~/.histfile
 HISTSIZE=10000
 SAVEHIST=100000
 export HISTCONTROL=ignorespace
 setopt autocd extendedglob notify
 unsetopt beep nomatch
-# End of lines configured by zsh-newuser-install
+
 # * ensure .profile has run
 if [ -z $DOTPROFILE_HAS_RUN ]; then source ~/.profile; fi
 
@@ -61,6 +60,7 @@ autoload -U zmv
 setopt auto_cd PROMPT_SUBST
 
 # * Text editing
+export PATH=$PATH:$HOME/.emacs.d/bin/
 # how on earth am I supposed to use a url bar I can't jump around with emacs shortcuts
 if [ ! $IS_MAC ]; then
     gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
