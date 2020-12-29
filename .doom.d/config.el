@@ -193,6 +193,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                    (when smerge-mode
                                      (unpackaged/smerge-hydra/body)))))
 
+;; * auto-expanding snippets for new file templates
+  (unless auto-insert-mode (auto-insert-mode))
+
+  (custom-set-variables
+   '(auto-insert-query nil)
+   '(auto-insert 'other)
+   '(auto-insert-directory "~/autoinsert-templates/")
+   '(auto-insert-alist '((("\\.vue\\'" . "Vue component") . ["template.vue" web-mode autoinsert-yas-expand]))))
+
 ;; * private and/or work-specific config
 (let ((private-config (concat default-directory "local.el")))
   (and (file-exists-p private-config) (load private-config)))
