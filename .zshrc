@@ -68,7 +68,7 @@ fi
 
 # C-hjkl clobbers C-k, and kill-line is not negotiable if I'm using emacs bindings. So: vim.
 bindkey -v
-EDITOR='emacsclient -nw'
+EDITOR='qed'
 
 # VI MODE KEYBINDINGS (ins mode)
 bindkey -M viins '^a'    beginning-of-line
