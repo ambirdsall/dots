@@ -6,12 +6,16 @@
 ;; use 'M-x doom/reload'.
 
 
+;; * gotta go fast
+(package! benchmark-init)
+
 ;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:
 ;; * evil
 (package! evil-replace-with-register)
 (package! evil-exchange)
 (package! evil-textobj-line
   :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
+(package! evil-matchit)
 
 ;; * TUI
 (package! evil-tmux-navigator
@@ -32,6 +36,10 @@
 ;; * there are more languages than :lang can speak
 (package! fennel-mode)
 (package! graphql-mode)
+
+;; * code compass
+(package! code-compass
+  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages/" "scripts/")))
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:
