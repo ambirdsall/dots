@@ -1,21 +1,21 @@
 #!/bin/sh
 
 if [[ "--hard" == $@ ]]; then
-  echo "*swish*"
+  draw-stepback
   git reset --hard HEAD~
 elif [[ "--swish" == $@ ]]; then
-  echo "*swish*"
+  draw-stepback
   git reset --hard HEAD~
 elif [[ "--jordan" == $@ ]]; then
-  echo "*swish*"
+  draw-stepback
   git reset --hard HEAD~2
 elif [[ "--steph" == $@ ]]; then
-  echo "*swish*"
+  draw-stepback
   git reset --hard HEAD~3
 elif [[ $# -gt 0 ]]; then
-  echo "*swish*"
+  draw-stepback
   git reset $@
 else
-  echo "Did you call bank?"
+  draw-stepback --bank
   git reset HEAD~
 fi

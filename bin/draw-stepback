@@ -1,0 +1,344 @@
+#!/usr/local/bin/guile
+!#
+
+(use-modules (srfi srfi-42))
+
+;; * ascii art
+(define shot-image "
+          o
+/|   o         o
+\\|=--            o
+   ##
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+;; ** swish
+(define swish-frame-0 "
+
+/|
+\\|=--
+   ##              o
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define swish-frame-1 "
+
+/|
+\\|=--            o
+   ##                  \n\
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define swish-frame-2 "
+
+/|             o
+\\|=--                 \n\
+   ##                  \n\
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define swish-frame-3 "
+          o
+/|                     \n\
+\\|=--                 \n\
+   ##                  \n\
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define swish-frame-4 "
+                       \n\
+/|   o                 \n\
+\\|=--                 \n\
+   ##                  \n\
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define swish-frame-5 "
+                       \n\
+/|                     \n\
+\\|=--                 \n\
+  ##                   \n\
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define swish-frame-6 "
+                       \n\
+/|                     \n\
+\\|=--                 \n\
+   ##                  \n\
+                   \\\\
+  o             /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define swish-frame-7 "
+                       \n\
+/|                     \n\
+\\|=--                 \n\
+   ##                  \n\
+                   \\\\
+                /   \\O
+               O_/   T
+ o             T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define swish-frame-8 "
+                       \n\
+/|                     \n\
+\\|=--                 \n\
+   ##                  \n\
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define swish-frames (list swish-frame-0 swish-frame-1 swish-frame-2 swish-frame-3 swish-frame-4 swish-frame-5 swish-frame-6 swish-frame-7 swish-frame-8))
+
+;; ** bank
+(define bank-frame-0 "
+
+/|
+\\|=--
+   ##              o
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define bank-frame-1 "
+
+/|
+\\|=--            o
+   ##                 \n\
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define bank-frame-2 "
+
+/|             o
+\\|=--                \n\
+   ##
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define bank-frame-3 "
+         o
+/|                    \n\
+\\|=--
+   ##
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define bank-frame-4 "
+     o         \n\
+/|                   \n\
+\\|=--                  \n\
+   ##
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define bank-frame-5 "
+                       \n\
+/|o                  \n\
+\\|=--
+   ##
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define bank-frame-6 "
+
+/|      \n\
+\\|=--
+    ##
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define bank-frame-7 "
+                       \n\
+/|                     \n\
+\\|=--                 \n\
+   ##      \n\
+     o             \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define bank-frame-8 "
+
+/|
+\\|=--
+   ##
+                   \\\\
+                /   \\O
+               O_/   T
+      o        T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define bank-frame-9 "
+
+/|
+\\|=--
+   ##
+                   \\\\
+                /   \\O
+               O_/   T
+               T    /|
+               |\\  | |
+_______________|_|________
+")
+
+(define bank-frames (list bank-frame-0 bank-frame-1 bank-frame-2 bank-frame-3 bank-frame-4 bank-frame-5 bank-frame-6 bank-frame-7 bank-frame-8 bank-frame-9))
+
+;; * drawing
+;; ** moving the cursor
+(define (-escape-code-with-numerical-arg N escape-code-suffix)
+  (let ([escape-code-prefix (string #\esc #\[)])
+    (display (string-append escape-code-prefix (number->string N) escape-code-suffix))))
+
+(define (move-up-by n)
+  (-escape-code-with-numerical-arg n "A"))
+
+(define (move-down-by n)
+  (-escape-code-with-numerical-arg n "B"))
+
+(define (move-right-by n)
+  (-escape-code-with-numerical-arg n "C"))
+
+(define (move-left-by n)
+  (-escape-code-with-numerical-arg n "D"))
+
+;; ** clearing lines
+(define (clear-whole-line) (-escape-code-with-numerical-arg 2 "K"))
+(define (clear-lines-to n)
+  (unless (> 1 n)
+    (move-up-by 1)
+    (clear-whole-line)
+    (clear-lines-to (- n 1))))
+
+;; ** drawing the frames
+(define draw-frame
+  (let ([prior-frame #f])
+    (lambda (new-frame)
+      (and prior-frame (clear-prior-frame prior-frame))
+      (set! prior-frame new-frame)
+      (display new-frame))))
+
+(define (clear-prior-frame prior-frame)
+  (usleep 90000)
+  ;; move cursor upwards N lines and simply overwrite
+  (let* ([frame-height (length (string-split prior-frame #\newline))]
+         [distance-to-top-of-frame (- frame-height 1)])
+    (clear-lines-to distance-to-top-of-frame)))
+
+;; ** fun unused diversion: typewriter effect
+;; (display "I fucking love hot dogs")
+
+;; (for-each
+;;  (lambda (_)
+;;    (move-left-by 1)
+;;    (display " ")
+;;    (move-left-by 1)
+;;    (usleep 200000))
+;;  (string->list "dogs"))
+
+;; (for-each
+;;  (lambda (char)
+;;    (display (string char))
+;;    (usleep 300000))
+;;  (string->list "naps"))
+
+
+;; * do it
+(define (swish) (for-each draw-frame swish-frames))
+
+(define (bank) (for-each draw-frame bank-frames))
+
+(if (member "--bank" (command-line))
+    (begin
+      (bank)
+      (newline)
+      (display "I didn't hear you call bank, lol")
+      (newline))
+    (swish))
+
