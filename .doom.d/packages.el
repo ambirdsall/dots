@@ -5,6 +5,8 @@
 ;; on the command line, then restart Emacs for the changes to take effect -- or
 ;; use 'M-x doom/reload'.
 
+;; * TODO: remove bug fixes ASAP
+(package! xref :pin "a82f459b37b31546bf274388baf8aca79e9c30d9")
 
 ;; * gotta go fast
 (package! benchmark-init)
@@ -16,6 +18,8 @@
 (package! evil-textobj-line
   :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
 (package! evil-matchit)
+;; you can have my 'evil-substitute when you pry it from my cold, dead fingers
+(package! evil-snipe :disable t)
 
 ;; * TUI
 (package! evil-tmux-navigator
@@ -34,12 +38,16 @@
 (package! ox-gfm)
 
 ;; * there are more languages than :lang can speak
+;; ** language modes
 (package! fennel-mode)
 (package! graphql-mode)
 
+;; ** lsp
+(package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
+
 ;; * code compass
 (package! code-compass
-  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages/" "scripts/")))
+  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:

@@ -3,6 +3,9 @@
 ;; This file controls what Doom modules are enabled and what order they load
 ;; in. Remember to run 'doom sync' after modifying it!
 
+;; it also has a few bits of config which should be loaded as early as possible
+(setq evil-disable-insert-state-bindings t)
+
 ;; NOTE Press 'SPC h d h' (or 'C-h d h' for non-vim users) to access Doom's
 ;;      documentation. There you'll find a "Module Index" link where you'll find
 ;;      a comprehensive list of Doom's modules and what flags they support.
@@ -14,10 +17,6 @@
 ;;      Alternatively, press 'gd' (or 'C-c c d') on a module to browse its
 ;;      directory (for easy access to its source code).
 
-(when doom-debug-p
-  (require 'benchmark-init)
-  (add-hook 'doom-first-input-hook #'benchmark-init/deactivate))
-
 (doom! :input
        ;;chinese
        ;;japanese
@@ -25,9 +24,10 @@
 
        :completion
        (company +childframe)           ; the ultimate code completion backend
-       helm              ; the *other* search engine for love and life
+       ;; helm              ; the *other* search engine for love and life
        ;;ido               ; the other *other* search engine...
        ;; ivy               ; a search engine for love and life
+       vertico
 
        :ui
        ;;deft              ; notational velocity for Emacs
@@ -56,6 +56,7 @@
 
        :editor
        (evil +everywhere) ; come to the dark side, we have cookies
+       ;; evil               ; come to the dark side, we have cookies
        file-templates     ; auto-snippets for empty files
        fold               ; (nigh) universal code folding
        ;;(format +onsave) ; automated prettiness
@@ -69,11 +70,11 @@
        ;;word-wrap        ; soft wrapping with language-aware indent
 
        :emacs
-       dired             ; making dired pretty [functional]
-       electric          ; smarter, keyword-based electric-indent
-       ;;ibuffer         ; interactive buffer management
-       (undo +tree)              ; persistent, smarter undo for your inevitable mistakes
-       vc                ; version-control and Emacs, sitting in a tree
+       dired               ; making dired pretty [functional]
+       electric            ; smarter, keyword-based electric-indent
+       ;;ibuffer           ; interactive buffer management
+       (undo +tree)        ; persistent, smarter undo for your inevitable mistakes
+       vc                  ; version-control and Emacs, sitting in a tree
 
        :term
        ;;eshell            ; the elisp shell that works everywhere
@@ -97,8 +98,8 @@
        ;;gist              ; interacting with github gists
        lookup              ; navigate your code and its documentation
        lsp
-       (magit +forge)             ; a git porcelain for Emacs
-       ;;make              ; run make tasks from Emacs
+       magit             ; a git porcelain for Emacs
+       make              ; run make tasks from Emacs
        ;;pass              ; password manager for nerds
        ;;pdf               ; pdf enhancements
        ;;prodigy           ; FIXME managing external services & code builders
@@ -114,7 +115,7 @@
 
        :lang
        ;;agda              ; types of types of types of types...
-       ;;cc                ; C/C++/Obj-C madness
+       ;; cc                ; C/C++/Obj-C madness
        clojure           ; java with a lisp
        ;;common-lisp       ; if you've seen one lisp, you've seen them all
        ;;coq               ; proofs-as-programs
@@ -145,8 +146,8 @@
        ;;lean
        ;;factor
        ;;ledger            ; an accounting system in Emacs
-       ;;lua               ; one-based indices? one-based indices
-       (markdown +grip)    ; writing docs for people to ignore
+       lua                 ; one-based indices? one-based indices
+       markdown            ; writing docs for people to ignore
        ;;nim               ; python + lisp at the speed of c
        ;;nix               ; I hereby declare "nix geht mehr!"
        ;;ocaml             ; an objective camel
@@ -169,7 +170,8 @@
         +lsp)              ; 1.step {|i| p "Ruby is #{i.even? ? 'love' : 'life'}"}
        ;;rust              ; Fe2O3.unwrap().unwrap().unwrap().unwrap()
        ;;scala             ; java, but good
-       ;;scheme            ; a fully conniving family of lisps
+       (scheme
+        +guile)            ; a fully conniving family of lisps
        sh                  ; she sells {ba,z,fi}sh shells on the C xor
        ;;sml
        ;;solidity          ; do you need a blockchain? No.
@@ -192,3 +194,8 @@
        :config
        ;;literate
        (default +bindings +smartparens))
+
+;; Help me help you^H^H^Hme
+(when doom-debug-p
+  (require 'benchmark-init)
+  (add-hook 'doom-first-input-hook #'benchmark-init/deactivate))

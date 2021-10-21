@@ -18,17 +18,18 @@
 (setq user-full-name "Alex Birdsall"
       user-mail-address "ambirdsall@gmail.com")
 
-
-;; I told you what I told you.
-(setq confirm-kill-emacs nil)
+;; GUI emacs? sure, be cute.
+;; In the terminal? I said what I said.
+(setq confirm-kill-emacs (display-graphic-p))
 
 ;; * i got this footgun for self defuns
-(defun yank-buffer-filename-relative-to-project ()
-  "Copy the current buffer's path, relative to the project root, to the kill ring."
-  (interactive)
-  (if-let (filename (or buffer-file-name (bound-and-true-p list-buffers-directory)))
-      (message (kill-new (f-relative filename (projectile-acquire-root))))
-    (error "Couldn't find filename in current buffer")))
+(after! projectile
+  (defun yank-buffer-filename-relative-to-project ()
+    "Copy the current buffer's path, relative to the project root, to the kill ring."
+    (interactive)
+    (if-let (filename (or buffer-file-name (bound-and-true-p list-buffers-directory)))
+        (message (kill-new (f-relative filename (projectile-acquire-root))))
+      (error "Couldn't find filename in current buffer"))))
 
 (defmacro on-string-or-region (fn)
   "Given a string-manipulation function, defines an interactive command which will apply that
@@ -89,11 +90,13 @@ used interactively."
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-nord)
+(setq doom-theme 'doom-rouge)
 (defun amb/toggle-themes ()
   (interactive)
-  (cond ((eq doom-theme 'doom-nord) (load-theme 'doom-nord-light))
-        ((eq doom-theme 'doom-nord-light) (load-theme 'doom-nord))))
+  (cond ((eq doom-theme 'doom-rouge) (load-theme 'doom-plain))
+        (t (load-theme 'doom-rouge))))
+
+;; TODO: amb/random-theme
 
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
@@ -113,37 +116,33 @@ used interactively."
  "Nw" #'widen
  :desc "jump to first non-blank" "of" #'evil-first-non-blank
  :desc "new frame" "oF" #'make-frame
- :desc "Open project TODOs.org file" "po" (cmd! (find-file (concat (projectile-project-root) "todo.org")))
- "ww" #'+hydra/window-nav/body
+ :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos
  "W" #'subword-mode)
 
 ;; ** evil and global bindings
 (map!
- (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame)
  "C-;" #'evil-avy-goto-char-timer
  :ni "C-)" #'sp-forward-slurp-sexp
- :ni "C-(" #'sp-backward-slurp-sexp)
+ :ni "C-(" #'sp-backward-slurp-sexp
+ :n "M-/" #'+default/search-buffer
+ (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
 
 ;; * evil config
-(setq! evil-disable-insert-state-bindings t
-       evil-ex-search-persistent-highlight nil)
+(setq! evil-ex-search-persistent-highlight nil
+       +evil-want-o/O-to-continue-comments nil)
 
 (use-package! evil-replace-with-register
   :init
   (setq evil-replace-with-register-key (kbd "gr"))
-  :config
-  (evil-replace-with-register-install))
+  :config (evil-replace-with-register-install))
 (use-package! evil-exchange
-  :config
-  (evil-exchange-install))
+  :config (evil-exchange-install))
 (use-package! evil-tmux-navigator
-  :config
-  (evil-tmux-navigator-bind-keys))
+  :config (evil-tmux-navigator-bind-keys))
 (use-package! evil-matchit
   :config (global-evil-matchit-mode 1))
 
-;; you can have my 'evil-substitute when you pry it from my cold, dead fingers
-(after! evil-snipe (evil-snipe-mode -1))
+
 
 ;; * languages
 (use-package! fennel-mode
@@ -151,6 +150,13 @@ used interactively."
   (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
 (use-package! graphql-mode)
 (setq typescript-indent-level 2)
+
+;; ** elixir
+(after! alchemist-mode
+  (map! :map alchemist-mode-map
+        :n
+        "C-j" #'tmux-navigate-down
+        "C-k" #'tmux-navigate-up))
 
 ;; ** web-mode
 (setq! web-mode-markup-indent-offset 2
@@ -163,7 +169,10 @@ used interactively."
         ("phoenix" . "\\.html.eex")
         ("erb" . "\\.html\\.erb")))
 
+;; ** lsp
+(use-package! lsp-tailwindcss)
 ;; * computer-wide settings
+;; TODO: unset the option/meta switch when I'm back at my ergodox
 (setq! mac-command-modifier 'meta
        mac-option-modifier 'super
        ns-function-modifier 'hyper)
@@ -175,6 +184,15 @@ used interactively."
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/Dropbox/org/")
+
+;; share a global todo.org file freely between projects with ~ln~, without breaking projectile workflows
+;; by opening different filepaths to the same inode in different buffers
+(setq find-file-existing-other-name nil)
+
+(after! projectile
+  (defun amb/goto-project-todos ()
+    (interactive)
+    (find-file (concat (projectile-project-root) "todo.org"))))
 
 ; TODO: copy the contents of existing notes somewhere, set this to ~/Dropbox/org, and laugh all the
 ; way to the b̶a̶n̶k̶ knowledge graph
@@ -199,6 +217,12 @@ used interactively."
                           "/Users/alex.birdsall/Dropbox/org/house.org"))
 (setq! org-log-into-drawer t)
 (setq! org-refile-use-outline-path 'full-file-path)
+
+;; This pair lets you open the same hardlinked {multiple,project,repos}/todo.org inode in multiple
+;; project-specific buffers, each respecting the local filename and context (important for
+;; maintaining the correct context for e.g. projectile functions)
+(setq! find-file-existing-other-name nil
+       find-file-visit-truename nil)
 
 ;; ** agenda viewing
 (defun org-my-auto-exclude-fn (tag)
@@ -254,14 +278,15 @@ used interactively."
 (use-package! graphviz-dot-mode
   :after org)
 
-(eval-after-load "org"
-  '(require 'ox-gfm nil t))
+;; TODO: figure out doom's org exporter API
+;; (after! org
+;;   '(require 'ox-gfm nil t))
 
 ;; * git
 ;; ** nice git conflic resolution hydra
 ;; all thanks and apologies to https://github.com/alphapapa/unpackaged.el
 (use-package! smerge-mode
-  :after hydra
+  :after (hydra magit)
   :config
   (defhydra unpackaged/smerge-hydra
     (:color pink :hint nil :post (smerge-auto-leave))
@@ -301,23 +326,14 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                      (unpackaged/smerge-hydra/body)))))
 
 ;; ** make magit play nicely with window configurations
-;; tip of the ol' cap to Magnar Sveen
-(after! 'magit
-  (defadvice magit-status (around magit-fullscreen activate)
-    (window-configuration-to-register :magit-fullscreen)
-    ad-do-it
-    (delete-other-windows))
-
-  (defun magit-quit-session ()
-    "Restores the previous window configuration and kills the magit buffer"
-    (interactive)
-    (kill-buffer)
-    (jump-to-register :magit-fullscreen))
-
-  (define-key magit-status-mode-map (kbd "q") 'magit-quit-session))
+(after! magit
+  ;; strictly speaking unnecessary (it's the default)
+  ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
+  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+  (setq magit-bury-buffer-function #'magit-restore-window-configuration))
 
 ;; * code compass
-(use-package! code-compass)
+(use-package! code-compass :defer t)
 
 ;; * private and/or work-specific config
 (let ((private-config (concat doom-private-dir "local.el")))
