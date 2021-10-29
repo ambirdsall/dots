@@ -20,7 +20,7 @@
 
 ;; GUI emacs? sure, be cute.
 ;; In the terminal? I said what I said.
-(setq confirm-kill-emacs (display-graphic-p))
+(unless (display-graphic-p) (setq confirm-kill-emacs nil))
 
 ;; * i got this footgun for self defuns
 (after! projectile
