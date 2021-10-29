@@ -25,4 +25,5 @@ dots () {
   fi
 }
 #+END_SRC sh
-So it's simply a wrapper for ~git~, but with saner default behavior if given no subcommand.
+So it's simply a separate-git-dir-aware wrapper for ~git~, but with saner
+default behavior if given no subcommand.
