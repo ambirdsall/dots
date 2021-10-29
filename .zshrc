@@ -124,12 +124,7 @@ zle -N zle-line-init
 zle -N zle-keymap-select
 
 # * PAGERs
-<<<<<<< HEAD
 export PAGER='bat --plain'
-=======
-# smh, I used `bat` and it was great, but now they disallow that ish
-export PAGER=less
->>>>>>> 15b660d81c2513b3f20f5c1b71ae2ce2a878011d
 export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
 
 # * Prompt
