@@ -39,7 +39,10 @@ if [[ -f /usr/share/calendar/calendar.history ]]; then
     printf "\n"
 fi
 
-&>/dev/null rm ~/Pictures/Screenshot*.png
+&>/dev/null rm ~/Desktop/Screenshot*.png
+
+# f that c-s
+stty -ixon
 
 # * Completion setup
 # The following lines were added by compinstall
@@ -121,7 +124,7 @@ zle -N zle-line-init
 zle -N zle-keymap-select
 
 # * PAGERs
-export PAGER=bat
+export PAGER='bat --plain'
 export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
 
 # * configure modifier keys
