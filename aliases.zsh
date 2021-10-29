@@ -329,7 +329,7 @@ unique () {
 }
 git-recent () {
   # lists unique git refs you have checked out, in order of how recently you checked them out
-  git reflog | ack --nocolor checkout: | awk '{print $6}' | unique | more
+  git reflog | grep checkout: | awk '{print $6}' | unique | more
 }
 
 alias gg="git grep"
