@@ -12,14 +12,13 @@ else
 fi
 
 # * Configure zsh features
-# Lines configured by zsh-newuser-install
 HISTFILE=~/.histfile
 HISTSIZE=10000
 SAVEHIST=100000
 export HISTCONTROL=ignorespace
 setopt autocd extendedglob notify
 unsetopt beep nomatch
-# End of lines configured by zsh-newuser-install
+
 # * ensure .profile has run
 if [ -z $DOTPROFILE_HAS_RUN ]; then source ~/.profile; fi
 
@@ -64,6 +63,7 @@ autoload -U zmv
 setopt auto_cd PROMPT_SUBST
 
 # * Text editing
+export PATH=$PATH:$HOME/.emacs.d/bin/
 # how on earth am I supposed to use a url bar I can't jump around with emacs shortcuts
 if [ ! $IS_MAC ]; then
     gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
@@ -124,19 +124,13 @@ zle -N zle-line-init
 zle -N zle-keymap-select
 
 # * PAGERs
+<<<<<<< HEAD
 export PAGER='bat --plain'
+=======
+# smh, I used `bat` and it was great, but now they disallow that ish
+export PAGER=less
+>>>>>>> 15b660d81c2513b3f20f5c1b71ae2ce2a878011d
 export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
-
-# * configure modifier keys
-# repeated invocations of an xcape mapping without killing in between causes
-# xcape to send multiples of the new mappings, which is terrible.
-if command -v xcape; then
-ps aux | grep -i '[x]cape' >/dev/null && killall -9 xcape
-hash xcape 2>&1 >/dev/null && \
-    xcape -e 'Control_L=Escape;Caps_Lock=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0' >/dev/null
-fi
-# rebind PrtSc
-if command -v xmodmap; then xmodmap ~/.Xmodmap; fi
 
 # * Prompt
 # ** util

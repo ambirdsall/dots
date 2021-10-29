@@ -81,10 +81,9 @@ used interactively."
 ;; font string. You generally only need these two:
 ;; (setq doom-font (font-spec :family "monospace" :size 12 :weight 'semi-light)
 ;;       doom-variable-pitch-font (font-spec :family "sans" :size 13))
-(setq doom-font "Fira Code")
+(setq doom-font "FiraCode")
 ;; ;; why doesn't the sizing work?!?!?!?!?!?!?!?
-;; (setq doom-variable-pitch-font "Baskerville-18")
-;; (setq doom-variable-pitch-font "Baskerville")
+(setq doom-variable-pitch-font (if IS-MAC "Baskerville-18" "LibreBaskerville"))
 
 ;; * Theme this bad boy
 ;; There are two ways to load a theme. Both assume the theme is installed and
