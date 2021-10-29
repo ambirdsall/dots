@@ -131,7 +131,10 @@ cdd () {
     ls -GF
 }
 
-
+# ** interactively choose command from history
+r () {
+    $(fc -l -n 1 | tail -r | fzf)
+}
 
 # ** chmod
 alias cx='chmod +x'
@@ -212,6 +215,7 @@ alias tree='tree -I node_modules'
 alias be='bundle exec'
 # ** js/ts
 alias scripts='jq .scripts < package.json'
+alias s=scripts
 # * Git gets its own top-level section
 # No arguments: `git status`
 # With arguments: acts like `git`
@@ -222,25 +226,30 @@ g () {
     git status -s
   fi
 }
+# Complete g like git
+compdef g=git
 
 gs () {
-    emacsclient -a "" --socket=magit -nw -e "(progn (or (advice-member-p 'spacemacs/frame-killer 'magit-mode-bury-buffer) (advice-add 'magit-mode-bury-buffer :before 'spacemacs/frame-killer)) (magit-status))"
+    emacsclient -a "" --socket=magit -nw -e "
+(progn
+  (or (advice-member-p 'save-buffers-kill-terminal '+magit/quit)
+      (advice-add '+magit/quit :before 'save-buffers-kill-terminal))
+  (magit-status))"
 }
-# Complete g like git, which is actually `hub`.
-# compdef g=hub
 
 # run `git clone` and `cdd` into dir
 # if no arguments are provided, assumes you have copied a repo url to your clipboard
 gc () {
-  if [[ $# -gt 0 ]]; then
+  if [[ $# -eq 0 ]]; then
     repo=$(pbpaste)
   else
-    repo=$1
+    repo=$@
   fi
 
   repo_dir_with_trailing_git=${repo##*/}
   repo_dir=${repo_dir_with_trailing_git%.git}
   git clone $repo
+  echo ""
   cdd $repo_dir
 }
 
@@ -267,7 +276,7 @@ cob () {
 
 d () {
   # git diff --word-diff "$@"
-    git diff --diff-algorithm=minimal --color "$@" | diff-so-fancy | bat
+    git diff --diff-algorithm=minimal --color "$@" | diff-so-fancy | bat --plain
 }
 alias gdc="d --cached"
 alias gdo="git diff \$(git rev-parse --abbrev-ref HEAD 2> /dev/null)..origin/\$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
@@ -290,9 +299,11 @@ alias f="git fetch"
 
 alias gr="git rebase"
 alias gr-="git rebase -"
+alias grm="git rebase master"
 alias gri="g ri" # home-cooked git-ri, which simplifies syntax of `git rebase -i`
 
 alias gp="git pull --ff-only"
+alias gp!="git branch --set-upstream-to=origin/$(git rev-parse --abbrev-ref HEAD) $(git rev-parse --abbrev-ref HEAD) && git pull --ff-only"
 alias gpr="git pull --rebase"
 
 alias gb="git branch"
@@ -301,7 +312,7 @@ alias gbl="git branch -l"
 l () {
   # no args
   if [[ $# -eq 0 ]]; then
-    git log --oneline --decorate --graph --all
+    git log --oneline --decorate -8
   # one arg which is an integer
   elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
     git log --oneline --decorate -$1
@@ -328,10 +339,26 @@ alias b="git blame"
 alias stash="git stash save -u"
 alias pop="git stash pop"
 
-alias shipit='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~" && git push origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
-alias SHIPIT='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~" && git push --force-with-lease origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
-# an important part of being a good programmer is making fun of yourself when you make a typo
-alias SHIIT='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~" && echo "      FUUCK"'
+alias ahoy='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~"'
+alias shipit='ahoy && git push origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
+alias SHIPIT='ahoy && git push --force-with-lease origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
+# who doesn't love a good typo
+alias SHIIT='ahoy && echo "      FUUCK"'
+
+describe-commits () {
+  if [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
+    # 1) list the sha and subject line for the latest ARG commits
+    # 2) pipe that to an awk script which formats each as "- $SHA :: $SUBJECT_LINE\n"
+    # 3) pipe that to tac to reverse the order, listing commits from first to latest
+    # then copy-paste that into your pull request description, editing the subject lines into nice
+    # descriptions as needed
+    git log --oneline -$1 --no-decorate \
+      | awk '{printf "- " $1 " :: "; for (i=2; i<=NF; i++) printf $i FS; print ""}' \
+      | tac
+  else
+    echo "Usage: describe-commits [number of commits]" >&2
+  fi
+}
 
 # * Self-expanding shell abbreviations
 # cf. http://zshwiki.org/home/examples/zleiab
@@ -391,5 +418,3 @@ alias tetris='emacs -q --no-splash -f tetris'
 
 # and machine-specific aliases/overrides:
 [ -f ~/.local-aliases.zsh ] && source ~/.local-aliases.zsh || true
-
-# vim:foldmethod=marker:foldlevel=0
