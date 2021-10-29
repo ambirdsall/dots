@@ -41,7 +41,7 @@ vi () {
     fi
 }
 em () {
-    emacsclient -nw --alternate-editor=emacs ${@}
+    emacsclient -nw --alternate-editor=vim ${@}
 }
 
 if [ $(uname) != 'Darwin' ]; then
@@ -51,11 +51,8 @@ if [ $(uname) != 'Darwin' ]; then
 
     if [ -z $XMODMAP_SET ]; then xmodmap ~/.Xmodmap; fi
     export XMODMAP_SET=t
-
-    export PATH="$HOME/.cargo/bin:$PATH"
-    export PATH='/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin':"$PATH"
-    export PATH='/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin':"$PATH"
 fi
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$HOME/.cargo/env ] && source "$HOME/.cargo/env"
