@@ -6,6 +6,9 @@
 
 ;; * ascii art
 ;; ** colorizing strings
+;; clojure-style threading macro; takes a value and then a list of functions, each of which is
+;; called in order with value of the last expression prepended to its argument list to make a
+;; pipeline functions transforming the initial value.
 (define-syntax ->
   (syntax-rules ()
       ((-> value) value)
@@ -14,29 +17,10 @@
       ((-> value fn rest ...)
        (-> (fn value) rest ...))))
 
-(define (highlight color-code target-substring str)
-  (let ([colorize (string-append (string #\esc #\[) "38;5;" (number->string color-code) "m")]
-        [color-reset (string-append (string #\esc #\[) "0m")]
-        [match-data (string-match target-substring str)])
-    (if match-data
-        (regexp-substitute #f match-data
-                           'pre colorize 0 color-reset 'post)
-        str)))
-
-(define (ball str) (highlight 216 "o" str))
-(define (rim str) (highlight 208 "=--" str))
-(define (net str) (highlight 252 "##" str))
-(define (backboard str) (highlight 253 "/|" (highlight 253 "\|" str)))
-(define (celtics str) (highlight 83 "T" str))
-
-;; (define (paint frame) (backboard (ball (rim (net frame)))))
-(define (paint frame) (-> frame
-                          ball
-                          rim
-                          net
-                          backboard))
-
 (define-macro (painted frame)
+  "A macro which wraps notable substrings in the appropriate ANSI color codes. The resulting string
+can be precalculated at compile time, which is why this is a macro and not a function."
+  ;; this whole macro definition is just helper functions lmaoo
   (define (highlight color-code target-substring str)
     (let ([colorize (string-append (string #\esc #\[) "38;5;" (number->string color-code) "m")]
           [color-reset (string-append (string #\esc #\[) "0m")]
@@ -58,6 +42,7 @@
                             net
                             backboard))
 
+  ;; got all that? okay:
   (paint frame))
 
 ;; ** the OG
