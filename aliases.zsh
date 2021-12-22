@@ -1,14 +1,18 @@
 # * emacsclients
+alias e="emacsclient -nw"
+alias E="emacsclient -c"
 
 em () {
-  emacs -nw $@
+  qed $@
 }
 
 # sometimes in life, you don't have emacs installed on a new computer yet.
-# These also tend to be times when you open config files a lot!
+# These also tend to be times when you open config files a lot! And even when
+# you do have emacs installed, cracking open a config/alias/whatever file is
+# a scenario where falling back to vim is preferable to a slow-booting editor.
 emv () {
   if command -v emacs; then
-    emacs -nw $@
+    emacsclient -nw --alternate-editor="vim" $@
   else
     vim $@
   fi
@@ -142,9 +146,6 @@ alias cx='chmod +x'
 # ** clear
 alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
 
-# ** echo
-alias e=echo
-
 # ** `=` :: less
 = () {
     # iff there are 0 arguments given, assume input from stdin (i.e. a pipe)
@@ -170,7 +171,6 @@ alias fuck="rm -rf"
 tailfh () {
   tail -f $1 | ack -i 'error' --passthru
 }
-alias tsslog='tail -f /tmp/tss.log'
 
 # ** `mv`
 alias mmv='noglob zmv -W'
@@ -230,11 +230,11 @@ g () {
 compdef g=git
 
 gs () {
-    emacsclient -a "" --socket=magit -nw -e "
+    emacsclient --socket=magit -nw -e "
 (progn
   (or (advice-member-p 'save-buffers-kill-terminal '+magit/quit)
       (advice-add '+magit/quit :before 'save-buffers-kill-terminal))
-  (magit-status))"
+  (magit-status))" || emacs --daemon=magit
 }
 
 # run `git clone` and `cdd` into dir
@@ -258,10 +258,13 @@ co () {
   if [[ $# -gt 0 ]]; then
     git checkout "$@"
   else
-    git checkout `git branch -l | sed 's/^* //' | fzf --preview 'git show heads/{} | diff-so-fancy'`
+    local BRANCH_OR_REF=$(git recent | fzf --preview 'git show heads/{} | diff-so-fancy')
+    if [ ! -z $BRANCH_OR_REF ]; then
+        git checkout $BRANCH_OR_REF
+    fi
   fi
 }
-alias co-="git co -"
+alias co-="git checkout -"
 
 cor () {
     local BRANCH_OR_REF=$(git recent | fzf --preview 'git show heads/{} | diff-so-fancy')
@@ -270,13 +273,18 @@ cor () {
     fi
 }
 
+com () {
+    local big_kahuna_branch=$(git rev-parse --abbrev-ref origin/HEAD | cut -c8-)
+
+    g co $big_kahuna_branch && g pull --rebase
+}
+
 cob () {
-  co -b "`echo $* | tr ' ' -`"
+  git checkout -b "`echo $* | tr ' ' -`"
 }
 
 d () {
-  # git diff --word-diff "$@"
-    git diff --diff-algorithm=minimal --color "$@" | diff-so-fancy | bat --plain
+  git diff --diff-algorithm=minimal --color "$@" | diff-so-fancy | bat --plain
 }
 alias gdc="d --cached"
 alias gdo="git diff \$(git rev-parse --abbrev-ref HEAD 2> /dev/null)..origin/\$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
@@ -329,7 +337,7 @@ unique () {
 }
 git-recent () {
   # lists unique git refs you have checked out, in order of how recently you checked them out
-  git reflog | grep checkout: | awk '{print $6}' | unique | more
+  git reflog | grep checkout: | awk '{print $6}' | unique
 }
 
 alias gg="git grep"
