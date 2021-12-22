@@ -2,8 +2,65 @@
 !#
 
 (use-modules (srfi srfi-42))
+(use-modules (ice-9 regex))
 
 ;; * ascii art
+;; ** colorizing strings
+(define-syntax ->
+  (syntax-rules ()
+      ((-> value) value)
+      ((-> value (fn args ...) rest ...)
+       (-> (fn value args ...) rest ...))
+      ((-> value fn rest ...)
+       (-> (fn value) rest ...))))
+
+(define (highlight color-code target-substring str)
+  (let ([colorize (string-append (string #\esc #\[) "38;5;" (number->string color-code) "m")]
+        [color-reset (string-append (string #\esc #\[) "0m")]
+        [match-data (string-match target-substring str)])
+    (if match-data
+        (regexp-substitute #f match-data
+                           'pre colorize 0 color-reset 'post)
+        str)))
+
+(define (ball str) (highlight 216 "o" str))
+(define (rim str) (highlight 208 "=--" str))
+(define (net str) (highlight 252 "##" str))
+(define (backboard str) (highlight 253 "/|" (highlight 253 "\|" str)))
+(define (celtics str) (highlight 83 "T" str))
+
+;; (define (paint frame) (backboard (ball (rim (net frame)))))
+(define (paint frame) (-> frame
+                          ball
+                          rim
+                          net
+                          backboard))
+
+(define-macro (painted frame)
+  (define (highlight color-code target-substring str)
+    (let ([colorize (string-append (string #\esc #\[) "38;5;" (number->string color-code) "m")]
+          [color-reset (string-append (string #\esc #\[) "0m")]
+          [match-data (string-match target-substring str)])
+      (if match-data
+          (regexp-substitute #f match-data
+                             'pre colorize 0 color-reset 'post)
+          str)))
+
+  (define (ball str) (highlight 216 "o" str))
+  (define (rim str) (highlight 208 "=--" str))
+  (define (net str) (highlight 252 "##" str))
+  (define (backboard str) (highlight 253 "/|" (highlight 253 "\|" str)))
+  (define (celtics str) (highlight 83 "T" str))
+
+  (define (paint frame) (-> frame
+                            ball
+                            rim
+                            net
+                            backboard))
+
+  (paint frame))
+
+;; ** the OG
 (define shot-image "
           o
 /|   o         o
@@ -17,8 +74,8 @@
 _______________|_|________
 ")
 
-;; ** swish
-(define swish-frame-0 "
+;; ** swish frames
+(define swish-frame-0 (painted "
 
 /|
 \\|=--
@@ -29,9 +86,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define swish-frame-1 "
+(define swish-frame-1 (painted "
 
 /|
 \\|=--            o
@@ -42,9 +99,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define swish-frame-2 "
+(define swish-frame-2 (painted "
 
 /|             o
 \\|=--                 \n\
@@ -55,9 +112,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define swish-frame-3 "
+(define swish-frame-3 (painted "
           o
 /|                     \n\
 \\|=--                 \n\
@@ -68,9 +125,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define swish-frame-4 "
+(define swish-frame-4 (painted "
                        \n\
 /|   o                 \n\
 \\|=--                 \n\
@@ -81,9 +138,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define swish-frame-5 "
+(define swish-frame-5 (painted "
                        \n\
 /|                     \n\
 \\|=--                 \n\
@@ -94,9 +151,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define swish-frame-6 "
+(define swish-frame-6 (painted "
                        \n\
 /|                     \n\
 \\|=--                 \n\
@@ -107,9 +164,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define swish-frame-7 "
+(define swish-frame-7 (painted "
                        \n\
 /|                     \n\
 \\|=--                 \n\
@@ -120,9 +177,9 @@ _______________|_|________
  o             T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define swish-frame-8 "
+(define swish-frame-8 (painted "
                        \n\
 /|                     \n\
 \\|=--                 \n\
@@ -133,12 +190,10 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define swish-frames (list swish-frame-0 swish-frame-1 swish-frame-2 swish-frame-3 swish-frame-4 swish-frame-5 swish-frame-6 swish-frame-7 swish-frame-8))
-
-;; ** bank
-(define bank-frame-0 "
+;; ** bank frames
+(define bank-frame-0 (painted "
 
 /|
 \\|=--
@@ -149,9 +204,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define bank-frame-1 "
+(define bank-frame-1 (painted "
 
 /|
 \\|=--            o
@@ -162,9 +217,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define bank-frame-2 "
+(define bank-frame-2 (painted "
 
 /|             o
 \\|=--                \n\
@@ -175,9 +230,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define bank-frame-3 "
+(define bank-frame-3 (painted "
          o
 /|                    \n\
 \\|=--
@@ -188,9 +243,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define bank-frame-4 "
+(define bank-frame-4 (painted "
      o         \n\
 /|                   \n\
 \\|=--                  \n\
@@ -201,9 +256,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define bank-frame-5 "
+(define bank-frame-5 (painted "
                        \n\
 /|o                  \n\
 \\|=--
@@ -214,9 +269,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define bank-frame-6 "
+(define bank-frame-6 (painted "
 
 /|      \n\
 \\|=--
@@ -227,9 +282,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define bank-frame-7 "
+(define bank-frame-7 (painted "
                        \n\
 /|                     \n\
 \\|=--                 \n\
@@ -240,9 +295,9 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define bank-frame-8 "
+(define bank-frame-8 (painted "
 
 /|
 \\|=--
@@ -253,9 +308,9 @@ _______________|_|________
       o        T    /|
                |\\  | |
 _______________|_|________
-")
+"))
 
-(define bank-frame-9 "
+(define bank-frame-9 (painted "
 
 /|
 \\|=--
@@ -266,7 +321,11 @@ _______________|_|________
                T    /|
                |\\  | |
 _______________|_|________
-")
+"))
+
+;; ** LISt Processing
+;; (define swish-frames (map paint (list swish-frame-0 swish-frame-1 swish-frame-2 swish-frame-3 swish-frame-4 swish-frame-5 swish-frame-6 swish-frame-7 swish-frame-8)))
+(define swish-frames (list swish-frame-0 swish-frame-1 swish-frame-2 swish-frame-3 swish-frame-4 swish-frame-5 swish-frame-6 swish-frame-7 swish-frame-8))
 
 (define bank-frames (list bank-frame-0 bank-frame-1 bank-frame-2 bank-frame-3 bank-frame-4 bank-frame-5 bank-frame-6 bank-frame-7 bank-frame-8 bank-frame-9))
 
@@ -311,23 +370,22 @@ _______________|_|________
          [distance-to-top-of-frame (- frame-height 1)])
     (clear-lines-to distance-to-top-of-frame)))
 
-;; ** fun unused diversion: typewriter effect
-;; (display "I fucking love hot dogs")
+;; ** dumbass typewriter effects
+(define* (typewrite text #:optional (delay 90000))
+  (for-each
+ (lambda (char)
+   (display (string char))
+   (usleep delay))
+ (string->list text)))
 
-;; (for-each
-;;  (lambda (_)
-;;    (move-left-by 1)
-;;    (display " ")
-;;    (move-left-by 1)
-;;    (usleep 200000))
-;;  (string->list "dogs"))
-
-;; (for-each
-;;  (lambda (char)
-;;    (display (string char))
-;;    (usleep 300000))
-;;  (string->list "naps"))
-
+(define* (backspace text #:optional (delay 90000))
+  (for-each
+   (lambda (_)
+     (move-left-by 1)
+     (display " ")
+     (move-left-by 1)
+     (usleep delay))
+   (string->list text)))
 
 ;; * do it
 (define (swish) (for-each draw-frame swish-frames))
@@ -338,7 +396,15 @@ _______________|_|________
     (begin
       (bank)
       (newline)
-      (display "I didn't hear you call bank, lol")
+      (typewrite "I didn't hear you call bank, lol" 20000)
+      ;; (sleep 1)
+
+      ;; (backspace "lol")
+      ;; (typewrite "motherfucker" 30000)
+      ;; (sleep 1)
+
+      ;; (backspace "motherfucker" 20000)
+      ;; (typewrite "lol ;D")
       (newline))
     (swish))
 
