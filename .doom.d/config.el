@@ -81,7 +81,7 @@ used interactively."
 ;; font string. You generally only need these two:
 ;; (setq doom-font (font-spec :family "monospace" :size 12 :weight 'semi-light)
 ;;       doom-variable-pitch-font (font-spec :family "sans" :size 13))
-(setq doom-font "FiraCode")
+(setq doom-font "Fira Code")
 ;; ;; why doesn't the sizing work?!?!?!?!?!?!?!?
 (setq doom-variable-pitch-font (if IS-MAC "Baskerville-18" "LibreBaskerville"))
 
@@ -92,7 +92,7 @@ used interactively."
 (setq doom-theme 'doom-rouge)
 (defun amb/toggle-themes ()
   (interactive)
-  (cond ((eq doom-theme 'doom-rouge) (load-theme 'doom-plain))
+  (cond ((eq doom-theme 'doom-rouge) (load-theme 'tsdh-light))
         (t (load-theme 'doom-rouge))))
 
 ;; TODO: amb/random-theme
@@ -152,10 +152,14 @@ used interactively."
 
 ;; ** elixir
 (after! alchemist-mode
-  (map! :map alchemist-mode-map
-        :n
-        "C-j" #'tmux-navigate-down
-        "C-k" #'tmux-navigate-up))
+  (map! (:when (featurep! :lang elixir)    ; local conditional
+        (:map alchemist-mode-map
+         :n
+         "C-j" #'tmux-navigate-down
+         "C-k" #'tmux-navigate-up
+         :localleader
+         "tt" #'exunit-toggle-file-and-test
+         "tT" #'exunit-toggle-file-and-test-other-window))))
 
 ;; ** web-mode
 (setq! web-mode-markup-indent-offset 2
@@ -171,10 +175,9 @@ used interactively."
 ;; ** lsp
 (use-package! lsp-tailwindcss)
 ;; * computer-wide settings
-;; TODO: unset the option/meta switch when I'm back at my ergodox
 (setq! mac-command-modifier 'meta
-       mac-option-modifier 'super
-       ns-function-modifier 'hyper)
+       mac-option-modifier 'meta
+       ns-function-modifier 'super)
 (setq! projectile-project-search-path '("~/c/"))
 (setq! fill-column 100)
 (global-visual-line-mode -1)

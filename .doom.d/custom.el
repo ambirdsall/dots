@@ -16,7 +16,7 @@
    '("node_modules" "bower_components" "vendor" "tmp" "images"))
  '(c/preferred-browser "open")
  '(custom-safe-themes
-   '("1704976a1797342a1b4ea7a75bdbb3be1569f4619134341bd5a4c1cfb16abad4" "d268b67e0935b9ebc427cad88ded41e875abfcc27abd409726a92e55459e0d01" "fce3524887a0994f8b9b047aef9cc4cc017c5a93a5fb1f84d300391fba313743" "f4876796ef5ee9c82b125a096a590c9891cec31320569fc6ff602ff99ed73dca" "e074be1c799b509f52870ee596a5977b519f6d269455b84ed998666cf6fc802a" "e6ff132edb1bfa0645e2ba032c44ce94a3bd3c15e3929cdf6c049802cf059a2a" "f2927d7d87e8207fa9a0a003c0f222d45c948845de162c885bf6ad2a255babfd" "99ea831ca79a916f1bd789de366b639d09811501e8c092c85b2cb7d697777f93" default))
+   '("e2c926ced58e48afc87f4415af9b7f7b58e62ec792659fcb626e8cba674d2065" "846b3dc12d774794861d81d7d2dcdb9645f82423565bfb4dad01204fa322dbd5" "1704976a1797342a1b4ea7a75bdbb3be1569f4619134341bd5a4c1cfb16abad4" "d268b67e0935b9ebc427cad88ded41e875abfcc27abd409726a92e55459e0d01" "fce3524887a0994f8b9b047aef9cc4cc017c5a93a5fb1f84d300391fba313743" "f4876796ef5ee9c82b125a096a590c9891cec31320569fc6ff602ff99ed73dca" "e074be1c799b509f52870ee596a5977b519f6d269455b84ed998666cf6fc802a" "e6ff132edb1bfa0645e2ba032c44ce94a3bd3c15e3929cdf6c049802cf059a2a" "f2927d7d87e8207fa9a0a003c0f222d45c948845de162c885bf6ad2a255babfd" "99ea831ca79a916f1bd789de366b639d09811501e8c092c85b2cb7d697777f93" default))
  '(diary-file "~/notes/diary-google")
  '(fci-rule-color "#AEBACF")
  '(fill-column 100)
@@ -32,7 +32,24 @@
  '(rustic-ansi-faces
    ["#E5E9F0" "#99324B" "#4F894C" "#9A7500" "#3B6EA8" "#97365B" "#398EAC" "#3B4252"])
  '(safe-local-variable-values
-   '((git-commit-major-mode . git-commit-elisp-text-mode)
+   '((eval let
+           ((root-dir-unexpanded
+             (locate-dominating-file default-directory ".dir-locals.el")))
+           (when root-dir-unexpanded
+             (let*
+                 ((root-dir
+                   (expand-file-name root-dir-unexpanded))
+                  (root-dir*
+                   (directory-file-name root-dir)))
+               (unless
+                   (boundp 'geiser-guile-load-path)
+                 (defvar geiser-guile-load-path 'nil))
+               (make-local-variable 'geiser-guile-load-path)
+               (require 'cl-lib)
+               (cl-pushnew root-dir* geiser-guile-load-path :test #'string-equal))))
+     (eval setq-local guix-directory
+           (locate-dominating-file default-directory ".dir-locals.el"))
+     (git-commit-major-mode . git-commit-elisp-text-mode)
      (auto-save-default)))
  '(vc-annotate-background "#E5E9F0")
  '(vc-annotate-color-map
@@ -57,7 +74,7 @@
     (cons 360 "#AEBACF")))
  '(vc-annotate-very-old-color nil)
  '(warning-suppress-types '((elixir-mode-hook) (lsp-mode)))
- '(web-mode-markup-indent-offset 2 t))
+ '(web-mode-markup-indent-offset 2))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
