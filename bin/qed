@@ -1,1 +1,13 @@
+#!/bin/sh
+
+# 😭
+# server_name () {
+#     [[ -n $TMUX ]] && tmux display-message -p '#S' || echo some-solo-tty
+# }
+
+# # ensure the daemon is running as quickly as possible
+# emacsclient -a false -e 't' --socket-name="$(server_name)" || emacs --daemon="$(server_name)"
+
+# emacsclient --socket-name="$(server_name)" -nw "$@"
+
 emacsclient -nw --alternate-editor="" "$@"
