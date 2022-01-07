@@ -44,14 +44,14 @@ em () {
     emacsclient -nw --alternate-editor=vim ${@}
 }
 
-if [ $(uname) != 'Darwin' ]; then
-    local XCAPE_OPTS='Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'
-    if [ -z $XCAPE_SET ]; then xcape -e $XCAPE_OPTS; fi
-    export XCAPE_SET=t
-
-    if [ -z $XMODMAP_SET ]; then xmodmap ~/.Xmodmap; fi
-    export XMODMAP_SET=t
-fi
+# if [ $(uname) != 'Darwin' ]; then
+#     local XCAPE_OPTS='Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'
+#     if [ -z $XCAPE_SET ]; then xcape -e $XCAPE_OPTS; fi
+#     export XCAPE_SET=t
+# 
+#     if [ -z $XMODMAP_SET ]; then xmodmap ~/.Xmodmap; fi
+#     export XMODMAP_SET=t
+# fi
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
