@@ -5,7 +5,7 @@ little upfront setup effort. Given that the upfront work can be copy-pasted, it'
 tradeoff.
 * to install on a new computer
 #+BEGIN_SRC sh
-  git clone --separate-git-dir=$HOME/.dots https://github.com/ambirdsall/dots.git tmpdotfiles
+  git clone --separate-git-dir=$HOME/.dots git@github.com:ambirdsall/dots.git tmpdotfiles
   rsync --recursive --verbose --exclude '.git' tmpdotfiles/ $HOME/
   rm -r tmpdotfiles
 
