@@ -68,6 +68,10 @@ used interactively."
 (def-text-operator 'screaming-snake-case #'(lambda (str) (s-upcase (s-snake-case str))))
 (def-text-operator 'lower-words-case #'(lambda (str) (s-join " " (-map #'s-downcase (s-split-words str)))))
 
+(defun autoinsert-yas-expand()
+  "Replace text in yasnippet template."
+  (yas-expand-snippet (buffer-string) (point-min) (point-max)))
+
 ;; * make it pretty
 ;; Doom exposes five (optional) variables for controlling fonts in Doom. Here
 ;; are the three important ones:
@@ -89,11 +93,11 @@ used interactively."
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-rouge)
+(setq doom-theme 'doom-gruvbox)
 (defun amb/toggle-themes ()
   (interactive)
-  (cond ((eq doom-theme 'doom-rouge) (load-theme 'tsdh-light))
-        (t (load-theme 'doom-rouge))))
+  (cond ((eq doom-theme 'doom-gruvbox) (load-theme 'tango))
+        (t (load-theme 'doom-gruvbox))))
 
 ;; TODO: amb/random-theme
 
@@ -179,7 +183,7 @@ used interactively."
        mac-option-modifier 'meta
        ns-function-modifier 'super)
 (setq! projectile-project-search-path '("~/c/"))
-(setq! fill-column 100)
+(setq! fill-column 90)
 (global-visual-line-mode -1)
 
 ;; * org-mode config
