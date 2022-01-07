@@ -16,8 +16,9 @@ tradeoff.
 
 * managing this git directory
 The =~/bin/dots= file provides a =dots= command to handle all interaction with the git repo. It wraps
-~git~, passing the correct directories to ~--git-dir~ and ~--work-tree~ and defaulting to ~git status -s~
-when called with no arguments.
+~git~, passing the correct directories to ~--git-dir~ and ~--work-tree~ and paving a few common paths: it
+defaults to ~git status -s~ when called with no arguments, and ~dots c some commit message~ expands to
+~dots commit -m "some commit message"~.
 ** TODO find way to invoke magit-status with a separate git dir and work tree
 
 * working notes

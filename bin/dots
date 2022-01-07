@@ -1,7 +1,15 @@
 #!/bin/bash
 
+EDITOR='emacsclient -nw --alternate-editor=vim'
+GIT_CMD="git --git-dir=$HOME/.dots/ --work-tree=$HOME"
+
 if [[ $# -gt 0 ]]; then
-    EDITOR='emacsclient -nw --alternate-editor=vim' git --git-dir=$HOME/.dots/ --work-tree=$HOME ${@}
+    if [[ "$1" == "c" ]]; then
+        shift
+        $GIT_CMD commit -m "${*}"
+    else
+        $GIT_CMD ${*}
+    fi
 else
-    git --git-dir=$HOME/.dots/ --work-tree=$HOME status
+    $GIT_CMD status
 fi
