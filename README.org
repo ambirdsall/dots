@@ -13,17 +13,54 @@ tradeoff.
 
   make install
 #+END_SRC
+
 * managing this git directory
-The =~/aliases.zsh= file defines a =dots= command to handle all interaction with the git repo. At the
-time of writing, it is defined as
-#+BEGIN_SRC sh
-dots () {
-  if [[ $# -gt 0 ]]; then
-    git --git-dir=$HOME/.dots/ --work-tree=$HOME ${@}
-  else
-    git --git-dir=$HOME/.dots/ --work-tree=$HOME status
-  fi
-}
-#+END_SRC sh
-So it's simply a separate-git-dir-aware wrapper for ~git~, but with saner
-default behavior if given no subcommand.
+The =~/bin/dots= file provides a =dots= command to handle all interaction with the git repo. It wraps
+~git~, passing the correct directories to ~--git-dir~ and ~--work-tree~ and defaulting to ~git status -s~
+when called with no arguments.
+** TODO find way to invoke magit-status with a separate git dir and work tree
+
+* working notes
+** i3 setup [0/9]
+*** TODO a proper system for machine-specific config
+*** TODO define optional pwd for a given workspace to open new terminal windows in
+*** TODO allow semantically-meaningful workspace names without borking navigability
+**** TODO test if prefixing a workspace name with the number preserves ~$mod+$n~ navigation
+**** quick fix :: predefine a consistent, machine-specific workspace layout
+**** alternative and/or stretch goal :: make system for interactively renaming workspaces without borking navigability
+*** literate config file [0/1]
+**** TODO create checklist for moving to an org-based literate config
+*** new keybindings to add [0/4]
+**** TODO launch common apps
+| ~E~ | emacs(client) | must change exit i3 bind |
+| ~F~ | firefox       |                          |
+**** TODO spacehydra
+| ~$mod+space~ | enter mode    |
+| ~q~          | exit mode     |
+| ~esc~        | exit mode     |
+|------------+---------------|
+| ~w~          | window shit   |
+| ~e~          | emacs(client) |
+| ~f~          | firefox       |
+
+**** TODO window manipulation hydra
+| ~$mod+w~ or ~$mod+space w~ | enter mode        |
+| ~q~                      | exit mode         |
+| ~esc~                    | exit mode         |
+|------------------------+-------------------|
+| ~h~                      | move focus left   |
+| ~j~                      | move focus down   |
+| ~k~                      | move focus up     |
+| ~l~                      | move focus right  |
+|------------------------+-------------------|
+| ~H~                      | move window left  |
+| ~J~                      | move window down  |
+| ~K~                      | move window up    |
+| ~L~                      | move window right |
+|------------------------+-------------------|
+| ~r~                      | resize mode       |
+
+**** TODO jump to prior workspace with ~$mod+`~
+** emacs config [0/2]
+*** TODO wtf ~fill-column~, get thee to a ~90~
+*** TODO teach magit how to work with dotfiles
