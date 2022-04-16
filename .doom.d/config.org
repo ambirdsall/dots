@@ -1,3 +1,20 @@
+#+TITLE: Alex Birdsall's doom emacs config
+
+* top-of-file comment sections
+** TODO clean this up, it's not cute up at the top of the page
+*** option one :: mark this top-level subtree as folded by default with property drawer
+*** option two :: use noweb double angle bracket syntax to decouple source order and output order
+** packages.el
+#+begin_src elisp :tangle packages.el
+;; -*- no-byte-compile: t; -*-
+
+;; To install a package with Doom you must declare them here and run 'doom sync'
+;; on the command line, then restart Emacs for the changes to take effect -- or
+;; use 'M-x doom/reload'.
+#+end_src
+
+** config.el
+#+begin_src elisp
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
 ;; Place your private configuration here! Remember, you do not need to run 'doom
@@ -21,7 +38,21 @@
 ;; GUI emacs? sure, be cute.
 ;; In the terminal? I said what I said.
 (unless (display-graphic-p) (setq confirm-kill-emacs nil))
+#+end_src
 
+* config²
+Gotta go fast, so let's start with a spedometer:
+#+begin_src elisp :tangle packages.el
+(package! benchmark-init)
+#+end_src
+
+** a literate config, tangled asynchronously
+This is taken from Tecosaur's config; hopefully this whole section can be removed shortly, once Teco
+upstreams it to doom proper. For the time being, though, it has turned a seemingly infinite, blocking tangling
+process (seriously: I let it ride for almost 15 minutes with no resolution before mashing =C-g= and
+trying this instead) into a 1.6s async job.
+
+#+begin_src emacs-lisp
 (defvar +literate-tangle--proc nil)
 (defvar +literate-tangle--proc-start-time nil)
 
@@ -78,7 +109,89 @@
     (switch-to-buffer " *tangle config*")
     (signal 'quit nil)))
 (add-hook! 'kill-emacs-hook #'+literate-tangle-check-finished)
+#+end_src
+* packages.el
+** doom package/package! documentation
+To install a package directly from a remote git repo, you must specify a
+~:recipe~. You'll find documentation on what ~:recipe~ accepts [[https://github.com/raxod502/straight.el#the-recipe-format][here]].
+#+begin_src
+(package! another-package
+  :recipe (:host github :repo "username/repo"))
+#+end_src
 
+If the package you are trying to install does not contain a =PACKAGENAME.el=
+file, or is located in a subdirectory of the repo, you'll need to specify
+~:files~ in the ~:recipe~:
+#+begin_src
+(package! this-package
+  :recipe (:host github :repo "username/repo"
+           :files ("some-file.el" "src/lisp/*.el")))
+#+end_src
+
+If you'd like to disable a package included with Doom, you can do so here
+with the ~:disable~ property:
+#+begin_src
+(package! builtin-package :disable t)
+#+end_src
+
+You can override the recipe of a built in package without having to specify
+all the properties for ~:recipe~. These will inherit the rest of its recipe
+from Doom or MELPA/ELPA/Emacsmirror:
+#+begin_src
+(package! builtin-package :recipe (:nonrecursive t))
+(package! builtin-package-2 :recipe (:repo "myfork/package"))
+#+end_src
+
+Specify a ~:branch~ to install a package from a particular branch or tag.
+This is required for some packages whose default branch isn't =master= (which
+our package manager can't deal with; see raxod502/straight.el#279)
+#+begin_src
+(package! builtin-package :recipe (:branch "develop"))
+#+end_src
+
+Use ~:pin~ to specify a particular commit to install.
+#+begin_src
+package! builtin-package :pin "1a2b3c4d5e")
+#+end_src
+
+
+Doom's packages are pinned to a specific commit and updated from release to
+release. The ~unpin!~ macro allows you to unpin single packages...
+#+begin_src
+(unpin! pinned-package)
+#+end_src
+...or multiple packages
+#+begin_src
+(unpin! pinned-package another-pinned-package)
+#+end_src
+...Or *all* packages (NOT RECOMMENDED; will likely break things)
+#+begin_src
+(unpin! t)
+#+end_src
+** code migration dumping ground
+#+begin_src elisp :tangle packages.el
+;; * UI
+(package! emojify)
+
+;; * org-mode
+(package! mixed-pitch)
+
+(package! outshine
+  :recipe (:host github :repo "alphapapa/outshine"))
+(package! graphviz-dot-mode)
+(package! ox-gfm)
+
+;; * there are more languages than :lang can speak
+;; ** language modes
+(package! fennel-mode)
+(package! graphql-mode)
+
+;; ** lsp
+(package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
+#+end_src
+
+* i got this footgun for self defuns
+#+begin_src elisp
 (after! projectile
   (defun yank-buffer-filename-relative-to-project ()
     "Copy the current buffer's path, relative to the project root, to the kill ring."
@@ -127,7 +240,10 @@ used interactively."
 (defun autoinsert-yas-expand()
   "Replace text in yasnippet template."
   (yas-expand-snippet (buffer-string) (point-min) (point-max)))
+#+end_src
 
+* make it pretty
+#+begin_src elisp
 ;; Doom exposes five (optional) variables for controlling fonts in Doom. Here
 ;; are the three important ones:
 ;;
@@ -143,7 +259,10 @@ used interactively."
 (setq doom-font "Fira Code")
 ;; ;; why doesn't the sizing work?!?!?!?!?!?!?!?
 (setq doom-variable-pitch-font (if IS-MAC "Baskerville-18" "LibreBaskerville"))
+#+end_src
 
+* Theme this bad boy
+#+begin_src elisp
 ;; There are two ways to load a theme. Both assume the theme is installed and
 ;; available. You can either set `doom-theme' or manually load a theme with the
 ;; `load-theme' function. This is the default:
@@ -159,6 +278,10 @@ used interactively."
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type t)
 
+#+end_src
+* Keybindings
+** lead me to space
+#+begin_src elisp
 (map!
  :leader
  :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer
@@ -173,7 +296,9 @@ used interactively."
  :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos
  "tt" #'amb/toggle-themes
  "W" #'subword-mode)
-
+#+end_src
+** evil and global bindings
+#+begin_src elisp
 (map!
  "C-;" #'evil-avy-goto-char-timer
  :ni "C-)" #'sp-forward-slurp-sexp
@@ -181,32 +306,86 @@ used interactively."
  :n "M-/" #'+default/search-buffer
  (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
 
+#+end_src
+* evil config
+** additional packages
+*** wait, is this split two tmux panes or two emacs windows?
+WHO CARES
+#+begin_src elisp :tangle packages.el
+(package! evil-tmux-navigator
+  :recipe (:host github :repo "ambirdsall/evil-tmux-navigator"))
+(unpin! evil-tmux-navigator)
+#+end_src
+
+#+begin_src elisp
 (use-package! evil-tmux-navigator
   :config (evil-tmux-navigator-bind-keys))
+#+end_src
 
+*** replace with register
+#+begin_src elisp :tangle packages.el
+(package! evil-replace-with-register)
+#+end_src
+
+#+begin_src elisp
 (use-package! evil-replace-with-register
   :init (setq evil-replace-with-register-key (kbd "gr"))
   :config (evil-replace-with-register-install))
+#+end_src
+*** evil-exchange
+#+begin_src elisp :tangle packages.el
+(package! evil-exchange)
+#+end_src
 
+#+begin_src elisp
 (use-package! evil-exchange
   :config (evil-exchange-install))
+#+end_src
+*** match all the pairs
+#+begin_src elisp :tangle packages.el
+(package! evil-matchit)
+#+end_src
 
+#+begin_src elisp
 (use-package! evil-matchit
   :config (global-evil-matchit-mode 1))
+#+end_src
+*** additional text objects
+#+begin_src elisp :tangle packages.el
+(package! evil-textobj-line
+  :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
+#+end_src
 
+#+begin_src elisp
 (use-package! evil-textobj-line
   :after evil)
-
+#+end_src
+** changing up some default settings
+#+begin_src elisp
 (setq! evil-ex-search-persistent-highlight nil
        +evil-want-o/O-to-continue-comments nil)
+#+end_src
 
+You can have my 'evil-substitute when you pry it from my cold, dead fingers.
+#+begin_src elisp :tangle packages.el
+(package! evil-snipe :disable t)
+#+end_src
+* TODO languages
+** fennel
+#+begin_src elisp
 (use-package! fennel-mode
   :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
-
+#+end_src
+** graphql
+#+begin_src elisp
 (use-package! graphql-mode)
-
+#+end_src
+** typescript
+#+begin_src elisp
 (setq typescript-indent-level 2)
-
+#+end_src
+** elixir
+#+begin_src elisp
 (after! alchemist-mode
   (map! (:when (featurep! :lang elixir)    ; local conditional
         (:map alchemist-mode-map
@@ -217,6 +396,9 @@ used interactively."
          "tt" #'exunit-toggle-file-and-test
          "tT" #'exunit-toggle-file-and-test-other-window))))
 
+#+end_src
+** web-mode
+#+begin_src elisp
 (setq! web-mode-markup-indent-offset 2
        web-mode-css-indent-offset 2
        web-mode-code-indent-offset 2)
@@ -226,9 +408,13 @@ used interactively."
         ("vue" . "\\.vue")
         ("phoenix" . "\\.html\\.eex")
         ("erb" . "\\.html\\.erb")))
-
+#+end_src
+** lsp
+#+begin_src elisp
 (use-package! lsp-tailwindcss)
-
+#+end_src
+* computer-wide settings
+#+begin_src elisp
 (setq! mac-command-modifier 'meta
        mac-option-modifier 'meta
        ns-function-modifier 'super)
@@ -236,30 +422,65 @@ used interactively."
 (setq! fill-column 90)
 (global-visual-line-mode -1)
 
+#+end_src
+* org-mode config
+** TODO diagnose Dropbox working with async tangle process
+I used to use this:
+#+begin_src
+(setq org-directory "~/Dropbox/org/")
+#+end_src
+
+But it ate a whole core and made the UI go beach ball of death.
+Now I use this:
+#+begin_src
+ln -s ~/Dropbox/org ~/org
+#+end_src
+
+It's a hack.
+
+** every project has a =todo.org= and every =todo.org= can just be hardlinks of the same underlying file
+It's an idiosyncratic pattern, but it works, particularly for work computers.
+#+begin_src elisp
 ;; This pair lets you open the same hardlinked {multiple,project,repos}/todo.org inode in multiple
 ;; project-specific buffers, each respecting the local filename and context (important for
 ;; maintaining the correct context for e.g. projectile functions)
 (setq! find-file-existing-other-name nil
        find-file-visit-truename nil)
+#+end_src
 
+#+begin_src elisp
 (after! projectile
   (defun amb/goto-project-todos ()
     (interactive)
     (find-file (concat (projectile-project-root) "todo.org"))))
+#+end_src
 
+** TODO roam
+#+begin_src elisp
 ; TODO: copy the contents of existing notes somewhere, set this to ~/Dropbox/org, and laugh all the
 ; way to the knowledge graph bank
 (setq org-roam-directory "~/roam/")
 
 ; make
 (setq! org-hierarchical-todo-statistics nil)
-
+#+end_src
+** 'TODO get shit done
+#+begin_src elisp
 (setq! org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
+#+end_src
 
+** logging
+#+begin_src elisp
 (setq! org-log-into-drawer t)
+#+end_src
 
+** org-refile
+#+begin_src elisp
 (setq! org-refile-use-outline-path 'full-file-path)
 
+#+end_src
+** org-agenda
+#+begin_src elisp
 ;; TODO verify whether explicitly setting agenda files prevents automatic
 ;; detection of new files in ~/notes/*.org
 (setq! org-agenda-files '("~/Dropbox/org/todo.org"
@@ -286,10 +507,16 @@ used interactively."
 
 (setq org-agenda-auto-exclude-function 'org-my-auto-exclude-fn)
 
+#+end_src
+** keybinding fixes
+#+begin_src elisp
 (map! :after org
  :map 'org-mode-map
       "<tab>" 'org-cycle)
+#+end_src
 
+** ✨ org everywhere ✨
+#+begin_src elisp
 (use-package! outshine
   :after org
   :config
@@ -297,6 +524,11 @@ used interactively."
   ;; (defvar outline-minor-mode-prefix "\M-#")
   )
 
+#+end_src
+** make it pretty 💅
+*** mixed pitch
+I very much want to get mixed-pitch working, but jeepers it's hard to learn emacs' font system; here is my latest unsuccessful attempt.
+#+begin_src elisp
 ;; (use-package! mixed-pitch
 ;;   :hook (org-mode . #'mixed-pitch-mode)
 ;;   :config
@@ -305,7 +537,12 @@ used interactively."
 ;;   (setq mixed-pitch-variable-pitch-cursor nil))
 ;; (add-hook! 'org-mode-hook #'mixed-pitch-mode)
 ;; (setq mixed-pitch-variable-pitch-cursor nil)
+#+end_src
 
+Ah well.
+
+*** TODO the rest of it :: clean up, subdivide
+#+begin_src elisp
 (custom-set-faces!
   '(outline-1 :weight extra-bold :height 1.25)
   '(outline-2 :weight bold :height 1.15)
@@ -321,7 +558,10 @@ used interactively."
  org-agenda-filter-preset '("-quotidian"))
 
 (add-hook! (org-mode) (org-appear-mode 1))
+#+end_src
 
+** 📉_(ツ)_📈
+#+begin_src elisp
 (use-package! graphviz-dot-mode
   :after org)
 
@@ -329,6 +569,10 @@ used interactively."
 ;; (after! org
 ;;   '(require 'ox-gfm nil t))
 
+#+end_src
+* git
+** nice git conflic resolution hydra
+#+begin_src elisp
 ;; all thanks and apologies to https://github.com/alphapapa/unpackaged.el
 (use-package! smerge-mode
   :after (hydra magit)
@@ -370,6 +614,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                    (when smerge-mode
                                      (unpackaged/smerge-hydra/body)))))
 
+#+end_src
+** make magit play nicely with window configurations
+#+begin_src elisp
 (after! magit
   ;; strictly speaking unnecessary (it's the default)
   ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
@@ -382,7 +629,116 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
   (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh))
 
-(use-package! code-compass :defer t)
+#+end_src
+* code compass
+#+begin_src elisp :tangle packages.el
+(package! code-compass
+  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
+#+end_src
 
+#+begin_src elisp
+(use-package! code-compass :defer t)
+#+end_src
+
+* private config
+#+begin_src elisp
 (let ((private-config (concat doom-private-dir "local.el")))
   (and (file-exists-p private-config) (load private-config)))
+#+end_src
+
+* TODO custom.el :: remove me, the ~setq!~ macro is in doom for a reason
+I know, I know. Some things were annoying to set and I didn't want to use doom's ~setq!~ (for a few early settings, I just didn't understand it, tbh).
+#+begin_src elisp :tangle custom.el
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(ansi-color-names-vector
+   ["#E5E9F0" "#99324B" "#4F894C" "#9A7500" "#3B6EA8" "#97365B" "#398EAC" "#3B4252"])
+ '(auto-insert 'other)
+ '(auto-insert-alist
+   '((("\\.vue\\'" . "Vue component")
+      .
+      ["template.vue" web-mode autoinsert-yas-expand])))
+ '(auto-insert-directory "~/autoinsert-templates/")
+ '(auto-insert-query nil)
+ '(c/exclude-directories
+   '("node_modules" "bower_components" "vendor" "tmp" "images"))
+ '(c/preferred-browser "open")
+ '(custom-safe-themes
+   '("e2c926ced58e48afc87f4415af9b7f7b58e62ec792659fcb626e8cba674d2065" "846b3dc12d774794861d81d7d2dcdb9645f82423565bfb4dad01204fa322dbd5" "1704976a1797342a1b4ea7a75bdbb3be1569f4619134341bd5a4c1cfb16abad4" "d268b67e0935b9ebc427cad88ded41e875abfcc27abd409726a92e55459e0d01" "fce3524887a0994f8b9b047aef9cc4cc017c5a93a5fb1f84d300391fba313743" "f4876796ef5ee9c82b125a096a590c9891cec31320569fc6ff602ff99ed73dca" "e074be1c799b509f52870ee596a5977b519f6d269455b84ed998666cf6fc802a" "e6ff132edb1bfa0645e2ba032c44ce94a3bd3c15e3929cdf6c049802cf059a2a" "f2927d7d87e8207fa9a0a003c0f222d45c948845de162c885bf6ad2a255babfd" "99ea831ca79a916f1bd789de366b639d09811501e8c092c85b2cb7d697777f93" default))
+ '(diary-file "~/notes/diary-google")
+ '(fci-rule-color "#AEBACF")
+ '(fill-column 100)
+ '(jdee-db-active-breakpoint-face-colors (cons "#F0F4FC" "#5d86b6"))
+ '(jdee-db-requested-breakpoint-face-colors (cons "#F0F4FC" "#4F894C"))
+ '(jdee-db-spec-breakpoint-face-colors (cons "#F0F4FC" "#B8C5DB"))
+ '(objed-cursor-color "#99324B")
+ '(org-agenda-files
+   '("~/c/monorail/todo.org" "~/Dropbox/org/todo.org" "/Users/alex.birdsall/Dropbox/org/car.org" "/Users/alex.birdsall/Dropbox/org/doom.org" "/Users/alex.birdsall/Dropbox/org/food.org" "/Users/alex.birdsall/Dropbox/org/linux.org" "/Users/alex.birdsall/Dropbox/org/nba.org"))
+ '(org-agenda-include-diary t)
+ '(package-selected-packages '(graphql-mode yaml-mode mixed-pitch))
+ '(pdf-view-midnight-colors (cons "#3B4252" "#E5E9F0"))
+ '(rustic-ansi-faces
+   ["#E5E9F0" "#99324B" "#4F894C" "#9A7500" "#3B6EA8" "#97365B" "#398EAC" "#3B4252"])
+ '(safe-local-variable-values
+   '((eval let
+           ((root-dir-unexpanded
+             (locate-dominating-file default-directory ".dir-locals.el")))
+           (when root-dir-unexpanded
+             (let*
+                 ((root-dir
+                   (expand-file-name root-dir-unexpanded))
+                  (root-dir*
+                   (directory-file-name root-dir)))
+               (unless
+                   (boundp 'geiser-guile-load-path)
+                 (defvar geiser-guile-load-path 'nil))
+               (make-local-variable 'geiser-guile-load-path)
+               (require 'cl-lib)
+               (cl-pushnew root-dir* geiser-guile-load-path :test #'string-equal))))
+     (eval setq-local guix-directory
+           (locate-dominating-file default-directory ".dir-locals.el"))
+     (git-commit-major-mode . git-commit-elisp-text-mode)
+     (auto-save-default)))
+ '(vc-annotate-background "#E5E9F0")
+ '(vc-annotate-color-map
+   (list
+    (cons 20 "#4F894C")
+    (cons 40 "#688232")
+    (cons 60 "#817b19")
+    (cons 80 "#9A7500")
+    (cons 100 "#a0640c")
+    (cons 120 "#a65419")
+    (cons 140 "#AC4426")
+    (cons 160 "#a53f37")
+    (cons 180 "#9e3a49")
+    (cons 200 "#97365B")
+    (cons 220 "#973455")
+    (cons 240 "#983350")
+    (cons 260 "#99324B")
+    (cons 280 "#a0566f")
+    (cons 300 "#a87b93")
+    (cons 320 "#b0a0b6")
+    (cons 340 "#AEBACF")
+    (cons 360 "#AEBACF")))
+ '(vc-annotate-very-old-color nil)
+ '(warning-suppress-types '((elixir-mode-hook) (lsp-mode)))
+ '(web-mode-markup-indent-offset 2))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(outline-1 ((t (:weight extra-bold :height 1.25))))
+ '(outline-2 ((t (:weight bold :height 1.15))))
+ '(outline-3 ((t (:weight bold :height 1.12))))
+ '(outline-4 ((t (:weight semi-bold :height 1.09))))
+ '(outline-5 ((t (:weight semi-bold :height 1.06))))
+ '(outline-6 ((t (:weight semi-bold :height 1.03))))
+ '(outline-8 ((t (:weight semi-bold))))
+ '(outline-9 ((t (:weight semi-bold)))))
+(put 'narrow-to-region 'disabled nil)
+
+#+end_src
