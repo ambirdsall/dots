@@ -2,19 +2,17 @@
 
 # USAGE
 # git recent [count]
-# if count is provided, displays the most recent *count* branches
+# if COUNT is provided, displays the most recent *count* branches
 # if the `--all` flag is given, lists all branches in the reflog and
-#   automatically pipes output to a pager (had issues using `less`, so `more`
-#   it is)
-# otherwise, displays the 10 most recent branches
+#   automatically pipes output to a pager
+# if no COUNT is given, displays the 10 most recent branches
 if (count = ARGV.first)
   if count == '--all'
-    exec "git reflog | grep 'checkout:' | awk '{print $6}' | unique | more"
+    exec "git reflog | grep 'checkout:' | awk '{print $6}' | unique | $PAGER"
   else
     branches = `git reflog | grep 'checkout:' | awk '{print $6}' | unique`.split("\n")
     count.to_i.times {|i| puts branches[i] }
   end
 else
-  # show 10 most recent by default
   exec "git reflog | grep 'checkout:' | awk '{print $6}' | unique | head"
 end
