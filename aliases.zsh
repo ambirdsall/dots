@@ -1,6 +1,9 @@
 # * emacsclients
+# TODO auto-start server, this is a solved problem lol
 alias e="emacsclient -nw"
-alias E="emacsclient -c"
+E () {
+ emacsclient -c & disown
+}
 
 em () {
   qed $@
