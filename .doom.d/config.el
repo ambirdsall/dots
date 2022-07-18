@@ -1,26 +1,17 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-;; Place your private configuration here! Remember, you do not need to run 'doom
-;; sync' after modifying this file!
-
-;; Here are some additional functions/macros that could help you configure Doom:
-;;
-;; - `load!' for loading external *.el files relative to this one
-;; - `use-package!' for configuring packages
-;; - `after!' for running code after a package has loaded
-;; - `add-load-path!' for adding directories to the `load-path', relative to
-;;   this file. Emacs searches the `load-path' when you load packages with
-;;   `require' or `use-package'.
-
-;; * whoami
-;; Some functionality uses this to identify you, e.g. GPG configuration, email
-;; clients, file templates and snippets.
 (setq user-full-name "Alex Birdsall"
       user-mail-address "ambirdsall@gmail.com")
 
 ;; GUI emacs? sure, be cute.
 ;; In the terminal? I said what I said.
 (unless (display-graphic-p) (setq confirm-kill-emacs nil))
+
+(map! :leader :desc "Open config.org" :ne "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir))))
+
+(map! :leader
+      "fP" (cmd! (find-file "~/.doom.d/config.org"))
+      "f." #'doom/open-private-config)
 
 (defvar +literate-tangle--proc nil)
 (defvar +literate-tangle--proc-start-time nil)
@@ -79,16 +70,74 @@
     (signal 'quit nil)))
 (add-hook! 'kill-emacs-hook #'+literate-tangle-check-finished)
 
-(after! projectile
-  (defun yank-buffer-filename-relative-to-project ()
-    "Copy the current buffer's path, relative to the project root, to the kill ring."
-    (interactive)
-    (if-let (filename (or buffer-file-name (bound-and-true-p list-buffers-directory)))
-        (message (kill-new (f-relative filename (projectile-acquire-root))))
-      (error "Couldn't find filename in current buffer"))))
+(setq! mac-command-modifier 'meta
+       mac-option-modifier 'meta
+       ns-function-modifier 'super)
+
+(let ((private-config (concat doom-private-dir "local.el")))
+  (and (file-exists-p private-config) (load private-config)))
+
+(defun +doom-dashboard-setup-modified-keymap ()
+  (setq +doom-dashboard-mode-map (make-sparse-keymap))
+  (map! :map +doom-dashboard-mode-map
+        :desc "Find file" :ne "f" #'find-file
+        :desc "Recent files" :ne "r" #'consult-recent-file
+        :desc "Config dir" :ne "C" #'doom/open-private-config
+        :desc "Open config.org" :ne "c" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
+        :desc "Open dotfile" :ne "." (cmd! (doom-project-find-file "~/.config/"))
+        :desc "Notes (roam)" :ne "n" #'org-roam-node-find
+        :desc "Switch buffer" :ne "b" #'+vertico/switch-workspace-buffer
+        :desc "Switch buffers (all)" :ne "B" #'consult-buffer
+        :desc "IBuffer" :ne "i" #'ibuffer
+        :desc "Previous buffer" :ne "p" #'previous-buffer
+        :desc "Set theme" :ne "t" #'consult-theme
+        :desc "Quit" :ne "Q" #'save-buffers-kill-terminal
+        :desc "Show keybindings" :ne "h" (cmd! (which-key-show-keymap '+doom-dashboard-mode-map))))
+
+(add-transient-hook! #'+doom-dashboard-mode (+doom-dashboard-setup-modified-keymap))
+(add-transient-hook! #'+doom-dashboard-mode :append (+doom-dashboard-setup-modified-keymap))
+(add-hook! 'doom-init-ui-hook :append (+doom-dashboard-setup-modified-keymap))
+
+(map! :leader :desc "Dashboard" "d" #'+doom-dashboard/open)
+
+(setq doom-font "Fira Code")
+;; ;; why doesn't the sizing work?!?!?!?!?!?!?!?
+(setq doom-variable-pitch-font (if IS-MAC "Baskerville-18" "LibreBaskerville"))
+
+;; There are two ways to load a theme. Both assume the theme is installed and
+;; available. You can either set `doom-theme' or manually load a theme with the
+;; `load-theme' function. This is the default:
+(setq amb/doom-dark-theme 'doom-vibrant
+      amb/doom-light-theme 'doom-one-light)
+
+;; TODO: amb/random-theme
+;; this uses
+(defun amb/toggle-themes ()
+  "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
+  (interactive)
+  (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
+        (t (load-theme amb/doom-dark-theme))))
+
+(setq display-line-numbers-type 'relative)
+
+(setq! fill-column 90)
+(global-visual-line-mode -1)
+
+(setq frame-title-format
+      '(""
+        (:eval
+         (if (s-contains-p org-roam-directory (or buffer-file-name ""))
+             (replace-regexp-in-string
+              ".*/[0-9]*-?" "☰ "
+              (subst-char-in-string ?_ ?  buffer-file-name))
+           "%b"))
+        (:eval
+         (let ((project-name (projectile-project-name)))
+           (unless (string= "-" project-name)
+             (format (if (buffer-modified-p)  " ◉ %s" "  ●  %s") project-name))))))
 
 (defmacro on-string-or-region (fn)
-  "Given a string-manipulation function, defines an interactive command which will apply that
+  "Given a string-manipulation function FN, defines an interactive command which will apply that
 function to either a string argument or to selected text, depending on context."
   `(lambda (string &optional from to)
      (interactive
@@ -124,45 +173,9 @@ used interactively."
 (def-text-operator 'screaming-snake-case #'(lambda (str) (s-upcase (s-snake-case str))))
 (def-text-operator 'lower-words-case #'(lambda (str) (s-join " " (-map #'s-downcase (s-split-words str)))))
 
-(defun autoinsert-yas-expand()
-  "Replace text in yasnippet template."
-  (yas-expand-snippet (buffer-string) (point-min) (point-max)))
-
-;; Doom exposes five (optional) variables for controlling fonts in Doom. Here
-;; are the three important ones:
-;;
-;; + `doom-font'
-;; + `doom-variable-pitch-font'
-;; + `doom-big-font' -- used for `doom-big-font-mode'; use this for
-;;   presentations or streaming.
-;;
-;; They all accept either a font-spec, font string ("Input Mono-12"), or xlfd
-;; font string. You generally only need these two:
-;; (setq doom-font (font-spec :family "monospace" :size 12 :weight 'semi-light)
-;;       doom-variable-pitch-font (font-spec :family "sans" :size 13))
-(setq doom-font "Fira Code")
-;; ;; why doesn't the sizing work?!?!?!?!?!?!?!?
-(setq doom-variable-pitch-font (if IS-MAC "Baskerville-18" "LibreBaskerville"))
-
-;; There are two ways to load a theme. Both assume the theme is installed and
-;; available. You can either set `doom-theme' or manually load a theme with the
-;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-gruvbox)
-(defun amb/toggle-themes ()
-  (interactive)
-  (cond ((eq doom-theme 'doom-gruvbox) (load-theme 'tango))
-        (t (load-theme 'doom-gruvbox))))
-
-;; TODO: amb/random-theme
-
-;; This determines the style of line numbers in effect. If set to `nil', line
-;; numbers are disabled. For relative line numbers, set this to `relative'.
-(setq display-line-numbers-type t)
-
 (map!
  :leader
  :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer
- "fY" #'yank-buffer-filename-relative-to-project
  "Nr" #'narrow-to-region
  "Nf" #'narrow-to-defun
  "Np" #'narrow-to-page
@@ -181,24 +194,19 @@ used interactively."
  :n "M-/" #'+default/search-buffer
  (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
 
-(use-package! evil-tmux-navigator
-  :config (evil-tmux-navigator-bind-keys))
+(defun autoinsert-yas-expand()
+  "Replace text in yasnippet template."
+  (yas-expand-snippet (buffer-string) (point-min) (point-max)))
 
-(use-package! evil-replace-with-register
-  :init (setq evil-replace-with-register-key (kbd "gr"))
-  :config (evil-replace-with-register-install))
+(after! projectile
+  (defun yank-buffer-filename-relative-to-project ()
+    "Copy the current buffer's path, relative to the project root, to the kill ring."
+    (interactive)
+    (if-let (filename (or buffer-file-name (bound-and-true-p list-buffers-directory)))
+        (message (kill-new (f-relative filename (projectile-acquire-root))))
+      (error "Couldn't find filename in current buffer"))))
 
-(use-package! evil-exchange
-  :config (evil-exchange-install))
-
-(use-package! evil-matchit
-  :config (global-evil-matchit-mode 1))
-
-(use-package! evil-textobj-line
-  :after evil)
-
-(setq! evil-ex-search-persistent-highlight nil
-       +evil-want-o/O-to-continue-comments nil)
+(map! :leader "fY" #'yank-buffer-filename-relative-to-project)
 
 (use-package! fennel-mode
   :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
@@ -227,107 +235,8 @@ used interactively."
         ("phoenix" . "\\.html\\.eex")
         ("erb" . "\\.html\\.erb")))
 
-(use-package! lsp-tailwindcss)
-
-(setq! mac-command-modifier 'meta
-       mac-option-modifier 'meta
-       ns-function-modifier 'super)
-(setq! projectile-project-search-path '("~/c/"))
-(setq! fill-column 90)
-(global-visual-line-mode -1)
-
-;; This pair lets you open the same hardlinked {multiple,project,repos}/todo.org inode in multiple
-;; project-specific buffers, each respecting the local filename and context (important for
-;; maintaining the correct context for e.g. projectile functions)
-(setq! find-file-existing-other-name nil
-       find-file-visit-truename nil)
-
-(after! projectile
-  (defun amb/goto-project-todos ()
-    (interactive)
-    (find-file (concat (projectile-project-root) "todo.org"))))
-
-; TODO: copy the contents of existing notes somewhere, set this to ~/Dropbox/org, and laugh all the
-; way to the knowledge graph bank
-(setq org-roam-directory "~/roam/")
-
-; make
-(setq! org-hierarchical-todo-statistics nil)
-
-(setq! org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
-
-(setq! org-log-into-drawer t)
-
-(setq! org-refile-use-outline-path 'full-file-path)
-
-;; TODO verify whether explicitly setting agenda files prevents automatic
-;; detection of new files in ~/notes/*.org
-(setq! org-agenda-files '("~/Dropbox/org/todo.org"
-                          "~/c/monorail/todo.org"
-                          "~/Dropbox/org/notes.org"
-                          "/Users/alex.birdsall/Dropbox/org/car.org"
-                          "/Users/alex.birdsall/Dropbox/org/doom.org"
-                          "/Users/alex.birdsall/Dropbox/org/food.org"
-                          "/Users/alex.birdsall/Dropbox/org/indiegogo.org"
-                          "/Users/alex.birdsall/Dropbox/org/linux.org"
-                          "/Users/alex.birdsall/Dropbox/org/nba.org"
-                          "/Users/alex.birdsall/Dropbox/org/house.org"))
-
-(defun org-my-auto-exclude-fn (tag)
-  (if (cond
-       ;; TODO show only the next 2
-       ((string= tag "quotidian")
-        t)
-       ;; only see work things between 8am and 7pm
-       ((string= tag "work")
-        (let ((hr (nth 2 (decode-time))))
-          (or (< hr 8) (> hr 19)))))
-      (concat "-" tag)))
-
-(setq org-agenda-auto-exclude-function 'org-my-auto-exclude-fn)
-
-(map! :after org
- :map 'org-mode-map
-      "<tab>" 'org-cycle)
-
-(use-package! outshine
-  :after org
-  :config
-  (add-hook 'prog-mode-hook 'outshine-mode)
-  ;; (defvar outline-minor-mode-prefix "\M-#")
-  )
-
-;; (use-package! mixed-pitch
-;;   :hook (org-mode . #'mixed-pitch-mode)
-;;   :config
-;;   (setq mixed-pitch-set-heigth t)
-;;   (set-face-attribute 'variable-pitch nil :height 180)
-;;   (setq mixed-pitch-variable-pitch-cursor nil))
-;; (add-hook! 'org-mode-hook #'mixed-pitch-mode)
-;; (setq mixed-pitch-variable-pitch-cursor nil)
-
-(custom-set-faces!
-  '(outline-1 :weight extra-bold :height 1.25)
-  '(outline-2 :weight bold :height 1.15)
-  '(outline-3 :weight bold :height 1.12)
-  '(outline-4 :weight semi-bold :height 1.09)
-  '(outline-5 :weight semi-bold :height 1.06)
-  '(outline-6 :weight semi-bold :height 1.03)
-  '(outline-8 :weight semi-bold)
-  '(outline-9 :weight semi-bold))
-
-(setq!
- org-hide-emphasis-markers t
- org-agenda-filter-preset '("-quotidian"))
-
-(add-hook! (org-mode) (org-appear-mode 1))
-
-(use-package! graphviz-dot-mode
-  :after org)
-
-;; TODO: figure out doom's org exporter API
-;; (after! org
-;;   '(require 'ox-gfm nil t))
+(use-package! lsp-tailwindcss
+  :after lsp)
 
 ;; all thanks and apologies to https://github.com/alphapapa/unpackaged.el
 (use-package! smerge-mode
@@ -382,7 +291,121 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
   (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh))
 
-(use-package! code-compass :defer t)
+(setq! projectile-project-search-path '("~/c/"))
 
-(let ((private-config (concat doom-private-dir "local.el")))
-  (and (file-exists-p private-config) (load private-config)))
+(use-package! code-compass :defer t
+              :config
+               (setq c/exclude-directories '("node_modules" "bower_components" "vendor" "tmp" "images")
+                     c/preferred-browser "open"))
+
+(use-package! evil-tmux-navigator
+  :config (evil-tmux-navigator-bind-keys))
+
+(use-package! evil-replace-with-register
+  :init (setq evil-replace-with-register-key (kbd "gr"))
+  :config (evil-replace-with-register-install))
+
+(use-package! evil-exchange
+  :config (evil-exchange-install))
+
+(use-package! evil-matchit
+  :config (global-evil-matchit-mode 1))
+
+(use-package! evil-textobj-line
+  :after evil)
+
+(setq! evil-ex-search-persistent-highlight nil
+       +evil-want-o/O-to-continue-comments nil)
+
+(setq org-directory "~/Dropbox/org/")
+
+(setq! org-log-into-drawer t
+       org-hierarchical-todo-statistics nil
+       org-refile-use-outline-path 'full-file-path
+       org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
+
+(custom-set-faces!
+  '(outline-1 :weight extra-bold :height 1.25)
+  '(outline-2 :weight bold :height 1.15)
+  '(outline-3 :weight bold :height 1.12)
+  '(outline-4 :weight semi-bold :height 1.09)
+  '(outline-5 :weight semi-bold :height 1.06)
+  '(outline-6 :weight semi-bold :height 1.03)
+  '(outline-8 :weight semi-bold)
+  '(outline-9 :weight semi-bold))
+
+(setq!
+ org-hide-emphasis-markers t
+ org-agenda-filter-preset '("-quotidian"))
+
+(add-hook! (org-mode) (org-appear-mode 1))
+
+(setq org-roam-directory "~/roam/")
+
+(use-package! websocket
+    :after org-roam)
+
+(use-package! org-roam-ui
+    :after org-roam ;; or :after org
+;;         normally we'd recommend hooking orui after org-roam, but since org-roam does not have
+;;         a hookable mode anymore, you're advised to pick something yourself
+;;         if you don't care about startup time, use
+;;  :hook (after-init . org-roam-ui-mode)
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
+
+(setq! find-file-existing-other-name nil
+       find-file-visit-truename nil)
+
+(after! projectile
+  (defun amb/goto-project-todos ()
+    (interactive)
+    ;; TODO dynamically create one if missing? This system can be improved further.
+    (find-file (concat (projectile-project-root) "todo.org"))))
+
+;; TODO verify whether explicitly setting agenda files prevents automatic
+;; detection of new files in ~/notes/*.org
+(setq! org-agenda-files '("~/Dropbox/org/todo.org"
+                          "~/c/monorail/todo.org"
+                          "~/Dropbox/org/notes.org"
+                          "/Users/alex.birdsall/Dropbox/org/car.org"
+                          "/Users/alex.birdsall/Dropbox/org/doom.org"
+                          "/Users/alex.birdsall/Dropbox/org/food.org"
+                          "/Users/alex.birdsall/Dropbox/org/indiegogo.org"
+                          "/Users/alex.birdsall/Dropbox/org/linux.org"
+                          "/Users/alex.birdsall/Dropbox/org/nba.org"
+                          "/Users/alex.birdsall/Dropbox/org/house.org"))
+
+(defun org-my-auto-exclude-fn (tag)
+  (if (cond
+       ;; TODO show only the next 2
+       ((string= tag "quotidian")
+        t)
+       ;; only see work things between 8am and 7pm
+       ((string= tag "work")
+        (let ((hr (nth 2 (decode-time))))
+          (or (< hr 8) (> hr 19)))))
+      (concat "-" tag)))
+
+(setq org-agenda-auto-exclude-function 'org-my-auto-exclude-fn)
+
+(map! :after org
+ :map 'org-mode-map
+      "<tab>" 'org-cycle)
+
+(use-package! outshine
+  :after org
+  :config
+  (add-hook 'prog-mode-hook 'outshine-mode))
+
+(use-package! graphviz-dot-mode
+  :after org)
+
+;; TODO: figure out doom's org exporter API
+;; (after! org
+;;   '(require 'ox-gfm nil t))
+(use-package! ox-gfm
+  :after org)
