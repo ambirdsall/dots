@@ -590,7 +590,7 @@ With that out of the way, a grab-bag of tweaks and variables.
 ** roam
 First, I need a roam directory to serve as the "slipbox":
 #+begin_src elisp
-(setq org-roam-directory "~/Dropbox/roam/")
+(setq org-roam-directory "~/roam/")
 #+end_src
 
 I'd like a pretty and interactive graph visualization, too, while I'm at it:
@@ -713,9 +713,9 @@ isn't packaged with the language and is therefore a big hassle to use across
 different computers, so it only tangles if that file is in the load path.
 
 This is begging for a better solution; for example, using racket instead of
-guile (BOOM, GOT 'EM).
+guile.
 
-#+begin_src guile :tangle (if (string-equal "exists" (shell-command-to-string "test -e `guile -c \"(display (string-append (car %load-path) \\\"/ice-9/colorized.scm\\\"))\"` && echo -n exists")) "~/.guile" "no")
+#+begin_src scheme :tangle (if (string-equal "exists" (shell-command-to-string "test -e `guile -c \"(display (string-append (car %load-path) \\\"/ice-9/colorized.scm\\\"))\"` && echo -n exists")) "~/.guile" "no")
 (use-modules
  (oop goops)
  (ice-9 colorized)

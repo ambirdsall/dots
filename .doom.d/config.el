@@ -340,7 +340,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (add-hook! (org-mode) (org-appear-mode 1))
 
-(setq org-roam-directory "~/roam/")
+(setq org-roam-directory "~/Dropbox/roam/")
 
 (use-package! websocket
     :after org-roam)
