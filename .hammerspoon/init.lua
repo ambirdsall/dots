@@ -1,12 +1,21 @@
-hs.alert.show("Spacehammer config loaded")
+-- * reload the config if any source file in the config dir changes
+function reloadConfig(files)
+  doReload = false
+  for _,file in pairs(files) do
+    if file:sub(-4) == ".lua" or file:sub(-4) == ".fnl" then
+      doReload = true
+    end
+  end
 
--- Support upcoming 5.4 release and also use luarocks' local path
-package.path = package.path .. ";" .. os.getenv("HOME") .. "/.luarocks/share/lua/5.4/?.lua;" .. os.getenv("HOME") .. "/.luarocks/share/lua/5.4/?/init.lua"
-package.cpath = package.cpath .. ";" .. os.getenv("HOME") .. "/.luarocks/lib/lua/5.4/?.so"
-package.path = package.path .. ";" .. os.getenv("HOME") .. "/.luarocks/share/lua/5.3/?.lua;" .. os.getenv("HOME") .. "/.luarocks/share/lua/5.3/?/init.lua"
-package.cpath = package.cpath .. ";" .. os.getenv("HOME") .. "/.luarocks/lib/lua/5.3/?.so"
+  if doReload then
+    hs.reload()
+  end
+end
 
-fennel = require("fennel")
+local watcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon", reloadConfig):start()
+
+-- * load fennel language and config
+local fennel = require("fennel")
 table.insert(package.loaders or package.searchers, fennel.searcher)
 
-require "core"
+require("config")
