@@ -202,8 +202,3 @@
        :config
        literate
        (default +bindings +smartparens))
-
-;; Help me help you^H^H^Hme
-(when doom-debug-p
-  (require 'benchmark-init)
-  (add-hook 'doom-first-input-hook #'benchmark-init/deactivate))
