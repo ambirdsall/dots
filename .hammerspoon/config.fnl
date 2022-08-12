@@ -1,15 +1,10 @@
 ;; -*- mode: fennel; auto-save-default: nil -*-
 
-;; * define utility fns
-;; ** API wrappers
-(fn notify [titleText bodyText]
-  "Send a native growl notification with text"
-  (: (hs.notify.new {:title titleText :informativeText bodyText}) :send))
-
-(fn alert [text] (hs.alert.show text))
-
-(local logger (hs.logger.new :amb :debug))
-(fn log [message] (logger:i message))
+(local {: notify
+        : alert
+        : log
+        : bearclaw
+        : shift+bearclaw} (require "utils"))
 
 ;; * script loading setup
 ;; ** load init-local.lua
@@ -19,13 +14,6 @@
 
 ;; * keybindings
 ;; ** modifiers and helper fns
-(fn bearclaw [key func]
-  "bind a function func to run on bearclaw+key"
-  (hs.hotkey.bind [:cmd :alt :ctrl] key func))
-
-(fn shift+bearclaw [key func]
-  "bind a function func to run on shift+bearclaw+key"
-  (hs.hotkey.bind [:shift :cmd :alt :ctrl] key func))
 
 ;; ** hammerspoon management
 (bearclaw :i hs.toggleConsole)
@@ -33,9 +21,8 @@
 
 ;; ** window management
 ;; *** switchers
-(local dev-switcher (hs.window.switcher.new ["Emacs" "iTerm"]))
-(bearclaw :d #((log "itching to do some dev switching") (dev-switcher:next)))
-(shift+bearclaw :d #((log "switching to do some dev, wait...") (dev-switcher:previous)))
+(local dev-switcher (hs.window.switcher.new ["Emacs" "iTerm2" "Google Chrome"]))
+(bearclaw :space #((log "itching for some switching") (dev-switcher:next)))
 
 ;; *** open specific apps
 ;; TODO Make the apps shortcuts toggle instead of unconditionally focusing
@@ -47,8 +34,7 @@
                     emacs-ng (: emacs-ng :setFrontmost)
                     (alert "Bruh. How do I focus an emacs GUI if you aren't running one."))))
 
-(bearclaw :t #(hs.eventtap.keyStroke [:alt] :space))
-(shift+bearclaw :t #(hs.application.launchOrFocus "iTerm"))
+(bearclaw :t #(hs.application.launchOrFocus "iTerm"))
 
 (bearclaw :s #(hs.application.launchOrFocus "Slack"))
 
@@ -61,8 +47,9 @@
                     (alert "Bruh. How do I focus cypress if you aren't running it."))))
 
 ;; *** grid
-;; currently, the grid is the default 3x3, so grid can be used for 1/3s and bearclaw + hjkl can be
-;; used for halves. Might go to a 12x12 grid to get both.
+;; currently, the grid is the default 3x3; 3x2 would be better, though, using these keys:
+;;    | w | e | r |
+;;    | s | d | f |
 (bearclaw :g hs.grid.show)
 
 ;; *** custom window management
@@ -109,6 +96,8 @@ h :: bottom-right corner -> top of screen
 
 (bearclaw "=" window/center)
 
+;; TODO: make this toggle between full size and previous.
+;; How to store previous size, though: global hashmap?
 (local window/fullscreen
        (window-resizer (fn [window screen]
                          (set window.x screen.x)
@@ -144,7 +133,7 @@ h :: bottom-right corner -> top of screen
                          (set window.w (/ screen.w 2))
                          (set window.h screen.h))))
 
-(bearclaw :return window/fullscreen)
+(bearclaw :m window/fullscreen)
 
 (bearclaw :h window/left-half)
 (bearclaw :j window/bottom-half)
