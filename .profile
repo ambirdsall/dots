@@ -46,6 +46,7 @@ em () {
 
 if [ -s "$HOME/.guix-profile" ]; then
     GUIX_PROFILE="$HOME/.guix-profile"
+    GUIX_LOCPATH="$GUIX_PROFILE/lib/locale"
     source "$GUIX_PROFILE/etc/profile"
 fi
 
