@@ -170,7 +170,7 @@ PS1_self_implemented='$(reverse_dir_stack)%F{cyan}%~%f $(current_branch)%F{136}$
 
 # ** but for real
 if [ $IS_MAC ]; then
-    source "/usr/local/opt/zsh-git-prompt/zshrc.sh"
+    source "/opt/homebrew/opt/zsh-git-prompt/zshrc.sh"
 else
     source "/usr/lib/zsh-git-prompt/zshrc.sh"
 fi
@@ -183,8 +183,8 @@ PS1='%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-w
 # source /opt/asdf-vm/completions/asdf.bash
 
 # * rbenv
-if [ $IS_MAC ]; then
-    export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl@1.1)"
+if command -v rbenv; then
+    [ $IS_MAC ] && export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl@1.1)"
     eval "$(rbenv init -)"
 fi
 
@@ -207,3 +207,6 @@ dots () {
 
 # * Aliases
 [[ -a ~/aliases.zsh ]] && source ~/aliases.zsh
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+source /Users/alexanderbirdsall/.airbuild/airbuildrc # SourceAirbyteRC
