@@ -49,6 +49,4 @@ if [ -s "$HOME/.guix-profile" ]; then
     source "$GUIX_PROFILE/etc/profile"
 fi
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
