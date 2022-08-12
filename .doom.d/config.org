@@ -357,10 +357,6 @@ I know, I know.
 #+begin_src elisp
 (use-package! graphql-mode)
 #+end_src
-*** typescript
-#+begin_src elisp
-(setq typescript-indent-level 2)
-#+end_src
 *** elixir
 #+begin_src elisp
 (after! alchemist-mode
@@ -375,6 +371,61 @@ I know, I know.
 
 #+end_src
 *** the four most frustrating words in the english language: web development in emacs
+First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckruse/doom.d/src/commit/c6c7163e79a0fecdda6df9e81e60dc246170213a/config.el
+**** typescript setup
+#+begin_src elisp :tangle packages.el
+(package! tsi :recipe (:type git :host github :repo "orzechowskid/tsi.el"))
+(package! tsx-mode :recipe (:type git :host github :repo "orzechowskid/tsx-mode.el"))
+#+end_src
+
+#+begin_src elisp
+(setq typescript-indent-level 2)
+
+(use-package! tsx-mode
+  :mode (("\\.tsx\\'" . tsx-mode))
+  :hook (tsx-mode . lsp!)
+  :hook (tsx-mode . rainbow-delimiters-mode)
+  :hook (tsx-mode . add-node-modules-path)
+  :custom (tsx-mode-tsx-auto-tags  t)
+  :defer t
+  :init
+  (after! flycheck
+    (flycheck-add-mode 'javascript-eslint 'tsx-mode))
+
+  (add-hook! 'tsx-mode-hook
+    (defun ck/tsx-setup ()
+      (flycheck-select-checker 'javascript-eslint)
+      (flycheck-add-next-checker 'javascript-eslint 'lsp)
+      (pushnew! flycheck-disabled-checkers
+                'javascript-jshint
+                'tsx-tide
+                'jsx-tide)))
+
+  (set-electric! 'tsx-mode
+    :chars '(?\} ?\))
+    :words '("||" "&&")))
+#+end_src
+
+**** prettier et al with apheleia (until elken's module drops lol)
+#+begin_src elisp :tangle packages.el
+(package! apheleia)
+  #+end_src
+
+#+begin_src elisp
+(use-package! apheleia
+  :hook ((tsx-mode . apheleia-mode)
+         (typescript-mode . apheleia-mode)
+         (js-mode . apheleia-mode)
+         (json-mode . apheleia-mode)
+         (css-mode . apheleia-mode)
+         (scss-mode . apheleia-mode))
+  :defer t
+  :config
+  (push '(tsx-mode . prettier) apheleia-mode-alist)
+  (push '(scss-mode . prettier) apheleia-mode-alist)
+  (push '(css-mode . prettier) apheleia-mode-alist))
+  #+end_src
+
 **** web-mode
 #+begin_src elisp
 (setq! web-mode-markup-indent-offset 2

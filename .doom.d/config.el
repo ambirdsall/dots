@@ -213,8 +213,6 @@ used interactively."
 
 (use-package! graphql-mode)
 
-(setq typescript-indent-level 2)
-
 (after! alchemist-mode
   (map! (:when (featurep! :lang elixir)    ; local conditional
         (:map alchemist-mode-map
@@ -224,6 +222,45 @@ used interactively."
          :localleader
          "tt" #'exunit-toggle-file-and-test
          "tT" #'exunit-toggle-file-and-test-other-window))))
+
+(setq typescript-indent-level 2)
+
+(use-package! tsx-mode
+  :mode (("\\.tsx\\'" . tsx-mode))
+  :hook (tsx-mode . lsp!)
+  :hook (tsx-mode . rainbow-delimiters-mode)
+  :hook (tsx-mode . add-node-modules-path)
+  :custom (tsx-mode-tsx-auto-tags  t)
+  :defer t
+  :init
+  (after! flycheck
+    (flycheck-add-mode 'javascript-eslint 'tsx-mode))
+
+  (add-hook! 'tsx-mode-hook
+    (defun ck/tsx-setup ()
+      (flycheck-select-checker 'javascript-eslint)
+      (flycheck-add-next-checker 'javascript-eslint 'lsp)
+      (pushnew! flycheck-disabled-checkers
+                'javascript-jshint
+                'tsx-tide
+                'jsx-tide)))
+
+  (set-electric! 'tsx-mode
+    :chars '(?\} ?\))
+    :words '("||" "&&")))
+
+(use-package! apheleia
+  :hook ((tsx-mode . apheleia-mode)
+         (typescript-mode . apheleia-mode)
+         (js-mode . apheleia-mode)
+         (json-mode . apheleia-mode)
+         (css-mode . apheleia-mode)
+         (scss-mode . apheleia-mode))
+  :defer t
+  :config
+  (push '(tsx-mode . prettier) apheleia-mode-alist)
+  (push '(scss-mode . prettier) apheleia-mode-alist)
+  (push '(css-mode . prettier) apheleia-mode-alist))
 
 (setq! web-mode-markup-indent-offset 2
        web-mode-css-indent-offset 2
