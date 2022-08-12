@@ -170,9 +170,13 @@ PS1_self_implemented='$(reverse_dir_stack)%F{cyan}%~%f $(current_branch)%F{136}$
 
 # ** but for real
 if [ $IS_MAC ]; then
-    source "/opt/homebrew/opt/zsh-git-prompt/zshrc.sh"
+    source /opt/homebrew/opt/zsh-git-prompt/zshrc.sh
+elif [ -f  /usr/lib/zsh-git-prompt/zshrc.sh ]; then
+    source /usr/lib/zsh-git-prompt/zshrc.sh
+elif [ -f  ~/c/zsh-git-prompt/zshrc.sh ]; then
+    source ~/c/zsh-git-prompt/zshrc.sh
 else
-    source "/usr/lib/zsh-git-prompt/zshrc.sh"
+    echo "Can't find zsh-git-prompt directory" >&2
 fi
 
 PS1='%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-work-tree &>/dev/null && git_super_status || echo -e "\b") $(~/bin/moon-phase) %F{3}$(current_commit 2>/dev/null)%f
