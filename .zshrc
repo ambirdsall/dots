@@ -197,6 +197,15 @@ if command -v direnv; then
     eval "$(direnv hook zsh)"
 fi
 
+# * ssh-agent
+# TODO figure out if this works as-is on macOS
+if ! pgrep -u "$USER" ssh-agent > /dev/null; then
+    ssh-agent > "$XDG_RUNTIME_DIR/ssh-agent.env"
+fi
+if [[ ! -f "$SSH_AUTH_SOCK" ]]; then
+    source "$XDG_RUNTIME_DIR/ssh-agent.env" >/dev/null
+fi
+
 # * dotfile maintenance
 dots () {
     if [[ $# -gt 0 ]]; then
