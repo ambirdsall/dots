@@ -1,3 +1,5 @@
+# -*- outshine-mode: t; -*-
+
 # This file is a modified version based on default i3-config-wizard config
 # source is available here:
 # https://raw.githubusercontent.com/endeavouros-team/endeavouros-i3wm-setup/master/.config/i3/config
@@ -63,14 +65,15 @@ gaps inner 6
 # window title alignment
 #title_align center
 
-# Use Mouse+$mod to drag floating windows to their wanted position
+# * window management
+# ** Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
 
-# switch/iterate between workspaces
+# ** switch/iterate between workspaces
 bindsym $mod+Tab workspace next
 bindsym $mod+Shift+Tab workspace prev
 
-# switch to workspace
+# ** switch to workspace
 bindsym $mod+1    workspace  $ws1
 bindsym $mod+2    workspace  $ws2
 bindsym $mod+3    workspace  $ws3
@@ -82,7 +85,7 @@ bindsym $mod+8    workspace  $ws8
 bindsym $mod+9    workspace  $ws9
 bindsym $mod+0    workspace  $ws10
 
-# switch to workspace with numpad keys
+# ** switch to workspace with numpad keys
 bindcode $mod+87 workspace 1
 bindcode $mod+88 workspace 2
 bindcode $mod+89 workspace 3
@@ -94,7 +97,7 @@ bindcode $mod+80 workspace 8
 bindcode $mod+81 workspace 9
 bindcode $mod+90 workspace 10
 
-# switch to workspace with numlock numpad keys
+# ** switch to workspace with numlock numpad keys
 bindcode $mod+Mod2+87 workspace $ws1
 bindcode $mod+Mod2+88 workspace $ws2
 bindcode $mod+Mod2+89 workspace $ws3
@@ -106,7 +109,7 @@ bindcode $mod+Mod2+80 workspace $ws8
 bindcode $mod+Mod2+81 workspace $ws9
 bindcode $mod+Mod2+90 workspace $ws10
 
-# move focused container to workspace
+# ** move focused container to workspace
 bindsym $mod+Shift+1    move container to workspace  $ws1
 bindsym $mod+Shift+2    move container to workspace  $ws2
 bindsym $mod+Shift+3    move container to workspace  $ws3
@@ -118,7 +121,7 @@ bindsym $mod+Shift+8    move container to workspace  $ws8
 bindsym $mod+Shift+9    move container to workspace  $ws9
 bindsym $mod+Shift+0    move container to workspace  $ws10
 
-# move focused container to workspace with numpad keys
+# ** move focused container to workspace with numpad keys
 bindcode $mod+Shift+Mod2+87 	move container to workspace  $ws1
 bindcode $mod+Shift+Mod2+88 	move container to workspace  $ws2
 bindcode $mod+Shift+Mod2+89 	move container to workspace  $ws3
@@ -130,7 +133,7 @@ bindcode $mod+Shift+Mod2+80 	move container to workspace  $ws8
 bindcode $mod+Shift+Mod2+81 	move container to workspace  $ws9
 bindcode $mod+Shift+Mod2+90 	move container to workspace  $ws10
 
-# move focused container to workspace with numpad keys
+# ** move focused container to workspace with numpad keys
 bindcode $mod+Shift+87 	 move container to workspace  $ws1
 bindcode $mod+Shift+88 	 move container to workspace  $ws2
 bindcode $mod+Shift+89 	 move container to workspace  $ws3
@@ -142,7 +145,17 @@ bindcode $mod+Shift+80 	 move container to workspace  $ws8
 bindcode $mod+Shift+81 	 move container to workspace  $ws9
 bindcode $mod+Shift+90 	 move container to workspace  $ws10
 
-# resize window (you can also use the mouse for that):
+# ** move focused workspace between monitors
+# (I know, the directions look backwards to me too)
+bindsym $mod+Ctrl+l move workspace to output left
+bindsym $mod+Ctrl+Right move workspace to output left
+bindsym $mod+Ctrl+h move workspace to output right
+bindsym $mod+Ctrl+Left move workspace to output right
+
+# ** TODO bindsym $mod+` focus prior workspace
+
+# * modes
+# ** resize window (you can also use the mouse for that):
 mode "resize" {
 	# These bindings trigger as soon as you enter the resize mode
 	# Pressing left will shrink the window's width.
@@ -167,9 +180,36 @@ mode "resize" {
 
 bindsym $mod+r mode "resize"
 
-######################################
-# keybindings for different actions: #
-######################################
+# ** folding windows together (combine a tile with a specific peer in by stacking)
+# you can fold over (focused window is on top of stack) or fold under (whatever's in the selected peer tile is on top of stack); you can fold in a cardinal direction (up, down, left, right); it's a visual operation.
+# TODO write scripts for all operations
+mode "fold" {
+	bindsym h fold-over left
+	bindsym Shift+h fold-under left
+	bindsym j fold-over down
+	bindsym Shift+j fold-under down
+	bindsym k fold-over up
+	bindsym Shift+k fold-under up
+	bindsym l fold-over right
+	bindsym Shift+l fold-under right
+
+	bindsym Left fold-over down
+	bindsym Shift+Left fold-under down
+	bindsym Down fold-over down
+	bindsym Shift+Down fold-under down
+	bindsym Up fold-over down
+	bindsym Shift+Up fold-under down
+	bindsym Right fold-over down
+	bindsym Shift+Right fold-under down
+
+	# back to normal: Enter or Escape
+	bindsym Return mode "default"
+	bindsym Escape mode "default"
+}
+
+# bindsym $mod+Ctrl+f "fold"
+
+# * keybindings for different actions
 
 # start a terminal
 bindsym $mod+Return exec xfce4-terminal
@@ -187,13 +227,14 @@ bindsym $mod+Shift+e exec ~/.config/i3/scripts/powermenu
 bindsym $mod+Shift+b exec ~/.config/i3/scripts/blur-lock
 
 # reload the configuration file
-bindsym $mod+Shift+c reload
+bindsym $mod+Ctrl+c reload
 
 # restart i3 inplace (preserves your layout/session, can be used to update i3)
 bindsym $mod+Shift+r restart
 
 # keybinding in fancy rofi (automated):
-bindsym F1 exec ~/.config/i3/scripts/keyhint-2
+bindsym $mod+w exec ~/.config/i3/scripts/keyhint-2
+bindsym $mod+Shift+/ exec ~/.config/i3/scripts/keyhint-2
 # alternative
 # keybinding list in editor:
 # bindsym $mod+F1 exec xed ~/.config/i3/keybindings
@@ -201,6 +242,11 @@ bindsym F1 exec ~/.config/i3/scripts/keyhint-2
 # Backlight control
 bindsym XF86MonBrightnessUp exec xbacklight +5 && notify-send "Brightness - $(xbacklight -get | cut -d '.' -f 1)%"
 bindsym XF86MonBrightnessDown exec xbacklight -5 && notify-send "Brightness - $(xbacklight -get | cut -d '.' -f 1)%"
+
+# keyboard backlight
+# TODO why this doesn't this work tho
+bindsym $mod+XF86MonBrightnessUp exec ~/bin/kbd-backlight-on
+bindsym $mod+XF86MonBrightnessDown exec ~/bin/kbd-backlight-off
 
 # change focus
 bindsym $mod+h focus left
@@ -244,7 +290,7 @@ bindsym $mod+e layout toggle split
 bindsym $mod+Shift+space floating toggle
 
 # change focus between tiling / floating windows
-bindsym $mod+space focus mode_toggle
+bindsym $mod+Ctrl+space focus mode_toggle
 
 # focus the parent container
 bindsym $mod+a focus parent
@@ -276,9 +322,11 @@ bindsym $mod+p exec /usr/local/bin/switch-audio-port
 
 ## App shortcuts
 # bindsym $mod+w exec /usr/bin/firefox
- bindsym $mod+w exec /usr/bin/chromium
-bindsym $mod+n exec /usr/bin/thunar
-bindsym Print exec scrot ~/%Y-%m-%d-%T-screenshot.png && notify-send "Screenshot saved to ~/$(date +"%Y-%m-%d-%T")-screenshot.png"
+# bindsym $mod+w exec /usr/bin/chromium
+# bindsym $mod+n exec /usr/bin/thunar
+
+# the sleep call is to give the system time to release the pointer so scrot can use it for a selection
+bindsym $mod+Shift+s exec sleep 0.2 && scrot -s ~/screenshots/%Y-%m-%d-%T-screenshot.png && notify-send "Screenshot saved to ~/screenshots/$(date +"%Y-%m-%d-%T")-screenshot.png"
 
 # Power Profiles menu switcher (rofi)
 bindsym $mod+Shift+p exec ~/.config/i3/scripts/power-profiles
@@ -289,16 +337,16 @@ bindsym $mod+Shift+p exec ~/.config/i3/scripts/power-profiles
 
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
-# icons can be copy/pasted from https://fontawesome.com/v5/cheatsheet
+# icons can be copy/pasted from https://fontawesome.com/v4.7/cheatsheet
 set $ws1 "1:"
 set $ws2 "2:"
 set $ws3 "3:"
 set $ws4 "4:"
 set $ws5 "5:"
 set $ws6 "6:"
-set $ws7 "7:"
+set $ws7 "7:"
 set $ws8 "8:"
-set $ws9 "9:"
+set $ws9 "9:"
 set $ws10 "10:"
 
 # use workspaces on different displays:
@@ -312,10 +360,11 @@ set $ws10 "10:"
 
 # bind program to workspace and focus to them on startup:
 # assign [class="Xfce4-terminal"] $ws1
-assign [class="(?i)chromium"] $ws2
-assign [class="Thunar"] $ws3
-assign [class="Thunderbird"] $ws4
-assign [class="TelegramDesktop"] $ws5
+# assign [class="(?i)chromium"] $ws2
+# assign [class="Thunar"] $ws3
+# assign [class="Thunderbird"] $ws4
+assign [class="Slack"] $ws5
+assign [class="zoom"] $ws7
 
 # automatic set focus new window if it opens on another workspace then the current:
 for_window [class=Xfce4-terminal] focus
@@ -323,6 +372,7 @@ for_window [class=(?i)firefox] focus
 for_window [class=Thunar] focus
 for_window [class=Thunderbird] focus
 for_window [class=TelegramDesktop] focus
+for_window [class=zoom] focus
 
 ##############
 # compositor #
@@ -347,10 +397,10 @@ for_window [class=TelegramDesktop] focus
 # For modifications, it can be copied to ~/.config/picom/picom.conf or ~/.config/picom.conf
 #
 # using default config 
-exec_always --no-startup-id picom -b --inactive-opacity=0.8 --fade-delta=1
+# exec_always --no-startup-id picom -b --inactive-opacity=0.8 --fade-delta=1
 #
 # for custom config:
-#exec_always --no-startup-id picom --config  ~/.config/picom.conf
+exec_always --no-startup-id picom --config  ~/.config/picom.conf
 
 #############################################
 # autostart applications/services on login: #
@@ -387,8 +437,8 @@ exec --no-startup-id dex --autostart --environment i3
 exec --no-startup-id feh --bg-scale ~/Pictures/crescent-pluto.jpg
 
 # set powersavings for display:
-exec --no-startup-id xset s 480 dpms 600 600 600
-exec --no-startup-id xss-lock -- ~/.config/i3/scripts/blur-lock
+# exec --no-startup-id xset s 480 dpms 600 600 600
+# exec --no-startup-id xss-lock -n ~/.config/i3/scripts/dim-screen -- ~/.config/i3/scripts/blur-lock
 
 # disable power saving (for example if using xscreensaver)
 #exec --no-startup-id xset -dpms
@@ -410,12 +460,13 @@ exec --no-startup-id dbus-launch dunst --config ~/.config/dunst/dunstrc
 # autotiling script
 # https://github.com/nwg-piotr/autotiling
 # `yay -S autotiling ;) (it is in AUR)
-#exec_always --no-startup-id autotiling
+exec_always --no-startup-id autotiling
 
 # Autostart apps as you like
-exec --no-startup-id sleep 2 && xfce4-terminal
- exec --no-startup-id sleep 7 && chromium
-exec --no-startup-id sleep 3 && emacs --daemon &
+exec --no-startup-id sleep 2 && chromium
+exec --no-startup-id sleep 3 && cd ~/c/airbyte/airbyte-webapp && emacs --daemon &
+exec --no-startup-id sleep 5 && slack
+# exec --no-startup-id sleep 7 && zoom
 
 ###############
 # system tray #
@@ -487,36 +538,38 @@ client.urgent		    	$urgentred	$urgentred	$white		$yellowbrown	$yellowbrown
 ############################################
 # bar settings (input comes from i3blocks) #
 ############################################
+# n.b. i3bar HAS BEEN DISABLED IN THIS HERE CONFIG, since xfce-panel (the top panel) can
+# be made nicer than my (aready quite nice!) i3bar with fairly little effort.
 
 # Start i3bar to display a workspace bar
 # (plus the system information i3status finds out, if available)
-bar {
-		font pango: Noto Sans Regular 10
-		status_command i3blocks -c ~/.config/i3/i3blocks.conf
-	    position bottom
-#	    	i3bar_command i3bar --transparency
-# it could be that you have no primary display set: set one (xrandr --output <output> --primary)
-# reference: https://i3wm.org/docs/userguide.html#_tray_output
-		    tray_output primary
-		    tray_padding 0
-
-# When strip_workspace_numbers is set to yes,
-# any workspace that has a name of the form
-# “[n][:][NAME]” will display only the name.
-# strip_workspace_numbers yes
-strip_workspace_name no
-
-	colors {
-	    separator          $purple
-	    background         $darkgrey
-	    statusline         $white
-#                      		border 		        bg		txt		indicator
-		focused_workspace	$mediumgrey	   		$grey		$darkgrey	$purple
-		active_workspace	$lightblue      	$mediumgrey	$darkgrey	$purple
-		inactive_workspace	$darkgrey   		$darkgrey	$grey		$purple
-		urgent_workspace	$urgentred	    	$urgentred	$white		$purple
-	}
-}
+# bar {
+# 		font pango: Noto Sans Regular 10
+# 		status_command i3blocks -c ~/.config/i3/i3blocks.conf
+# 	    position bottom
+# #	    	i3bar_command i3bar --transparency
+# # it could be that you have no primary display set: set one (xrandr --output <output> --primary)
+# # reference: https://i3wm.org/docs/userguide.html#_tray_output
+# 		    tray_output primary
+# 		    tray_padding 0
+#
+# # When strip_workspace_numbers is set to yes,
+# # any workspace that has a name of the form
+# # “[n][:][NAME]” will display only the name.
+# # strip_workspace_numbers yes
+# strip_workspace_name no
+#
+# 	colors {
+# 	    separator          $purple
+# 	    background         $darkgrey
+# 	    statusline         $white
+# #                      		border 		        bg		txt		indicator
+# 		focused_workspace	$mediumgrey	   		$grey		$darkgrey	$purple
+# 		active_workspace	$lightblue      	$mediumgrey	$darkgrey	$purple
+# 		inactive_workspace	$darkgrey   		$darkgrey	$grey		$purple
+# 		urgent_workspace	$urgentred	    	$urgentred	$white		$purple
+# 	}
+# }
 
 # you can add different bars for multidisplay setups on each display:
 # set output HDMI-0 to the display you want the bar, --transparency can be set.
@@ -571,6 +624,21 @@ bindsym $mod+t exec rofi -show window \
 
 ## rofi bindings to manage clipboard (install rofi-greenclip from the AUR)
 
-#exec --no-startup-id greenclip daemon>/dev/null
-#bindsym $mod+c exec --no-startup-id rofi -modi "clipboard:greenclip print" -show clipboard \
-#		-config ~/.config/rofi/rofidmenu.rasi
+exec --no-startup-id greenclip daemon>/dev/null
+bindsym $mod+c exec --no-startup-id rofi -modi "clipboard:greenclip print" -show clipboard \
+		-config ~/.config/rofi/rofidmenu.rasi
+
+##############
+# Miscellany #
+##############
+
+# It is terribly annoying when zoom popups take up full window splits instead of
+# floating; per https://www.reddit.com/r/i3wm/comments/mcwpur/comment/hhlck74/
+# this rule will filter the floating behavior to just non-meeting windows
+for_window [title="^zoom$" class="[zoom]*"] floating enable
+
+bindsym $mod+Shift+m exec ~/.config/i3/scripts/monitors
+bindsym $mod+Shift+c exec emacsclient -c -n -e "(org-capture)"
+bindsym $mod+Shift+a exec emacsclient -c -n -e '(org-agenda nil "a")'
+
+exec_once ~/bin/kbd-light-on
