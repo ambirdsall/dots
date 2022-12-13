@@ -73,14 +73,16 @@ EDITOR='qed'
 # VI MODE KEYBINDINGS (ins mode)
 bindkey -M viins '^a'    beginning-of-line
 bindkey -M viins '^e'    end-of-line
+bindkey -M viins '^h'    backward-delete-char
+bindkey -M viins '^k'    kill-line
+bindkey -M viins '^n'    down-line-or-history
+bindkey -M viins '^p'    up-line-or-history
 bindkey -M viins '^r'    history-incremental-pattern-search-backward
 bindkey -M viins '^s'    history-incremental-pattern-search-forward
-bindkey -M viins '^p'    up-line-or-history
-bindkey -M viins '^n'    down-line-or-history
-bindkey -M viins '^y'    yank
-bindkey -M viins '^w'    backward-kill-word
+bindkey -M viins '^t'    transpose-chars
 bindkey -M viins '^u'    backward-kill-line
-bindkey -M viins '^h'    backward-delete-char
+bindkey -M viins '^w'    backward-kill-word
+bindkey -M viins '^y'    yank
 bindkey -M viins '^?'    backward-delete-char
 bindkey -M viins '^_'    undo
 bindkey -M viins '^x^r'  redisplay
@@ -90,6 +92,7 @@ bindkey -M viins '\e[2~' overwrite-mode    # Insert
 bindkey -M viins '\ef'   forward-word      # Alt-f
 bindkey -M viins '\eb'   backward-word     # Alt-b
 bindkey -M viins '\ed'   kill-word         # Alt-d
+bindkey -M viins '\et'   transpose-words
 
 
 # VI MODE KEYBINDINGS (cmd mode)
@@ -121,8 +124,10 @@ zle -N zle-line-init
 zle -N zle-keymap-select
 
 # * PAGERs
-export PAGER='bat --plain'
-export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
+if command -v bat > /dev/null; then
+    export PAGER='bat --plain'
+    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+fi
 
 # * Prompt
 # ** util
@@ -162,12 +167,15 @@ dirty_check () {
     echo $GIT_DIRTY_CHECK_STATUS_COLUMNS | grep '??' > /dev/null && printf "..." || true
 }
 
-PS1_self_implemented='$(reverse_dir_stack)%F{cyan}%~%f $(current_branch)%F{136}$(current_commit)%f$(dirty_check) $(~/bin/moon-phase)
-%(?.%F{239}.%F{196})ᐇ%f '
 
 # ** but for real
-if [ $IS_MAC ]; then
+if [ -f /opt/homebrew/opt/zsh-git-prompt/zshrc.sh ]; then
+    # brew install zsh-git-prompt
     source /opt/homebrew/opt/zsh-git-prompt/zshrc.sh
+elif [ -f /usr/share/zsh/plugins/zsh-git-prompt/zshrc.sh ]; then
+    # aura -S zsh-git-prompt-hs-git
+    export GIT_PROMPT_EXECUTABLE="haskell"
+    source /usr/share/zsh/plugins/zsh-git-prompt/zshrc.sh
 elif [ -f  /usr/lib/zsh-git-prompt/zshrc.sh ]; then
     source /usr/lib/zsh-git-prompt/zshrc.sh
 elif [ -f  ~/c/zsh-git-prompt/zshrc.sh ]; then
@@ -176,8 +184,13 @@ else
     echo "Can't find zsh-git-prompt directory" >&2
 fi
 
-PS1='%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-work-tree &>/dev/null && git_super_status || echo -e "\b") $(~/bin/moon-phase) %F{3}$(current_commit 2>/dev/null)%f
+if [[ -n $_HAS_ZSH_GIT_PROMPT_PKG ]]; then
+    PS1='%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-work-tree &>/dev/null && git_super_status || echo -e "\b") $(~/bin/moon-phase) %F{3}$(current_commit 2>/dev/null)%f
 %F{239}└%f%(?.%F{239}.%F{196})➣%f '
+else
+    PS1='$(reverse_dir_stack)%F{cyan}%~%f $(current_branch)%F{136}$(current_commit)%f$(dirty_check) $(~/bin/moon-phase)
+%(?.%F{239}.%F{196})ᐇ%f '
+fi
 
 # * asdf
 # source /opt/asdf-vm/asdf.sh
@@ -194,13 +207,28 @@ if command -v direnv; then
     eval "$(direnv hook zsh)"
 fi
 
-# * ssh-agent
-# TODO figure out if this works as-is on macOS
+# * ssh
+# ** get ssh-agent running all the dang time
 if ! pgrep -u "$USER" ssh-agent > /dev/null; then
     ssh-agent > "$XDG_RUNTIME_DIR/ssh-agent.env"
 fi
 if [[ ! -f "$SSH_AUTH_SOCK" ]]; then
-    source "$XDG_RUNTIME_DIR/ssh-agent.env" >/dev/null
+    [[ -f "$XDG_RUNTIME_DIR/ssh-agent.env" ]] && source "$XDG_RUNTIME_DIR/ssh-agent.env" >/dev/null
+fi
+
+# TODO automatically run `ssh-add` if and only if it hasn't yet been run this session
+# i.e. only enter my ssh key passphrase once, and that only on demand
+# possibly via an ssh wrapper script?
+
+# ** fun output when logging into a computer of mine
+if [[ -n $SSH_CONNECTION ]]; then
+    if command -v neofetch &>/dev/null; then
+        if command -v lolcat &>/dev/null; then
+            neofetch | lolcat -S 10 -F 0.05
+        else
+            neofetch
+        fi
+    fi
 fi
 
 # * dotfile maintenance
@@ -212,11 +240,11 @@ dots () {
     fi
 }
 
-# * local config
-[[ -a ~/.zshrc.local.zsh ]] && source ~/.zshrc.local.zsh
-
 # * Aliases
 [[ -a ~/aliases.zsh ]] && source ~/aliases.zsh
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-source /Users/alexanderbirdsall/.airbuild/airbuildrc # SourceAirbyteRC
+
+# * local config
+# this should always go last, to allow local overrides of anything
+[[ -a ~/.zshrc.local.zsh ]] && source ~/.zshrc.local.zsh
