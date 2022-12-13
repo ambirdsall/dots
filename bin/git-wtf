@@ -11,8 +11,8 @@ args = ARGV.join(" ").gsub(/(^-r)|( -r)/, " --pickaxe-regex")
 
 if args.empty?
   # search for contents of clipboard
-  exec 'git log --pretty="format:%Cblue%as %C(auto)%h %s" -S "$(pbpaste)"'
+  exec '--pretty="format:%Cred%h %Creset%Cgreen%an:%Creset %s %Cblue(%as)%Creset" -S "$(pbpaste)"'
 else
   # search for given string
-  exec "git log --pretty='format:%Cblue%as %C(auto)%h %s' -S '#{args}'"
+  exec "--pretty='format:%Cred%h %Creset%Cgreen%an:%Creset %s %Cblue(%as)%Creset' -S '#{args}'"
 end
