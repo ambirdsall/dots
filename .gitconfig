@@ -7,3 +7,7 @@
 	d = diff
 	dc = diff --cached
 	p = add -p
+[rerere]
+	enabled = true
+[github]
+	user = ambirdsall
