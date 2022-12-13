@@ -18,18 +18,29 @@ if [ -n "$BASH_VERSION" ]; then
     fi
 fi
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ] ; then
-    PATH="$HOME/bin:$PATH"
+if command -v xfce4-terminal > /dev/null; then
+    export TERMINAL=xfce4-terminal
 fi
+
+#export QT_QPA_PLATFORMTHEME=qt5ct
+#export QT_QPA_PLATFORMTHEME=qt6ct
 
 # set PATH so it includes user's private bin if it exists
 if [ -d "$HOME/.local/bin" ] ; then
-    PATH="$HOME/.local/bin:$PATH"
+    export PATH="$HOME/.local/bin:$PATH"
 fi
 
 if [ -d "$HOME/.yarn/bin" ] ; then
-    PATH="$HOME/.yarn/bin:$PATH"
+    export PATH="$HOME/.yarn/bin:$PATH"
+fi
+
+if [ -d "$HOME/.cargo/bin" ] ; then
+    export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/bin" ] ; then
+    export PATH="$HOME/bin:$PATH"
 fi
 
 # a few barebones aliases, for muscle memory's sake
