@@ -19,9 +19,6 @@ export HISTCONTROL=ignorespace
 setopt autocd extendedglob notify
 unsetopt beep nomatch
 
-# * ensure .profile has run
-if [ -z $DOTPROFILE_HAS_RUN ]; then source ~/.profile; fi
-
 # * side effects & printed output when sourcing config
 
 if [[ -n $TMUX ]]; then

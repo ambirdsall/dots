@@ -8,8 +8,6 @@
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
 
-export DOTPROFILE_HAS_RUN=t
-
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
     # include .bashrc if it exists
@@ -18,47 +16,18 @@ if [ -n "$BASH_VERSION" ]; then
     fi
 fi
 
-if command -v xfce4-terminal > /dev/null; then
-    export TERMINAL=xfce4-terminal
-fi
-
-#export QT_QPA_PLATFORMTHEME=qt5ct
-#export QT_QPA_PLATFORMTHEME=qt6ct
-
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ] ; then
-    export PATH="$HOME/.local/bin:$PATH"
-fi
-
-if [ -d "$HOME/.yarn/bin" ] ; then
-    export PATH="$HOME/.yarn/bin:$PATH"
-fi
-
-if [ -d "$HOME/.cargo/bin" ] ; then
-    export PATH="$HOME/.cargo/bin:$PATH"
-fi
-
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ] ; then
-    export PATH="$HOME/bin:$PATH"
-fi
-
 # a few barebones aliases, for muscle memory's sake
-vi () {
-    if [[ $# -gt 0 ]]; then
-        vim "$@"
-    else
-        vim .
-    fi
-}
-em () {
-    emacsclient -nw --alternate-editor=vim ${@}
-}
-
-if [ -s "$HOME/.guix-profile" ]; then
-    GUIX_PROFILE="$HOME/.guix-profile"
-    GUIX_LOCPATH="$GUIX_PROFILE/lib/locale"
-    source "$GUIX_PROFILE/etc/profile"
+if command -v vim > /dev/null; then
+    vi () {
+        if [[ $# -gt 0 ]]; then
+            vim "$@"
+        else
+            vim .
+        fi
+    }
 fi
-
-[ -s "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+if command -v emacs > /dev/null; then
+    em () {
+        emacsclient -nw --alternate-editor=vim ${@}
+    }
+fi
