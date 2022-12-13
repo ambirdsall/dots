@@ -218,7 +218,10 @@ bindsym $mod+Return exec xfce4-terminal
 bindsym $mod+q kill
 
 # exit-menu
-bindsym $mod+Shift+e exec ~/.config/i3/scripts/powermenu
+bindsym $mod+Shift+x exec ~/.config/i3/scripts/powermenu
+
+# emoji picker
+bindsym $mod+Shift+e exec emoji-picker
 
 # Lock the system
 # lock with a picture:
@@ -602,14 +605,16 @@ client.urgent		    	$urgentred	$urgentred	$white		$yellowbrown	$yellowbrown
 #	}
 #}
 
-#####################################
-# Application menu handled by rofi: #
-#####################################
+#####################################################
+# Application menu handled by rofi and whiskermenu: #
+#####################################################
 
 ## rofi bindings fancy application menu ($mod+d /F9 optional disabled)
 
 bindsym $mod+d exec rofi -modi drun -show drun \
 		-config ~/.config/rofi/rofidmenu.rasi
+
+bindsym $mod+space exec xfce4-popup-whiskermenu
 
 #bindsym F9 exec rofi -modi drun -show drun \
 #		-config ~/.config/rofi/rofidmenu.rasi
