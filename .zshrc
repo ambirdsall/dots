@@ -172,14 +172,18 @@ dirty_check () {
 if [ -f /opt/homebrew/opt/zsh-git-prompt/zshrc.sh ]; then
     # brew install zsh-git-prompt
     source /opt/homebrew/opt/zsh-git-prompt/zshrc.sh
+    _HAS_ZSH_GIT_PROMPT_PKG=t
 elif [ -f /usr/share/zsh/plugins/zsh-git-prompt/zshrc.sh ]; then
     # aura -S zsh-git-prompt-hs-git
     export GIT_PROMPT_EXECUTABLE="haskell"
     source /usr/share/zsh/plugins/zsh-git-prompt/zshrc.sh
+    _HAS_ZSH_GIT_PROMPT_PKG=t
 elif [ -f  /usr/lib/zsh-git-prompt/zshrc.sh ]; then
     source /usr/lib/zsh-git-prompt/zshrc.sh
+    _HAS_ZSH_GIT_PROMPT_PKG=t
 elif [ -f  ~/c/zsh-git-prompt/zshrc.sh ]; then
     source ~/c/zsh-git-prompt/zshrc.sh
+    _HAS_ZSH_GIT_PROMPT_PKG=t
 else
     echo "Can't find zsh-git-prompt directory" >&2
 fi
