@@ -2,7 +2,7 @@
 # TODO auto-start server, this is a solved problem lol
 alias e="emacsclient -nw"
 E () {
- emacsclient -c & disown
+ emacsclient -c --alternate-editor="" "$@" & disown
 }
 
 em () {
@@ -45,12 +45,13 @@ slay () {
 # * pb{copy,paste}
 # it's just a better clipboard API, tbh; plus muscle memory
 if [ $(uname) != 'Darwin' ]; then
-    alias pbcopy='xclip -i'
-    alias pbpaste='xclip -o'
+    alias pbcopy='xclip -i -selection clipboard'
+    alias pbpaste='xclip -o -selection clipboard'
 fi
 
 
-# * cd to within code directory from anywhere
+# * cd to key directories from anywhere
+# ** ~/c
 cdc () {
   if [[ $# -gt 0 ]]; then
     cdd ~/c/${@}
@@ -63,6 +64,15 @@ tnc () {
   cdd ~/c/${@} && tn
 }
 compdef '_files -W ~/c' tnc
+# ** ~/.config
+cd. () {
+  if [[ $# -gt 0 ]]; then
+    cdd ~/.config/${@}
+  else
+    cdd ~/.config
+  fi
+}
+compdef '_files -W ~/.config' cd.
 
 # * quick edit/source shell config files
 alias ea="emv ~/aliases.zsh"
@@ -73,19 +83,21 @@ alias rc="source ~/.zshrc"
 alias et="emv ~/.tmux.conf"
 
 # * serve local files
+# TODO change to ~npx live-server~ or whatever
 alias serve="python -m SimpleHTTPServer"
 
 # * text formatting all fucked up in the terminal?
 alias sane='stty sane'
 
-# * first you have to be able to get where you're going
+# * task-based shortcuts
+# ** first you have to be able to get where you're going
 # ** jump around
 
 alias um="find . -type f | grep -vE '.tmp-*|.git|node_modules|bower_components' | fzf --multi --preview 'bat --color=always {}'"
 cdf() {
   pushd $(dirname $(find . -type f | grep -vE '.tmp-*|.git|node_modules|bower_components|DS_Store' | fzf --preview 'bat --color=always {}'))
 }
-# * fuzzy find from chrome history and open url (mac-specific for now)
+# ** fuzzy find from chrome history and open url (mac-specific for now)
 if [ $(uname) == 'Darwin' ]; then
     h () {
         local cols sep
@@ -105,7 +117,12 @@ fi
 
 
 
-# * shortcuts for standard commands and builtins
+# ** display the source code of a script
+showme () {
+  bat $(which $1)
+}
+# * program-based shortcuts
+# ** shortcuts for standard commands and builtins
 # ** awk
 alias awkcsv='awk -F "\"*,\"*"'
 
@@ -117,7 +134,7 @@ k () {
     kill %"$1"
 }
 
-# ** `cd` by any name would smell as sweet
+# ** cd by any name would smell as sweet
 alias 'cd-'="cd -"
 alias ..="cdd .."
 alias ...="cdd ../.."
@@ -149,7 +166,7 @@ alias cx='chmod +x'
 # ** clear
 alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
 
-# ** `=` :: less
+# ** = :: less
 = () {
     # iff there are 0 arguments given, assume input from stdin (i.e. a pipe)
     if [[ $# -gt 0 ]]; then
@@ -159,24 +176,27 @@ alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
     fi
 }
 
-# ** `ls`
+# ** ls
 alias ls="ls -GF"
 alias la="ls -A"
 alias ll="ls -l"
 
-# ** `mkdir`
+# ** mkdir
 alias mkdir="mkdir -pv"
 
-# ** `rm`
+# ** rm
 alias fuck="rm -rf"
 
-# ** `tail`
+# ** tail
 tailfh () {
   tail -f $1 | ack -i 'error' --passthru
 }
 
-# ** `mv`
+# ** mv
 alias mmv='noglob zmv -W'
+
+# ** sudo
+alias please=sudo
 
 # ** Vim and fam
 
@@ -194,7 +214,7 @@ bo () {
     emv $(bundle show "$1")
 }
 
-# * shortcuts for nonstandard commands
+# ** shortcuts for nonstandard commands
 # ** tmux
 alias t=tmux
 alias tt="tmux attach -t"
@@ -219,6 +239,14 @@ alias be='bundle exec'
 # ** js/ts
 alias scripts='jq .scripts < package.json'
 alias s=scripts
+run-npm-script () {
+  # using separate sed invocations instead of something simpler like `tr -d` to
+  # avoid mangling script keys containing colons
+  local chosen_script=$(scripts | grep -Eo '".+": ' | sed 's/"//' | sed 's/": //' | fzf)
+
+  test -n $chosen_script && npm run $chosen_script
+}
+alias S=run-npm-script
 # * Git gets its own top-level section
 # No arguments: `git status`
 # With arguments: acts like `git`
@@ -310,11 +338,13 @@ alias f="git fetch"
 
 alias gr="git rebase"
 alias gr-="git rebase -"
-alias grm="git rebase master"
+alias grm="com && co- && gr-"
 alias gri="g ri" # home-cooked git-ri, which simplifies syntax of `git rebase -i`
 
 alias gp="git pull --ff-only"
-alias gp!="git branch --set-upstream-to=origin/$(git rev-parse --abbrev-ref HEAD) $(git rev-parse --abbrev-ref HEAD) && git pull --ff-only"
+GP () {
+  git branch --set-upstream-to=origin/$(git rev-parse --abbrev-ref HEAD) $(git rev-parse --abbrev-ref HEAD) && git pull --ff-only
+}
 alias gpr="git pull --rebase"
 
 alias gb="git branch"
@@ -370,18 +400,18 @@ describe-commits () {
     echo "Usage: describe-commits [number of commits]" >&2
   fi
 }
-
 # * Self-expanding shell abbreviations
 # cf. http://zshwiki.org/home/examples/zleiab
 typeset -Ag abbreviations
 abbreviations=(
-"pa"    "| rg"
+"pa"    "| awk"
 "pag"   "| agrep"
 "pb"    "| bc"
 "peg"   "| egrep"
 "pgr"   "| groff -s -p -t -e -Tlatin1 -mandoc"
 "pf"    "| fzf"
-"pg"    "| rg"
+"pg"    "| rg -S"
+"G"     "| rg -S"
 "ph"    "| head"
 "pj"    "| jq"
 "pk"    "| keep"
