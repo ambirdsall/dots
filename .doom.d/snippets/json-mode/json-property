@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: json property
+# uuid:
+# key: ""
+# condition: t
+# --
+"connection.dbtCloudJobs.$1": "$2",
