@@ -12,6 +12,7 @@ There is a way to address this; look up noweb syntax in Info.
 *** TODO clean this up, it's not cute up at the top of the page
 **** option one :: mark this top-level subtree as folded by default with property drawer
 **** option two :: use noweb double angle bracket syntax to decouple source order and output order
+
 *** packages.el
 #+begin_src elisp :tangle packages.el
 ;; -*- no-byte-compile: t; -*-
@@ -828,7 +829,7 @@ keep things DRY and maintainable.
 
 *** augment load path
 #+name: guile-augment-load-path
-#+begin_src guile
+#+begin_src guile :tangle no
 (add-to-load-path (string-append (getenv "HOME") "/lib/scheme"))
 #+end_src
 
@@ -837,7 +838,7 @@ The first line here has ugly indentation so the corresponding noweb cookie (or w
 the term is) in the source blocks that actually get tangled to =.guile= files can have
 pretty indentation.
 #+name: guile-shared-modules
-#+begin_src guile
+#+begin_src guile :tangle no
 (oop goops)
   (srfi srfi-1)
   (srfi srfi-26) ;; cut
@@ -847,7 +848,7 @@ pretty indentation.
 
 *** setup repl
 #+name: guile-setup-repl
-#+begin_src guile
+#+begin_src guile :tangle no
 (activate-readline)
 #+end_src
 
