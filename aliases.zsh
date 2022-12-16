@@ -303,7 +303,7 @@ co () {
 alias co-="git checkout -"
 
 cor () {
-    local BRANCH_OR_REF=$(git recent | fzf --preview 'git show heads/{} | diff-so-fancy')
+    local BRANCH_OR_REF=$(git recent "$@" | fzf --preview 'git show heads/{} | diff-so-fancy')
     if [ ! -z $BRANCH_OR_REF ]; then
         git checkout $BRANCH_OR_REF
     fi
