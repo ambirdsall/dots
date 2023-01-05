@@ -1,6 +1,6 @@
 # * emacsclients
 # TODO auto-start server, this is a solved problem lol
-alias e="emacsclient -nw"
+alias e="qed"
 E () {
  emacsclient -c --alternate-editor="" "$@" & disown
 }
@@ -45,8 +45,13 @@ slay () {
 # * pb{copy,paste}
 # it's just a better clipboard API, tbh; plus muscle memory
 if [ $(uname) != 'Darwin' ]; then
+  if command -v xclip; then
     alias pbcopy='xclip -i -selection clipboard'
     alias pbpaste='xclip -o -selection clipboard'
+  elif command -v wl-copy; then
+    alias pbcopy='wl-copy'
+    alias pbpaste='wl-copy --type text'
+  fi
 fi
 
 
