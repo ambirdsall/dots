@@ -25,8 +25,6 @@ if [[ -n $TMUX ]]; then
     echo "Tmux sessions:"
     tmux list-sessions
     printf "\n"
-else
-    printf "No tmux sessions right now!\n\n"
 fi
 
 if [[ -f /usr/share/calendar/calendar.history ]]; then
