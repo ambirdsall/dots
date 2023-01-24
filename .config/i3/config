@@ -552,7 +552,7 @@ bar {
 	    position bottom
 		mode hide
 		hidden_state hide
-		modifier Mod1
+		modifier Mod4
 		#	i3bar_command transparency --i3bar
 		# it could be that you have no primary display set: set one (xrandr --output <primary> --output)
 		# reference: https://i3wm.org/docs/userguide.html#_tray_output
