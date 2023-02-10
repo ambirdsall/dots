@@ -329,7 +329,8 @@ bindsym $mod+p exec /usr/local/bin/switch-audio-port
 # bindsym $mod+n exec /usr/bin/thunar
 
 # the sleep call is to give the system time to release the pointer so scrot can use it for a selection
-bindsym $mod+Shift+s exec sleep 0.2 && scrot -s ~/screenshots/%Y-%m-%d-%T-screenshot.png && notify-send "Screenshot saved to ~/screenshots/$(date +"%Y-%m-%d-%T")-screenshot.png"
+# bindsym $mod+Shift+s exec sleep 0.2 && scrot -s ~/screenshots/%Y-%m-%d-%T-screenshot.png && notify-send "Screenshot saved to ~/screenshots/$(date +"%Y-%m-%d-%T")-screenshot.png"
+bindsym $mod+Shift+s exec flameshot gui --clipboard
 
 # Power Profiles menu switcher (rofi)
 bindsym $mod+Shift+p exec ~/.config/i3/scripts/power-profiles
