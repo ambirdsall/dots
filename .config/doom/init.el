@@ -40,7 +40,7 @@
        hydra
        indent-guides     ; highlighted indent columns
        (:if (display-graphic-p)
-           ligatures)    ; ligatures and symbols to make your code pretty again
+           (ligatures +extra))    ; ligatures and symbols to make your code pretty again
        ;;minimap           ; show a map of the code on the side
        modeline          ; snazzy, Atom-inspired modeline, plus API
        ;;nav-flash         ; blink cursor line after big motions
@@ -108,6 +108,7 @@
        ;;rgb               ; creating color strings
        ;;taskrunner        ; taskrunner for all your projects
        ;;terraform         ; infrastructure as code
+       tree-sitter
        tmux              ; an API for interacting with tmux
        ;;upload            ; map local to remote projects via ssh/ftp
 
@@ -119,7 +120,7 @@
        ;;agda              ; types of types of types of types...
        ;;beancount         ; mind the GAAP
        ;; cc                ; C/C++/Obj-C madness
-       clojure           ; java with a lisp
+       (clojure +lsp)           ; java with a lisp
        ;;common-lisp       ; if you've seen one lisp, you've seen them all
        ;;coq               ; proofs-as-programs
        ;;crystal           ; ruby at the speed of c
@@ -144,13 +145,17 @@
        ;;idris             ; a language you can depend on
        (json +lsp)              ; At least it ain't XML
        (java +meghanada) ; the poster child for carpal tunnel syndrome
-       (javascript +lsp)        ; all(hope(abandon(ye(who(enter(here))))))
+       (javascript
+        +lsp
+        +tree-sitter)        ; all(hope(abandon(ye(who(enter(here))))))
        ;;julia             ; a better, faster MATLAB
-       ;;kotlin            ; a better, slicker Java(Script)
+       (kotlin +lsp)            ; a better, slicker Java(Script)
        ;;latex             ; writing papers in Emacs has never been so fun
        ;;lean
        ;;ledger            ; an accounting system in Emacs
-       lua                 ; one-based indices? one-based indices
+       (lua
+        +fennel
+        +lsp)                 ; one-based indices? one-based indices
        markdown            ; writing docs for people to ignore
        ;;nim               ; python + lisp at the speed of c
        ;;nix               ; I hereby declare "nix geht mehr!"
@@ -173,18 +178,24 @@
        (ruby
         +rails
         +rbenv
-        +lsp)              ; 1.step {|i| p "Ruby is #{i.even? ? 'love' : 'life'}"}
+        +lsp
+        +tree-sitter)        ; 1.step {|i| p "Ruby is #{i.even? ? 'love' : 'life'}"}
        rust              ; Fe2O3.unwrap().unwrap().unwrap().unwrap()
        ;;scala             ; java, but good
        (scheme +guile)   ; a fully conniving family of lisps
 
-       sh                  ; she sells {ba,z,fi}sh shells on the C xor
+       (sh
+        +lsp
+        +tree-sitter)        ; she sells {ba,z,fi}sh shells on the C xor
        ;;sml
        ;;solidity          ; do you need a blockchain? No.
        ;;swift             ; who asked for emoji variables?
        ;;terra             ; Earth and Moon in alignment for performance.
-       (web +lsp)               ; the tubes
-       yaml              ; JSON, but readable
+       (web
+        +lsp
+        +tree-sitter)        ; the tubes
+       (yaml
+        +lsp)              ; JSON, but readable
        ;;zig               ; C, but simpler
 
        :email
@@ -194,8 +205,7 @@
 
        :app
        ;;calendar
-       ;;emms
-       ;;everywhere        ; *leave* Emacs!? You must be joking
+       ;;;everywhere        ; *leave* Emacs!? You must be joking
        ;;irc               ; how neckbeards socialize
        ;;(rss +org)        ; emacs as an RSS reader
        ;;twitter           ; twitter client https://twitter.com/vnought
