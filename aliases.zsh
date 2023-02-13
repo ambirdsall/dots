@@ -186,6 +186,9 @@ alias ls="ls -GF"
 alias la="ls -A"
 alias ll="ls -l"
 
+# allow exiting with C-c
+alias sl="sl -e"
+
 # ** mkdir
 alias mkdir="mkdir -pv"
 
