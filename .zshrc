@@ -70,7 +70,9 @@ EDITOR='qed'
 
 # VI MODE KEYBINDINGS (ins mode)
 bindkey -M viins '^a'    beginning-of-line
+bindkey -M viins '^b'    backward-char
 bindkey -M viins '^e'    end-of-line
+bindkey -M viins '^f'    forward-char
 bindkey -M viins '^h'    backward-delete-char
 bindkey -M viins '^k'    kill-line
 bindkey -M viins '^n'    down-line-or-history
