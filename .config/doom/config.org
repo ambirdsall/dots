@@ -623,11 +623,11 @@ the term is) in the source blocks that actually get tangled to =.guile= files ca
 pretty indentation.
 #+name: guile-shared-modules
 #+begin_src guile :tangle no
-(oop goops)
-  (srfi srfi-1)
-  (srfi srfi-26) ;; cut
-  (ice-9 match)
-  (ice-9 readline)
+ (oop goops)
+ (srfi srfi-1)
+ (srfi srfi-26) ;; cut
+ (ice-9 match)
+ (ice-9 readline)
 #+end_src
 
 **** setup repl
