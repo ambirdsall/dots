@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# if the external monitor is plugged in, activate it; if not, deactivate it.
+# this script is intended to be run via a udev rule (cf. /etc/udev/rules.d/99-monitor-hotplug.rules)
+
+HDMI_STATUS=$(cat /sys/class/drm/card0-HDMI-A-1/status)
+echo the monitor is $HDMI_STATUS >> /tmp/hello-udev
+
+if [ "$HDMI_STATUS" == "connected" ]; then
+    echo "[$(date)] trying to connect monitor" >> /tmp/udev-monitor.log
+    /home/amb/.screenlayout/dell-external-monitor-connected.sh
+elif [ "$HDMI_STATUS" == "disconnected" ]; then
+    echo "[$(date)] attempting to disconnect monitor" >> /tmp/udev-monitor.log
+    /home/amb/.screenlayout/laptop-screen-only.sh
+else
+    echo what the fuck is this shit in /sys/class/drm/card0-HDMI-A-1/status >> /tmp/udev-monitor.log
+fi

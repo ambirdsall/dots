@@ -1,0 +1,21 @@
+#!/bin/bash
+
+main () {
+    case "$1" in
+        "on")
+            ~/bin/kbd-light-on
+            exit
+        ;;
+        "off")
+            ~/bin/kbd-light-off
+            exit
+        ;;
+        *)
+            local SELECTION=$(printf "on\noff\n" | fzf)
+            test -z $SELECTION && exit 1
+            ~/bin/kbd-light-$SELECTION
+            ;;
+    esac
+}
+
+main $@

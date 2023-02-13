@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 
+# TODO rewrite in guile
+
 # Runs git pickaxe
 # 1 arg: string matcher, short output
 # 2+ args: args and matcher
@@ -11,8 +13,8 @@ args = ARGV.join(" ").gsub(/(^-r)|( -r)/, " --pickaxe-regex")
 
 if args.empty?
   # search for contents of clipboard
-  exec '--pretty="format:%Cred%h %Creset%Cgreen%an:%Creset %s %Cblue(%as)%Creset" -S "$(pbpaste)"'
+  exec 'git log --pretty="format:%Cred%h %Creset%Cgreen%an:%Creset %s %Cblue(%as)%Creset" -S "$(pbpaste)"'
 else
   # search for given string
-  exec "--pretty='format:%Cred%h %Creset%Cgreen%an:%Creset %s %Cblue(%as)%Creset' -S '#{args}'"
+  exec "git log --pretty='format:%Cred%h %Creset%Cgreen%an:%Creset %s %Cblue(%as)%Creset' -S '#{args}'"
 end

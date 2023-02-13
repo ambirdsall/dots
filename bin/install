@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+# A script to install the userland environment defined (at time of writing) in
+# this github-hosted repo: https://github.com/ambirdsall/dots
+#
+# At a high level, the script follows these steps:
+# 1. determine the operating system and package manager
+# 1.1. bail with a useful message if not in a supported starting point
+# 2. install a big ol' list of packages
+
+main () {
+    case $(uname) in
+        "Linux")
+            install_linux
+            ;;
+        "Darwin")
+            install_macos
+            ;;
+        *)
+            yell_into_stderr "Can't find a supported package manager; please install one before trying again.
+
+Otherwise, best of luck manually installing things!"
+            exit 127
+    esac
+}
+
+distro_type () {
+    if command -v pacman &>/dev/null; then
+        echo archlinux
+    elif command -v zypper &>/dev/null; then
+        echo opensuse
+    elif command -v apt &>/dev/null; then
+        echo debiany
+    else
+        idk
+    fi
+}
+
+install_linux () {
+    case $(distro_type) in
+        "archlinux")
+            install_arch
+            ;;
+        *)
+            yell_into_stderr Unknown linux distro
+            ;;
+    esac
+}
+
+yell_into_stderr () {
+    # TODO ANSI colors
+    echo "@" >& 2
+}
+
+idk () {
+    echo "I don't fucking know"
+}
+
+install_macos () {
+    # TODO check for and possibly install homebrew
+    #brew tap d12frosted/emacs-plus
+    #
+    # Installing packages one-by-one to allow for individual package flags
+    #for pkg in $(cat ~/lib/brew_packages); do brew install "$pkg"; done
+    #for pkg in $(cat ~/lib/cask_packages); do brew install --cask "$pkg"; done
+    yell_into_stderr install_macos not implemented yet
+    exit 1
+}
+
+install_arch () {
+    # TODO check for and possibly install aura
+    #aura -Syu
+    #for pkg in $(cat ~/lib/arch_packages); do aura -S $pkg; done
+    #for pkg in $(cat ~/lib/aur_packages); do aura -A $pkg; done
+    echo hello
+}
+
+# I don't use args /now/, but no harm giving myself the option, right?
+main "$@"

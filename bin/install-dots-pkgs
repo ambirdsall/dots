@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+
+# A script to install the userland environment defined (at time of writing) in
+# this github-hosted repo: https://github.com/ambirdsall/dots
+#
+# At a high level, the script follows these steps:
+# 1. determine the operating system and package manager
+# 1.1. bail with a useful message if not in a supported starting point
+# 2. install a big ol' list of packages
+
+main () {
+    case $(system_type) in
+        "archlinux")
+            install_arch
+            ;;
+        "macos")
+            install_macos
+            ;;
+        *)
+            yell_into_stderr "Can't find a supported package manager; please install one before trying again.
+
+Otherwise, best of luck manually installing things!"
+            exit 127
+    esac
+}
+
+system_type () {
+    case $(uname) in
+        "Linux")
+            if command -v pacman &>/dev/null; then
+                echo archlinux
+            elif command -v zypper &>/dev/null; then
+                echo opensuse
+            else
+                idk
+            fi
+            ;;
+        # TODO add macOS
+        *) idk
+    esac
+}
+
+yell_into_stderr () {
+    # TODO ANSI colors
+    echo "@" >& 2
+}
+
+idk () {
+    echo "I don't fucking know"
+}
+
+install_macos () {
+    yell_into_stderr Not implemented yet
+    exit 1
+}
+
+install_arch () {
+    echo hello
+}
+
+# I don't use args /now/, but no harm giving myself the option, right?
+main "$@"
