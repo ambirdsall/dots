@@ -378,7 +378,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (setq! evil-ex-search-persistent-highlight nil
        +evil-want-o/O-to-continue-comments nil)
 
-(setq org-directory "~/Dropbox/org/")
+(let ((dir "~/Dropbox/org/"))
+  (and (file-exists-p dir)
+       (setq org-directory dir)))
 
 (setq! org-log-into-drawer t
        org-hierarchical-todo-statistics nil
