@@ -11,3 +11,5 @@
 	enabled = true
 [github]
 	user = ambirdsall
+[init]
+	defaultBranch = main
