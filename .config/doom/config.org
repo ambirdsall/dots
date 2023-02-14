@@ -898,4 +898,9 @@ private) product projects.")
 (map! :leader
       :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
 #+end_src
-* the rest of the computer environment
+* random bugfixes and whatnot
+** magit/with-editor/transient-base-map snafu
+#+begin_src elisp :tangle packages.el
+(package! transient :pin "c2bdf7e12c530eb85476d3aef317eb2941ab9440")
+(package! with-editor :pin "391e76a256aeec6b9e4cbd733088f30c677d965b")
+#+end_src
