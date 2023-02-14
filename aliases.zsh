@@ -45,10 +45,10 @@ slay () {
 # * pb{copy,paste}
 # it's just a better clipboard API, tbh; plus muscle memory
 if [ $(uname) != 'Darwin' ]; then
-  if command -v xclip; then
+  if command -v xclip &>/dev/null; then
     alias pbcopy='xclip -i -selection clipboard'
     alias pbpaste='xclip -o -selection clipboard'
-  elif command -v wl-copy; then
+  elif command -v wl-copy &>/dev/null; then
     alias pbcopy='wl-copy'
     alias pbpaste='wl-copy --type text'
   fi
