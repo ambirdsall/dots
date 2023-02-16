@@ -256,6 +256,8 @@ run-npm-script () {
 }
 alias S=run-npm-script
 # * Git gets its own top-level section
+# ** porcelain
+# *** g is for git, that's good enough for me
 # No arguments: `git status`
 # With arguments: acts like `git`
 g () {
@@ -268,6 +270,8 @@ g () {
 # Complete g like git
 compdef g=git
 
+# *** oh, oh, it's ~magit~
+# TODO expand into a proper elisp script
 gs () {
     emacsclient --socket=magit -nw -e "
 (progn
@@ -276,6 +280,21 @@ gs () {
   (magit-status))" || emacs --daemon=magit
 }
 
+# ** git operations
+# ** ship shape
+# # TODO expand this into a proper little program
+# subcommands:
+#   ship it :: push current branch to its counterpart at origin
+#   ship in :: pull --rebase
+#   ship up :: rebase current branch on the repo's default branch at origin
+#   ship out :: set upstream
+alias ahoy='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~"'
+alias shipit='ahoy && git push origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
+alias SHIPIT='ahoy && git push --force-with-lease origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
+# who doesn't love a good typo
+alias SHIIT='ahoy && echo "      FUUCK"'
+
+# *** clone
 # run `git clone` and `cdd` into dir
 # if no arguments are provided, assumes you have copied a repo url to your clipboard
 gc () {
@@ -292,7 +311,7 @@ gc () {
   cdd $repo_dir
 }
 
-
+# *** checkout
 co () {
   if [[ $# -gt 0 ]]; then
     git checkout "$@"
@@ -322,16 +341,17 @@ cob () {
   git checkout -b "`echo $* | tr ' ' -`"
 }
 
+# *** diff
 d () {
   git diff --diff-algorithm=minimal --color "$@" | diff-so-fancy | bat --plain
 }
 alias gdc="d --cached"
 alias gdo="git diff \$(git rev-parse --abbrev-ref HEAD 2> /dev/null)..origin/\$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
 
-alias ts="tig status"
-
+# *** add
 alias p="git add -p"
 
+# *** commit
 c () {
   if [[ $# -gt 0 ]]; then
     git commit -m "$*"
@@ -342,22 +362,32 @@ c () {
 alias a="git commit --amend"
 alias arh="git commit --amend --reuse-message=HEAD"
 
+# *** fetch/pull
 alias f="git fetch"
 
+alias gp="git pull"
+GP () {
+  git branch --set-upstream-to=origin/$(git rev-parse --abbrev-ref HEAD) $(git rev-parse --abbrev-ref HEAD) && git pull "$@"
+}
+
+alias gpr="git pull --rebase"
+alias GPR="GP --rebase"
+alias gpf="git pull --ff-only"
+alias GPF="GP --ff-only"
+
+# *** rebase
+# TODO checkout, pull, and rebase all have a common ingredient: nacho code. Tug on that
+# thread a little.
 alias gr="git rebase"
 alias gr-="git rebase -"
 alias grm="com && co- && gr-"
 alias gri="g ri" # home-cooked git-ri, which simplifies syntax of `git rebase -i`
 
-alias gp="git pull --ff-only"
-GP () {
-  git branch --set-upstream-to=origin/$(git rev-parse --abbrev-ref HEAD) $(git rev-parse --abbrev-ref HEAD) && git pull --ff-only
-}
-alias gpr="git pull --rebase"
-
+# *** branch
 alias gb="git branch"
 alias gbl="git branch -l"
 
+# *** log
 l () {
   # no args
   if [[ $# -eq 0 ]]; then
@@ -369,30 +399,9 @@ l () {
     echo "Usage: l [number of commits]" >&2
   fi
 }
-eval "$(ruby -e '9.times do |i| puts %Q{alias l#{i+1}=l\\ -#{i+1}} end')"
+command -v ruby &>/dev/null && eval "$(ruby -e '9.times do |i| puts %Q{alias l#{i+1}=l\\ -#{i+1}} end')"
 alias lg="git log --oneline --decorate --graph --all"
 alias rl="git reflog"
-
-unique () {
-  perl -ne '$H{$_}++ or print'
-}
-git-recent () {
-  # lists unique git refs you have checked out, in order of how recently you checked them out
-  git reflog | grep checkout: | awk '{print $6}' | unique
-}
-
-alias gg="git grep"
-
-alias b="git blame"
-
-alias stash="git stash save -u"
-alias pop="git stash pop"
-
-alias ahoy='echo "       _~\n    _~ )_)_~\n    )_))_))_)\n    _!__!__!_\n    \______t/\n  ~~~~~~~~~~~~~"'
-alias shipit='ahoy && git push origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
-alias SHIPIT='ahoy && git push --force-with-lease origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
-# who doesn't love a good typo
-alias SHIIT='ahoy && echo "      FUUCK"'
 
 describe-commits () {
   if [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
@@ -407,6 +416,25 @@ describe-commits () {
   else
     echo "Usage: describe-commits [number of commits]" >&2
   fi
+}
+
+# *** grep
+alias gg="git grep"
+
+# *** blame
+alias b="git blame"
+
+# *** stash
+alias stash="git stash save -u"
+alias pop="git stash pop"
+
+# ** helper functions
+unique () {
+  perl -ne '$H{$_}++ or print'
+}
+git-recent () {
+  # lists unique git refs you have checked out, in order of how recently you checked them out
+  git reflog | grep checkout: | awk '{print $6}' | unique
 }
 # * Self-expanding shell abbreviations
 # cf. http://zshwiki.org/home/examples/zleiab
