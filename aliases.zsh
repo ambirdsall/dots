@@ -14,7 +14,7 @@ em () {
 # you do have emacs installed, cracking open a config/alias/whatever file is
 # a scenario where falling back to vim is preferable to a slow-booting editor.
 emv () {
-  if command -v emacs; then
+  if command -v emacs > /dev/null; then
     emacsclient -nw --alternate-editor="vim" $@
   else
     vim $@
@@ -50,7 +50,7 @@ if [ $(uname) != 'Darwin' ]; then
     alias pbpaste='xclip -o -selection clipboard'
   elif command -v wl-copy &>/dev/null; then
     alias pbcopy='wl-copy'
-    alias pbpaste='wl-copy --type text'
+    alias pbpaste='wl-paste --type text'
   fi
 fi
 
