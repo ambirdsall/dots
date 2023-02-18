@@ -156,23 +156,38 @@ up the appearance of the dashboard; this could use some similar TLC as a follow-
 #+end_src
 * appearance
 ** typography
-Doom exposes five (optional) variables for controlling fonts in Doom. Here
-are the three important ones:
+On arch linux, here are the packages you'll want to download:
+- =ttf-fira-code=
+- =otf-overpass=
+- =ttc-iosevka=
+- =ttc-iosevka-slab=
 
-+ ~doom-font~
-+ ~doom-variable-pitch-font~
-+ ~doom-big-font~ -- used for ~doom-big-font-mode~; use this for
-  presentations or streaming.
-
-They all accept either a font-spec, font string ("Input Mono-12"), or xlfd
-font string. You generally only need these two:
-+ ~doom-font~
-+ ~doom-variable-pitch-font~
-
+Fira Code is
 #+begin_src elisp
-(setq doom-font "Fira Code")
-;; ;; why doesn't the sizing work?!?!?!?!?!?!?!?
-(setq doom-variable-pitch-font (if IS-MAC "Baskerville-18" "Carlito"))
+(setq doom-font-increment 1
+      doom-font (font-spec :family "Fira Code" :size 16 :style "Retina" :weight 'semi-bold)
+      ;; doom-font (font-spec :family "Iosevka Fixed Slab" :size 16 :weight 'medium)
+      doom-big-font (font-spec :family "Fira Code" :size 26)
+      doom-variable-pitch-font (font-spec :family "Overpass" :size 20)
+      doom-serif-font (font-spec :family "Iosevka Slab" :size 16)
+      doom-unicode-font (font-spec :family "Iosevka" :size 16))
+#+end_src
+We’d like to use mixed pitch in certain modes. If we simply add a hook, when directly
+opening a file with (a new) Emacs, ~mixed-pitch-mode~ runs before UI initialisation, which is
+problematic. To resolve this, we create a hook that runs after UI initialisation and both
+- conditionally enables ~mixed-pitch-mode~
+- sets up the mixed pitch hooks
+#+begin_src elisp
+(defvar mixed-pitch-modes '(org-mode markdown-mode gfm-mode Info-mode text-mode)
+  "Modes that `mixed-pitch-mode' should be enabled in, but only after UI initialisation.")
+(defun init-mixed-pitch-h ()
+  "Hook `mixed-pitch-mode' into each mode in `mixed-pitch-modes'.
+Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
+  (when (memq major-mode mixed-pitch-modes)
+    (mixed-pitch-mode 1))
+  (dolist (hook mixed-pitch-modes)
+    (add-hook (intern (concat (symbol-name hook) "-hook")) #'mixed-pitch-mode)))
+(add-hook 'doom-init-ui-hook #'init-mixed-pitch-h)
 #+end_src
 
 Additionally, there are emojis:
@@ -180,22 +195,37 @@ Additionally, there are emojis:
 (package! emojify)
 #+end_src
 
-*** TODO [[https://www.reddit.com/r/emacs/comments/shzif1/n%CE%BBno_font_stack/][NANO emacs font stack]]
-** Theme this bad boy
-#+begin_src elisp
-;; There are two ways to load a theme. Both assume the theme is installed and
-;; available. You can either set `doom-theme' or manually load a theme with the
-;; `load-theme' function. This is the default:
-(setq amb/doom-dark-theme 'doom-1337
-      amb/doom-light-theme 'doom-opera-light)
+*** TODO try out [[https://www.reddit.com/r/emacs/comments/shzif1/n%CE%BBno_font_stack/][NANO emacs font stack]]
+I mean, it's nice.
 
-;; TODO: amb/random-theme
-;; this uses
+** theme this bad boy
+Sometimes (usually) I want dark mode; sometimes (presenting, in direct sunlight, or just mixing it up) I want light mode. Let's define some variables to hold nice dark and light themes and a function to toggle between them—that way, I don't need to keep the theme names straight, and I can swap in a new dark or light theme for all downstream logic just by changing up the corresponding variable.
+
+The modus themes are a solid starting point:
+#+begin_src elisp
+(setq amb/doom-dark-theme 'modus-vivendi
+      amb/doom-light-theme 'modus-operandi)
+
 (defun amb/toggle-themes ()
   "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
   (interactive)
   (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
         (t (load-theme amb/doom-dark-theme))))
+#+end_src
+
+The modus themes are tremendously configurable; let's toggle some of those switches:
+#+begin_src elisp
+(require-theme 'modus-themes)
+
+(setq modus-themes-bold-constructs t
+      modus-themes-italic-constructs t
+      modus-themes-syntax (list 'alt-syntax 'yellow-comments)
+      modus-themes-vivendi-color-overrides '((bg-main . "#0d0b11")))
+#+end_src
+
+I usually want dark mode, though, so let's set that at startup:
+#+begin_src elisp
+(setq doom-theme amb/doom-dark-theme)
 #+end_src
 
 ** line numbers
