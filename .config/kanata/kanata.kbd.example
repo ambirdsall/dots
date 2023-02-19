@@ -1,0 +1,13 @@
+(defcfg
+  linux-dev /dev/input/by-path/platform-39b10c000.spi-cs-0-event-kbd)
+
+(defsrc
+  caps lsft rsft esc)
+
+(deflayer qwerty
+  @cap @lshft @rshft esc)
+
+(defalias
+  cap   (tap-hold-press 111 111 esc lctl)
+  lshft (tap-hold-press 111 111 S-9 lsft)
+  rshft (tap-hold-press 111 111 S-0 rsft))

@@ -1,0 +1,60 @@
+#+title: Remap keys with kanata
+
+It is quite nice, once you understand the config language. So:
+
+Key names are predefined symbols (variables, more or less) that map to the OS input
+events. A ~defsrc~ form defines a keymap. The number and order of keys in a keymap is
+arbitrary; so long as each has a corresponding binding in the ~deflayer~ forms that follow,
+you're good.
+
+First, run this:
+#+begin_src shell
+cp kanata.kbd.example kanata.kbd
+mkdir -p ~/.config/systemd/default.target.wants/
+#+end_src
+
+If you're on linux (and if you're on macOS, why aren't you just using karabiner elements and/or hammerspoon?), then run this (MASSIVE CAVEAT: untested, written late night, from memory, after significant time away):
+#+begin_src shell
+cp kanata.service ~/.config/systemd/default.target.wants/
+systemctl --user enable kanata.service
+#+end_src
+
+You'll have to change the value given to ~defcfg~ to match your own system. Beyond that,
+whatever, go nuts.
+
+* set up permissions and shit ([[https://github.com/jtroo/kanata/blob/main/docs/avoid-sudo-linux.md][link]]) [0/0]
+- [X] convert the instructions below to org so it can become an executable literate runbook
+- [ ] figure out how to use sudo in org blocks so it can yada yada yada
+
+In Linux, kanata needs to be able to access the input and uinput subsystem to inject
+events. To do this, your user needs to have certain permissions set up.
+
+** 1. If the uinput group does not exist, create a new group
+
+#+begin-src shell
+sudo groupadd uinput
+#+end-src
+
+** 2. Add your user to the input and the uinput group
+
+#+begin-src shell
+sudo usermod -aG input $USER
+sudo usermod -aG uinput $USER
+#+end-src
+
+Make sure that it's effective by running `groups`. You might have to logout and login.
+
+** 3. Make sure the uinput device file has the right permissions.
+
+Add a udev rule (in either ~/etc/udev/rules.d~ or ~/lib/udev/rules.d~) something like the following:
+#+begin_src shell
+sudo echo 'KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput"' > /etc/udev/rules.d/99-udev.rules
+#+end_src
+
+** 4. Make sure the uinput drivers are loaded
+
+You may need to run this command whenever you start kanata for the first time:
+
+#+begin_src shell
+sudo modprobe uinput
+#+end_src
