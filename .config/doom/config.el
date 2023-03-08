@@ -96,8 +96,8 @@
 (map! :leader :desc "Dashboard" "d" #'+doom-dashboard/open)
 
 (setq doom-font-increment 1
-      ;; doom-font (font-spec :family "Fira Code" :size 16)
-      doom-font (font-spec :family "Iosevka" :style "Light" :size 16)
+      doom-font (font-spec :family "Fira Code" :size 16 :style "Retina" :weight 'semi-bold)
+      ;; doom-font (font-spec :family "Iosevka Fixed Slab" :size 16 :weight 'medium)
       doom-big-font (font-spec :family "Fira Code" :size 26)
       doom-variable-pitch-font (font-spec :family "Overpass" :size 20)
       doom-serif-font (font-spec :family "Iosevka Slab" :size 16)
@@ -123,7 +123,17 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
   (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
         (t (load-theme amb/doom-dark-theme))))
 
-(setq doom-theme amb/doom-dark-theme)
+(require-theme 'modus-themes)
+
+(setq modus-themes-bold-constructs t
+      modus-themes-italic-constructs t
+      modus-themes-syntax (list 'alt-syntax 'yellow-comments)
+      modus-themes-vivendi-color-overrides
+      '((bg-main . "#0d0b11")
+        (fg-main . "#ffeeee")
+        (bg-hl-line . "#29272f"))
+      modus-themes-operandi-color-overrides
+      '((bg-hl-line . "#eeeeee")))
 
 (setq display-line-numbers-type 'relative)
 
@@ -370,6 +380,16 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
               (if IS-MAC (setq c/preferred-browser "open")))
 
 (setq! geiser-active-implementations '(guile))
+
+(defun insert-guile-shebang ()
+  (interactive)
+  (save-excursion
+   (beginning-of-buffer)
+   (insert "#!/usr/local/bin/guile \\
+-e main -s
+!#
+
+")))
 
 (use-package! evil-tmux-navigator
   :config (evil-tmux-navigator-bind-keys))
