@@ -199,9 +199,18 @@ Additionally, there are emojis:
 I mean, it's nice.
 
 ** theme this bad boy
-Sometimes (usually) I want dark mode; sometimes (presenting, in direct sunlight, or just mixing it up) I want light mode. Let's define some variables to hold nice dark and light themes and a function to toggle between them—that way, I don't need to keep the theme names straight, and I can swap in a new dark or light theme for all downstream logic just by changing up the corresponding variable.
+The modus themes (included with emacs since version twenty-eight point something) are a
+thoughtfully-designed, goal-oriented set of color themes, designed for accessibility and
+readability (high-contrast, anti-deuteranopic variants) and sporting delightfully-paired
+names:
+- /modus operandi/ :: Mode, or manner, of that which is to be worked. The light color theme, for one's toil under the sun.
+- /modus vivendi/ :: Mode, or manner, of living. The dark color theme, for one's toil under monitor glare.
 
-The modus themes are a solid starting point:
+Sometimes (usually) I want dark mode; sometimes (presenting, in direct sunlight, or just
+mixing it up) I want light mode. What I do /not/ want is to have to pick a specific theme
+out of a haystack by name each time I want to toggle between light and dark; give me
+instead the blithe simplicity of a lightswitch flipped in passing. Or rather, let me give
+it to myself, so I can flit over to a different light and/or dark theme at my pleasure:
 #+begin_src elisp
 (setq amb/doom-dark-theme 'modus-vivendi
       amb/doom-light-theme 'modus-operandi)
@@ -213,19 +222,27 @@ The modus themes are a solid starting point:
         (t (load-theme amb/doom-dark-theme))))
 #+end_src
 
-The modus themes are tremendously configurable; let's toggle some of those switches:
+Speaking of toggling switches, the modus themes expose quite a few semantically-named
+variables for users to tweak; let's do so.
+
+By default, as of writing, ~modus-vivendi~ uses a background color of ~#000000~ and text color
+of ~#ffffff~. This pairing provides a /glaring/ degree of contrast; while that's in line with
+the stated goals of the themes, let's tone it down just a touch. A touch of blue gives the
+background a subtle "night sky" vibe; a touch of red makes the foreground text warmer.
+We'll also want a corresponding adjustment to the background color of highlighted (i.e.
+current) lines.
 #+begin_src elisp
 (require-theme 'modus-themes)
 
 (setq modus-themes-bold-constructs t
       modus-themes-italic-constructs t
       modus-themes-syntax (list 'alt-syntax 'yellow-comments)
-      modus-themes-vivendi-color-overrides '((bg-main . "#0d0b11")))
-#+end_src
-
-I usually want dark mode, though, so let's set that at startup:
-#+begin_src elisp
-(setq doom-theme amb/doom-dark-theme)
+      modus-themes-vivendi-color-overrides
+      '((bg-main . "#0d0b11")
+        (fg-main . "#ffeeee")
+        (bg-hl-line . "#29272f"))
+      modus-themes-operandi-color-overrides
+      '((bg-hl-line . "#eeeeee")))
 #+end_src
 
 ** line numbers
