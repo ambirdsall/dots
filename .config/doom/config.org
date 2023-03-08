@@ -638,9 +638,29 @@ project root (either because of error or because I used the wrong muscle memory)
 ** scheme, or: you've got gall, you've got guile
 Apologies to racket, which is a nicer language per se, but guile's already got its grubby
 little +mitts+ C ABI in lots of interesting parts of the linux ecosystem and I just don't
-have time to shop around. Until I do, I don't want to have to manually choose a scheme every single time I (re)open a ~*.scm~ buffer:
+have time to shop around. If the list stored at ~geiser-active-implementations~ has length >
+1, then every time I restart emacs, I'll be prompted to choose which implementation to
+associate with every. single. scheme. buffer. that. I. have. ever. opened. in. my. life.
+It gets old fast:
 #+begin_src elisp
 (setq! geiser-active-implementations '(guile))
+#+end_src
+
+Guile's shebang convention is surprisingly well-considered from first principles, in terms
+of how it relates to the rest of the language syntax and being a good cross-platform
+citizen. It's also weird, complex, and idiosyncratic, and I am apparently incapable of
+remembering it.
+
+#+begin_src elisp
+(defun insert-guile-shebang ()
+  (interactive)
+  (save-excursion
+   (beginning-of-buffer)
+   (insert "#!/usr/local/bin/guile \\
+-e main -s
+!#
+
+")))
 #+end_src
 
 *** pimp my +ride+ .guile
