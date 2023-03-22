@@ -2,7 +2,7 @@
 	name = Alex Birdsall
 	email = ambirdsall@gmail.com
 [alias]
-	c = commit
+	c = "!_f(){ [ $# -gt 0 ] && git commit -m \"$*\" || git commit -v; };_f"
 	co = checkout
 	d = diff
 	dc = diff --cached
