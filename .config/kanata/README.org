@@ -10,27 +10,20 @@ you're good.
 First, run this:
 #+begin_src shell
 cp kanata.kbd.example kanata.kbd
-mkdir -p ~/.config/systemd/default.target.wants/
+# very similar, but swaps alt/GUI keys so Meta is usable:
+# cp kanata.macbook.kbd.example kanata.kbd
 #+end_src
 
-If you're on linux (and if you're on macOS, why aren't you just using karabiner elements and/or hammerspoon?), then run this (MASSIVE CAVEAT: untested, written late night, from memory, after significant time away):
+You'll have to change the value given to ~defcfg~ to match your own system. You should be able to get the correct value with this:
 #+begin_src shell
-cp kanata.service ~/.config/systemd/default.target.wants/
-systemctl --user enable kanata.service
+command ls /dev/input/by-path/*.kbd
 #+end_src
-
-You'll have to change the value given to ~defcfg~ to match your own system. Beyond that,
-whatever, go nuts.
 
 * set up permissions and shit ([[https://github.com/jtroo/kanata/blob/main/docs/avoid-sudo-linux.md][link]]) [0/0]
-- [X] convert the instructions below to org so it can become an executable literate runbook
-- [ ] figure out how to use sudo in org blocks so it can yada yada yada
-
 In Linux, kanata needs to be able to access the input and uinput subsystem to inject
 events. To do this, your user needs to have certain permissions set up.
 
 ** 1. If the uinput group does not exist, create a new group
-
 #+begin-src shell
 sudo groupadd uinput
 #+end-src
@@ -48,7 +41,7 @@ Make sure that it's effective by running `groups`. You might have to logout and 
 
 Add a udev rule (in either ~/etc/udev/rules.d~ or ~/lib/udev/rules.d~) something like the following:
 #+begin_src shell
-sudo echo 'KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput"' > /etc/udev/rules.d/99-udev.rules
+echo 'KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=uinput"' | sudo tee /etc/udev/rules.d/99-udev.rules
 #+end_src
 
 ** 4. Make sure the uinput drivers are loaded
@@ -58,3 +51,13 @@ You may need to run this command whenever you start kanata for the first time:
 #+begin_src shell
 sudo modprobe uinput
 #+end_src
+
+* systemd was born for this shit
+If you're on linux (and if you're on macOS, why aren't you just using karabiner elements
+and/or hammerspoon?), you'll likely want systemd to start kanata for you automatically:
+#+begin_src shell
+cp kanata.service ~/.config/systemd/user/
+#+end_src
+
+Having done so, you can start kanata on-demand with ~systemctl --user start kanata.service~
+or every time you log in with ~systemctl --user --now enable kanata.service~.
