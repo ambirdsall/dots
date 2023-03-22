@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if command -v gdbus &>/dev/null; then
+  gdbus call --session --dest org.gnome.SettingsDaemon.Power --object-path /org/gnome/SettingsDaemon/Power --method org.gnome.SettingsDaemon.Power.Keyboard.StepDown
+else
+  kbd-light-off
+fi
