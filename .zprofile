@@ -11,45 +11,57 @@ _add_to_path () {
     fi
 }
 
-if command -v xcape > /dev/null; then
+_at_hand () {
+    command -v $1 > /dev/null
+}
+
+if _at_hand xcape; then
   pgrep xcape &> /dev/null || xcape -e 'Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'
 fi
 
 # TODO some automated scripts
-if command -v xcape > /dev/null; then
-  if [ -z $XMODMAP_SET ]; then xmodmap ~/.Xmodmap; fi
-  export XMODMAP_SET=t
+if _at_hand xmodmap; then
+  xmodmap ~/.Xmodmap
 fi
 
-if command -v xfce4-terminal > /dev/null; then
+if _at_hand kitty; then
+    export TERMINAL=kitty
+elif _at_hand alacritty; then
+    export TERMINAL=alacritty
+elif _at_hand xfce4-terminal; then
     export TERMINAL=xfce4-terminal
 fi
 
 #export QT_QPA_PLATFORMTHEME=qt5ct
 #export QT_QPA_PLATFORMTHEME=qt6ct
 
-if [ -d "$HOME/.yarn/bin" ] ; then
-    export PATH="$HOME/.yarn/bin:$PATH"
-fi
+_add_to_path "$HOME/.yarn/bin"
+# if [ -d "$HOME/.yarn/bin" ] ; then
+#     export PATH="$HOME/.yarn/bin:$PATH"
+# fi
 
-if [ -d "$HOME/.cargo/bin" ] ; then
-    export PATH="$HOME/.cargo/bin:$PATH"
-fi
+_add_to_path "$HOME/.cargo/bin"
+# if [ -d "$HOME/.cargo/bin" ] ; then
+#     export PATH="$HOME/.cargo/bin:$PATH"
+# fi
 
 [ -s "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 
 # set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/.local/bin" ] ; then
-    export PATH="$HOME/.local/bin:$PATH"
-fi
+_add_to_path "$HOME/.local/bin"
+# if [ -d "$HOME/.local/bin" ] ; then
+#     export PATH="$HOME/.local/bin:$PATH"
+# fi
 
 # set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ] ; then
-    export PATH="$HOME/bin:$PATH"
-fi
+# Make sure this one is added last!
+_add_to_path "$HOME/bin"
+# if [ -d "$HOME/bin" ] ; then
+#     export PATH="$HOME/bin:$PATH"
+# fi
 
 # a few barebones aliases, for muscle memory's sake
-if command -v vim > /dev/null; then
+if _at_hand vim; then
     vi () {
         if [[ $# -gt 0 ]]; then
             vim "$@"
@@ -58,7 +70,7 @@ if command -v vim > /dev/null; then
         fi
     }
 fi
-if command -v emacs > /dev/null; then
+if _at_hand emacs; then
     em () {
         emacsclient -nw --alternate-editor=vim ${@}
     }
@@ -70,6 +82,6 @@ if [ -s "$HOME/.guix-profile" ]; then
     source "$GUIX_PROFILE/etc/profile"
 fi
 
-if [ -f .zprofile.local.zsh ]; then
-  source .zprofile.local.zsh
+if [ -f "$HOME/.zprofile.local.zsh" ]; then
+  source "$HOME/.zprofile.local.zsh"
 fi
