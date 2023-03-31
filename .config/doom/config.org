@@ -199,6 +199,9 @@ Additionally, there are emojis:
 I mean, it's nice.
 
 ** theme this bad boy
+*** TODO wrap all theme config in a single ~(unless noninteractive <theme config>)~ form and =noweb= in the different logical sections
+
+*** that said...
 The modus themes (included with emacs since version twenty-eight point something) are a
 thoughtfully-designed, goal-oriented set of color themes, designed for accessibility and
 readability (high-contrast, anti-deuteranopic variants) and sporting delightfully-paired
@@ -212,14 +215,17 @@ out of a haystack by name each time I want to toggle between light and dark; giv
 instead the blithe simplicity of a lightswitch flipped in passing. Or rather, let me give
 it to myself, so I can flit over to a different light and/or dark theme at my pleasure:
 #+begin_src elisp
-(setq amb/doom-dark-theme 'modus-vivendi
-      amb/doom-light-theme 'modus-operandi)
+(unless noninteractive
+  (setq
+   ;; amb/doom-dark-theme 'modus-vivendi
+   amb/doom-dark-theme 'doom-badger
+   amb/doom-light-theme 'modus-operandi)
 
-(defun amb/toggle-themes ()
-  "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
-  (interactive)
-  (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
-        (t (load-theme amb/doom-dark-theme))))
+  (defun amb/toggle-themes ()
+    "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
+    (interactive)
+    (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
+          (t (load-theme amb/doom-dark-theme)))))
 #+end_src
 
 Speaking of toggling switches, the modus themes expose quite a few semantically-named
@@ -231,20 +237,21 @@ the stated goals of the themes, let's tone it down just a touch. A touch of blue
 background a subtle "night sky" vibe; a touch of red makes the foreground text warmer.
 We'll also want a corresponding adjustment to the background color of highlighted (i.e.
 current) lines.
+
 #+begin_src elisp
-(require-theme 'modus-themes)
+(unless noninteractive
+  (require-theme 'modus-themes)
 
-(setq modus-themes-bold-constructs t
-      modus-themes-italic-constructs t
-      modus-themes-syntax (list 'alt-syntax 'yellow-comments)
-      modus-themes-vivendi-color-overrides
-      '((bg-main . "#0d0b11")
-        (fg-main . "#ffeeee")
-        (bg-hl-line . "#29272f"))
-      modus-themes-operandi-color-overrides
-      '((bg-hl-line . "#eeeeee")))
+  (setq modus-themes-bold-constructs t
+        modus-themes-italic-constructs t
+        modus-themes-syntax (list 'alt-syntax 'yellow-comments)
+        modus-themes-vivendi-color-overrides
+        '((bg-main . "#0d0b11")
+          (fg-main . "#ffeeee")
+          (bg-hl-line . "#29272f"))
+        modus-themes-operandi-color-overrides
+        '((bg-hl-line . "#eeeeee"))))
 #+end_src
-
 ** line numbers
 This determines the style of line numbers in effect. If set to ~nil~, line numbers are disabled. For
 relative line numbers, set this to ~relative~.
