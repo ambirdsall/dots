@@ -7,6 +7,7 @@
 	d = diff
 	dc = diff --cached
 	p = add -p
+	latest = "!git reflog | grep checkout: | awk '{print $6}' | awk '!H[$0]++'"
 [rerere]
 	enabled = true
 [github]
