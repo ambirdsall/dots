@@ -165,12 +165,12 @@ On arch linux, here are the packages you'll want to download:
 Fira Code is
 #+begin_src elisp
 (setq doom-font-increment 1
-      doom-font (font-spec :family "Fira Code" :size 16 :style "Retina" :weight 'semi-bold)
+      doom-font (font-spec :family "Fira Code" :size (if IS-MAC 13 16) :style "Retina" :weight 'semi-bold)
       ;; doom-font (font-spec :family "Iosevka Fixed Slab" :size 16 :weight 'medium)
-      doom-big-font (font-spec :family "Fira Code" :size 26)
-      doom-variable-pitch-font (font-spec :family "Overpass" :size 20)
-      doom-serif-font (font-spec :family "Iosevka Slab" :size 16)
-      doom-unicode-font (font-spec :family "Iosevka" :size 16))
+      doom-big-font (font-spec :family "Fira Code" :size (if IS-MAC 20 26))
+      doom-variable-pitch-font (font-spec :family "Overpass" :size (if IS-MAC 15 20))
+      doom-serif-font (font-spec :family "Iosevka Slab" :size (if IS-MAC 13 16))
+      doom-unicode-font (font-spec :family "Iosevka" :size (if IS-MAC 13 16)))
 #+end_src
 We’d like to use mixed pitch in certain modes. If we simply add a hook, when directly
 opening a file with (a new) Emacs, ~mixed-pitch-mode~ runs before UI initialisation, which is

@@ -96,12 +96,12 @@
 (map! :leader :desc "Dashboard" "d" #'+doom-dashboard/open)
 
 (setq doom-font-increment 1
-      doom-font (font-spec :family "Fira Code" :size 16 :style "Retina" :weight 'semi-bold)
+      doom-font (font-spec :family "Fira Code" :size (if IS-MAC 13 16) :style "Retina" :weight 'semi-bold)
       ;; doom-font (font-spec :family "Iosevka Fixed Slab" :size 16 :weight 'medium)
-      doom-big-font (font-spec :family "Fira Code" :size 26)
-      doom-variable-pitch-font (font-spec :family "Overpass" :size 20)
-      doom-serif-font (font-spec :family "Iosevka Slab" :size 16)
-      doom-unicode-font (font-spec :family "Iosevka" :size 16))
+      doom-big-font (font-spec :family "Fira Code" :size (if IS-MAC 20 26))
+      doom-variable-pitch-font (font-spec :family "Overpass" :size (if IS-MAC 15 20))
+      doom-serif-font (font-spec :family "Iosevka Slab" :size (if IS-MAC 13 16))
+      doom-unicode-font (font-spec :family "Iosevka" :size (if IS-MAC 13 16)))
 
 (defvar mixed-pitch-modes '(org-mode markdown-mode gfm-mode Info-mode text-mode)
   "Modes that `mixed-pitch-mode' should be enabled in, but only after UI initialisation.")
