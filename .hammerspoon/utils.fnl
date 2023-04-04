@@ -17,8 +17,21 @@
   "bind a function func to run on shift+bearclaw+key"
   (hs.hotkey.bind [:shift :cmd :alt :ctrl] key func))
 
-{:notify notify
- :alert alert
- :log log
- :bearclaw bearclaw
- :shift+bearclaw shift+bearclaw}
+(fn dump [o]
+  (if (= (type o) :table)
+      (do
+        (var s "{ ")
+        (each [key v (pairs o)]
+          (var k key)
+          (if (~= (type key) :number)
+              (set k (.. "\"" k "\"")))
+          (set s (.. s "[" k "] = " (dump v) ",")))
+        (.. s "} "))
+      (tostring o)))
+
+{: notify
+ : alert
+ : log
+ : bearclaw
+ : shift+bearclaw
+ : dump}
