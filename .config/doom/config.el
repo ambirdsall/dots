@@ -3,9 +3,8 @@
 (setq user-full-name "Alex Birdsall"
       user-mail-address "ambirdsall@gmail.com")
 
-;; GUI emacs? sure, be cute.
-;; In the terminal? I said what I said.
-(unless (display-graphic-p) (setq confirm-kill-emacs nil))
+;; I said what I said.
+(setq confirm-kill-emacs nil)
 
 (map! :leader
       :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
@@ -114,26 +113,30 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
     (add-hook (intern (concat (symbol-name hook) "-hook")) #'mixed-pitch-mode)))
 (add-hook 'doom-init-ui-hook #'init-mixed-pitch-h)
 
-(setq amb/doom-dark-theme 'modus-vivendi
-      amb/doom-light-theme 'modus-operandi)
+(unless noninteractive
+  (setq
+   ;; amb/doom-dark-theme 'modus-vivendi
+   amb/doom-dark-theme 'doom-badger
+   amb/doom-light-theme 'modus-operandi)
 
-(defun amb/toggle-themes ()
-  "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
-  (interactive)
-  (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
-        (t (load-theme amb/doom-dark-theme))))
+  (defun amb/toggle-themes ()
+    "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
+    (interactive)
+    (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
+          (t (load-theme amb/doom-dark-theme)))))
 
-(require-theme 'modus-themes)
+(unless noninteractive
+  (require-theme 'modus-themes)
 
-(setq modus-themes-bold-constructs t
-      modus-themes-italic-constructs t
-      modus-themes-syntax (list 'alt-syntax 'yellow-comments)
-      modus-themes-vivendi-color-overrides
-      '((bg-main . "#0d0b11")
-        (fg-main . "#ffeeee")
-        (bg-hl-line . "#29272f"))
-      modus-themes-operandi-color-overrides
-      '((bg-hl-line . "#eeeeee")))
+  (setq modus-themes-bold-constructs t
+        modus-themes-italic-constructs t
+        modus-themes-syntax (list 'alt-syntax 'yellow-comments)
+        modus-themes-vivendi-color-overrides
+        '((bg-main . "#0d0b11")
+          (fg-main . "#ffeeee")
+          (bg-hl-line . "#29272f"))
+        modus-themes-operandi-color-overrides
+        '((bg-hl-line . "#eeeeee"))))
 
 (setq display-line-numbers-type 'relative)
 

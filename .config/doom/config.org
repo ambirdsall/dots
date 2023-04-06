@@ -32,9 +32,8 @@ Some functionality uses this to identify you, e.g. GPG configuration, email clie
 (setq user-full-name "Alex Birdsall"
       user-mail-address "ambirdsall@gmail.com")
 
-;; GUI emacs? sure, be cute.
-;; In the terminal? I said what I said.
-(unless (display-graphic-p) (setq confirm-kill-emacs nil))
+;; I said what I said.
+(setq confirm-kill-emacs nil)
 #+end_src
 
 * Who configures the configuration?
@@ -127,7 +126,7 @@ I should probably make these definitions conditional, eh.
        ns-function-modifier 'super)
 #+end_src
 
-* who doesn't like a nice dashboard
+* TODO who doesn't like a nice dashboard
 cf. [[https://tecosaur.github.io/emacs-config/config.html#dashboard-quick-actions][tecosaur's config]], whence this came. Teco adds some additional code to clean
 up the appearance of the dashboard; this could use some similar TLC as a follow-up.
 #+begin_src elisp
@@ -398,7 +397,7 @@ projectile would recognize your root directory as a project."
 #+end_src
 
 * programming
-** I mean, why would you not do these things?
+** Indent however you wish, as long as you do it right
 #+begin_src elisp
 (setq standard-indent 2)
 #+end_src
