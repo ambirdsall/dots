@@ -17,33 +17,30 @@ wezterm.on('gui-startup', function(cmd)
   end
 
   -- Set a workspace for coding on a current project
-  -- Top pane is for the editor, bottom pane is for the build tool
-  local tab, airbyte_pane, window = mux.spawn_window {
+  -- first argument is the tab object
+  local _, airbyte_pane, airbyte_window = mux.spawn_window {
     workspace = 'airbyte',
+    cwd = work_FE_dir,
     args = args,
-    cwd = work_FE_dir
   }
-  window:spawn_tab {
+  -- TODO: `send_text 'ssh-add\n'`
+  airbyte_window:spawn_tab {
     cwd = work_dir,
   }
   -- queue up a dev server but do not start it for me
   airbyte_pane:send_text 'pnpm start:cloud'
 
-  -- TODO: switch to other tab and `send_text 'ssh-add\n'`
 
-  -- A workspace for interacting with a local machine that
-  -- runs some docker containners for home automation
-  local tab, pane, window = mux.spawn_window {
+mux.spawn_window {
     workspace = 'conf',
     cwd = wezterm.home_dir .. '/.config',
   }
 
-  -- We want to startup in the coding workspace
   mux.set_active_workspace 'airbyte'
 end)
 
 return {
-  apply = function(config)
+  apply = function(_)
     -- config.unix_domains = {
     --   {
     --     name = "airbyte",

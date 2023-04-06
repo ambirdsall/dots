@@ -1,7 +1,7 @@
 local wezterm = require "wezterm"
 local act = wezterm.action
 
-function leader(key, action)
+local leader = function(key, action)
   return { key=key, mods="LEADER", action=action }
 end
 
