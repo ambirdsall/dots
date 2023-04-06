@@ -37,10 +37,10 @@ return {
       leader("7", act { ActivateTab=6 }),
       leader("8", act { ActivateTab=7 }),
       leader("9", act { ActivateTab=-1 }),
-      leader("[", act { ActivateTabRelative=-1 }),
-      leader("]", act { ActivateTabRelative=1 }),
+      leader("p", act { ActivateTabRelative=-1 }),
+      leader("n", act { ActivateTabRelative=1 }),
       -- Fuzzy attach to domain
-      { key = 'T', mods = 'LEADER', action = act.ShowLauncherArgs { flags = 'FUZZY|DOMAINS' } },
+      { key = 'S', mods = 'LEADER', action = act.ShowLauncherArgs { flags = 'FUZZY|WORKSPACES' } },
 
       -- Detach domain of the current pain
       { key = 'd', mods = 'LEADER', action = act.DetachDomain 'CurrentPaneDomain' },

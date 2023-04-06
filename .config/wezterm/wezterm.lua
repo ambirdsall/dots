@@ -8,6 +8,7 @@ end
 
 require('config/multiplexing').apply(config)
 require('config/keybinding').apply(config)
+require('config/appearance').apply(config)
 
 -- TODO local file
 
