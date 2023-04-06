@@ -4,7 +4,8 @@
         : alert
         : log
         : bearclaw
-        : shift+bearclaw} (require "utils"))
+        : shift+bearclaw
+        : dump} (require :utils))
 
 ;; * script loading setup
 ;; ** load init-local.lua
@@ -21,7 +22,7 @@
 
 ;; ** window management
 ;; *** switchers
-(local dev-switcher (hs.window.switcher.new ["Emacs" "iTerm2" "Google Chrome"]))
+(local dev-switcher (hs.window.switcher.new ["Emacs" "WezTerm"]))
 (bearclaw :space #((log "itching for some switching") (dev-switcher:next)))
 
 ;; *** open specific apps
@@ -34,7 +35,8 @@
                     emacs-ng (: emacs-ng :setFrontmost)
                     (alert "Bruh. How do I focus an emacs GUI if you aren't running one."))))
 
-(bearclaw :t #(hs.application.launchOrFocus "iTerm"))
+;; (bearclaw :t #(hs.application.launchOrFocus "iTerm"))
+(bearclaw :t #(hs.application.launchOrFocus "WezTerm"))
 
 (bearclaw :s #(hs.application.launchOrFocus "Slack"))
 
@@ -47,6 +49,9 @@
                     (alert "Bruh. How do I focus cypress if you aren't running it."))))
 
 ;; *** grid
+(hs.grid.setGrid :3x2)
+;; (set hs.grid.HINTS [[:w :e :r]
+;;                     [:s :d :f]])
 ;; currently, the grid is the default 3x3; 3x2 would be better, though, using these keys:
 ;;    | w | e | r |
 ;;    | s | d | f |
