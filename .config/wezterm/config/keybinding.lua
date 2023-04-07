@@ -9,6 +9,10 @@ return {
   apply = function(config)
     config.leader = { key = "Space", mods = "CTRL", timeout_milliseconds = 1000 }
     config.keys = {
+      { key = 'x', mods = 'META', action = act.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' } },
+
+      leader('Space', act.ActivateCopyMode),
+
       -- open/shut them, open/shut them, give a little clap clap clap
       leader("c", act.SpawnTab "CurrentPaneDomain"),
       leader("t", act.SpawnTab "CurrentPaneDomain"),
@@ -40,20 +44,25 @@ return {
       leader("p", act { ActivateTabRelative=-1 }),
       leader("n", act { ActivateTabRelative=1 }),
       -- Fuzzy attach to domain
-      { key = 'S', mods = 'LEADER', action = act.ShowLauncherArgs { flags = 'FUZZY|WORKSPACES' } },
+      -- { key = 'S', mods = 'LEADER', action = act.ShowLauncherArgs { flags = 'FUZZY|WORKSPACES' } },
+      leader('S', act.ShowLauncherArgs { flags = 'FUZZY|WORKSPACES' }),
 
-      -- Detach domain of the current pain
-      { key = 'd', mods = 'LEADER', action = act.DetachDomain 'CurrentPaneDomain' },
+      -- "Detach" from current workspace
+      leader('d', act.SwitchToWorkspace { name = 'default' }),
 
       -- Switch back to last tab
-      { key = '`', mods = 'LEADER', action = wezterm.action.ActivateLastTab },
+      leader('`', wezterm.action.ActivateLastTab),
 
       -- Navigate between tabs
       { key = 'LeftArrow', mods = 'SHIFT', action = act.ActivateTabRelative(-1) },
       { key = 'RightArrow', mods = 'SHIFT', action = act.ActivateTabRelative(1) },
-
-      -- TMUX like switch tabs
-      { key = 'w', mods = 'LEADER', action = act.ShowLauncherArgs { flags = 'FUZZY|TABS' } },
     }
+
+    -- if os.execute("[ $(uname) == Darwin ]") then
+    --   table.insert(
+    --     config.keys,
+    --     { key = 'x', mods = 'CMD', action = act.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' } }
+    --   )
+    -- end
   end
 }
