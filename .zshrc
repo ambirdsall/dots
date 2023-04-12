@@ -1,4 +1,15 @@
 # * Let's get ready to rumble
+_add_to_path () {
+    local BIN_DIR="$1"
+    if [ -d "$BIN_DIR" -a ! $(echo $PATH | grep "$BIN_DIR(:|$)") ]; then
+        export PATH="$BIN_DIR:$PATH"
+    fi
+}
+
+_at_hand () {
+    command -v $1 > /dev/null
+}
+
 if [[ $(uname) == 'Darwin' ]]; then
     export IS_MAC=t
 fi
@@ -18,6 +29,16 @@ SAVEHIST=100000
 export HISTCONTROL=ignorespace
 setopt autocd extendedglob notify
 unsetopt beep nomatch
+
+# * make the keyboard work how I want on (x11) linux
+if _at_hand xcape; then
+  pgrep xcape &> /dev/null || xcape -e 'Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'
+fi
+
+# TODO some automated scripts
+if _at_hand xmodmap; then
+  xmodmap ~/.Xmodmap
+fi
 
 # * side effects & printed output when sourcing config
 
