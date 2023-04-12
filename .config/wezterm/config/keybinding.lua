@@ -51,7 +51,12 @@ return {
       leader('d', act.SwitchToWorkspace { name = 'default' }),
 
       -- Switch back to last tab
-      leader('`', wezterm.action.ActivateLastTab),
+      leader('`', act.ActivateLastTab),
+
+      -- Switch back to prior workspace
+      -- n.b. this should be "previous" workspace in a stack, but that's not how the
+      -- underlying code works, so it's just cyclically iterating through a list
+      leader('L', act.SwitchWorkspaceRelative(-1)),
 
       -- Navigate between tabs
       { key = 'LeftArrow', mods = 'SHIFT', action = act.ActivateTabRelative(-1) },

@@ -27,8 +27,8 @@ wezterm.on(
     local zoomed_suffix = ''
     if tab.active_pane.is_zoomed then
       -- something more visual (e.g. microscope emoji) would be cool
-      zoomed_prefix = "🔎 "
-      zoomed_suffix = " 🔍"
+      zoomed_prefix = "🔎🔎🔎 "
+      zoomed_suffix = " 🔍🔍🔍"
     end
 
     local workspace = "[" .. wezterm.mux.get_active_workspace() .. "] "
