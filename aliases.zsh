@@ -410,8 +410,21 @@ l () {
     echo "Usage: l [number of commits]" >&2
   fi
 }
+
+L () {
+  # no args
+  if [[ $# -eq 0 ]]; then
+    git log --pretty=reference --decorate -8
+  # one arg which is an integer
+  elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
+    git log --pretty=reference --decorate -$1
+  else
+    echo "Usage: l [number of commits]" >&2
+  fi
+}
+
 command -v ruby &>/dev/null && eval "$(ruby -e '9.times do |i| puts %Q{alias l#{i+1}=l\\ -#{i+1}} end')"
-alias lg="git log --oneline --decorate --graph --all"
+alias lg="git log --pretty=reference --decorate --graph --all"
 alias rl="git reflog"
 
 describe-commits () {
