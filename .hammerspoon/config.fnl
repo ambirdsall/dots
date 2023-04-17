@@ -4,7 +4,7 @@
         : alert
         : log
         : bearclaw
-        : shift+bearclaw
+        : BEARCLAW
         : dump} (require :utils))
 
 ;; * script loading setup
@@ -42,7 +42,7 @@
 
 (bearclaw :c #(hs.application.launchOrFocus "Google Chrome"))
 
-(shift+bearclaw :c #(let [cypress (hs.application.get "Cypress")]
+(BEARCLAW :c #(let [cypress (hs.application.get "Cypress")]
                 ;; because the directory emacs was launched from matters, don't use
                 ;; (hs.application.launchOrFocus "Emacs")
                 (if cypress (: cypress :setFrontmost)
@@ -50,11 +50,19 @@
 
 ;; *** grid
 (hs.grid.setGrid :3x2)
-;; (set hs.grid.HINTS [[:w :e :r]
-;;                     [:s :d :f]])
-;; currently, the grid is the default 3x3; 3x2 would be better, though, using these keys:
-;;    | w | e | r |
-;;    | s | d | f |
+
+;; Underdocumented: the grid *must* include at least 5 rows, regardless of how many rows
+;; you actually need. Ergo ipso facto, since I only actually want to use
+;;     [[:u :i :o] [:j :k :l]],
+;; I need to define the grid hints to be those *plus* all the rows above and below. The
+;; unused hint keys don't strictly need to be adjacent, but why would I make it
+;; unnecessarily painful to change my mind?
+(set hs.grid.HINTS [[:f6 :f7 :f8]
+                    [:7  :8  :9]
+                    [:u  :i  :o]
+                    [:j  :k  :l]
+                    [:m  ","  :.]])
+
 (bearclaw :g hs.grid.show)
 
 ;; *** custom window management

@@ -13,7 +13,7 @@
   "bind a function func to run on bearclaw+key"
   (hs.hotkey.bind [:cmd :alt :ctrl] key func))
 
-(fn shift+bearclaw [key func]
+(fn BEARCLAW [key func]
   "bind a function func to run on shift+bearclaw+key"
   (hs.hotkey.bind [:shift :cmd :alt :ctrl] key func))
 
@@ -33,5 +33,5 @@
  : alert
  : log
  : bearclaw
- : shift+bearclaw
+ : BEARCLAW
  : dump}
