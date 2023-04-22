@@ -1,0 +1,9 @@
+#+title: Hammer that spoon
+
+* TODO split =utils.fnl= into =notification.fnl= and =keybinding.fnl=
+* TODO extract window management helper functions into a =window.fnl= file
+** there may well be built-in internal APIs that would tidy up window management fns
+* add keybindings to move windows without resizing them
+** implementation steps [0/2]
+*** TODO are there built-in APIs to use?
+*** TODO query the existing window's dimensions
