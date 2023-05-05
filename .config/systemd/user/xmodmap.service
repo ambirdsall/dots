@@ -1,0 +1,13 @@
+[Unit]
+Description=Set up keyboard remapping for X11, xmodmap
+After=graphical-session.target
+
+[Service]
+Environment=PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/bin
+Environment=DISPLAY=:0
+Type=simple
+ExecStart=/usr/bin/xmodmap %E/xmodmap/config
+Restart=never
+
+[Install]
+WantedBy=default.target

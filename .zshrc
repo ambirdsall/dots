@@ -31,14 +31,7 @@ setopt autocd extendedglob notify
 unsetopt beep nomatch
 
 # * make the keyboard work how I want on (x11) linux
-if _at_hand xcape; then
-  pgrep xcape &> /dev/null || xcape -e 'Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'
-fi
-
-# TODO some automated scripts
-if _at_hand xmodmap; then
-  xmodmap ~/.Xmodmap
-fi
+# TODO long term: kmonad-ad-ad-ad-ad-ad you oughta know by now
 
 # * side effects & printed output when sourcing config
 

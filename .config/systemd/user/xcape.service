@@ -1,0 +1,13 @@
+[Unit]
+Description=Set up keyboard remapping for X11
+After=xmodmap.service
+
+[Service]
+Environment=PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/bin
+Environment=DISPLAY=:0
+Type=forking
+ExecStart=/usr/bin/xcape -e 'Control_L=Escape;Shift_L=Shift_L|9;Shift_R=Shift_R|0'
+Restart=never
+
+[Install]
+WantedBy=default.target
