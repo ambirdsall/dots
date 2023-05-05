@@ -41,11 +41,11 @@
 (global modkey :Mod4)
 
 (set awful.layout.layouts
-     [awful.layout.suit.spiral.dwindle
-      awful.layout.suit.max
+     [;; awful.layout.suit.spiral.dwindle
+      awful.layout.suit.corner.nw
       ;; awful.layout.suit.floating
       awful.layout.suit.magnifier
-      awful.layout.suit.corner.nw])
+      awful.layout.suit.max])
 
 (global myawesomemenu [[:hotkeys #(hotkeys-popup.show_help nil (awful.screen.focused))]
                        [:manual (.. terminal " -e man awesome")]
@@ -167,6 +167,8 @@
          (awful.key [] :XF86AudioNext (sh "playerctl next"))
          (awful.key [] :XF86AudioPrev (sh "playerctl previous"))
          (awful.key [] :XF86AudioMute (sh "amixer sset Master toggle"))
+         (awful.key [] :XF86AudioRaiseVolume (sh "amixer -D pulse sset Master 5%+"))
+         (awful.key [] :XF86AudioLowerVolume (sh "amixer -D pulse sset Master 5%-"))
          (super :d (sh "rofi -modi drun -show drun -config ~/.config/rofi/rofidmenu.rasi"))
 
          (super :s hotkeys-popup.show_help
