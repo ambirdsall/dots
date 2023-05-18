@@ -103,7 +103,9 @@
        ;;gist              ; interacting with github gists
        lookup              ; navigate your code and its documentation
        (lsp +peek)
-       (magit +forge)    ; a git porcelain for Emacs
+       (magit
+        ;; +forge ; TODO temporarily disabled due to errors with sqlite wrapper
+        )    ; a git porcelain for Emacs
        make              ; run make tasks from Emacs
        ;;pass              ; password manager for nerds
        pdf               ; pdf enhancements
