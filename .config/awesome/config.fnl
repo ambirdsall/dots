@@ -41,11 +41,10 @@
 (global modkey :Mod4)
 
 (set awful.layout.layouts
-     [;; awful.layout.suit.spiral.dwindle
-      awful.layout.suit.corner.nw
-      ;; awful.layout.suit.floating
-      awful.layout.suit.magnifier
-      awful.layout.suit.max])
+     [awful.layout.suit.corner.nw
+      awful.layout.suit.max
+      ;; TODO can I give the magnified window a taller aspect ratio?
+      awful.layout.suit.magnifier])
 
 (global myawesomemenu [[:hotkeys #(hotkeys-popup.show_help nil (awful.screen.focused))]
                        [:manual (.. terminal " -e man awesome")]
