@@ -5,8 +5,10 @@ E () {
  emacsclient -c --alternate-editor="" "$@" & disown
 }
 
-em () {
-  qed $@
+# Don't want to mess with the existing session?
+alias ee="emacs -nw"
+EE () {
+  emacs "$@" & disown
 }
 
 # sometimes in life, you don't have emacs installed on a new computer yet.
@@ -22,15 +24,15 @@ emv () {
 }
 
 emm () {
-  em $(um)
+  e $(um)
 }
 
 rem () {
-  em . -eval "(require 'projectile)(dired (directile-project-root))"
+  e . -eval "(require 'projectile)(dired (directile-project-root))"
 }
 
 todos () {
-  em --quiet -eval "(require 'org-projectile) (call-interactively 'org-projectile/get-todos)"
+  e --quiet -eval "(require 'org-projectile) (call-interactively 'org-projectile/get-todos)"
 }
 
 slay () {
@@ -234,7 +236,7 @@ bo () {
 # ** shortcuts for nonstandard commands
 # ** tmux
 alias t=tmux
-alias tt="tmux attach -t"
+alias ta="tmux attach -t"
 alias tk="tmux kill-session -t"
 tn () {
     if [[ $# -gt 0 ]]; then
