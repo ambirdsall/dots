@@ -4,10 +4,13 @@
 set $mod Mod4
 
 # * kill focused window
-bindsym $mod+Shift+q kill
+bindsym $mod+x kill
 
 # * make it pretty
 exec --no-startup-id feh --bg-scale ~/Pictures/crescent-pluto.jpg
+smart_gaps on
+smart_borders on
+gaps inner 8
 
 # * gotta get that dropbox going to get the org files right
 exec --no-startup-id [ -f ~/.dropbox-dist/dropboxd ] && ~/.dropbox-dist/dropboxd
@@ -23,6 +26,9 @@ floating_modifier $mod
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
 # exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork -i ~/Pictures/pluto-closeup.png
+
+# nah, I'm 'a get FANCY
+# exec --no-startup-id xss-lock --transfer-sleep-lock -- ~/bin/i3lock-fancy --nofork -- scrot -z
 
 # ** wifi
 # NetworkManager is the most popular way to manage wireless networks on Linux,
@@ -41,17 +47,25 @@ floating_modifier $mod
 # exec xmodmap ~/.Xmodmap
 
 # ** Use pactl to adjust volume in PulseAudio.
-# set $refresh_i3status killall -SIGUSR1 i3status
-# bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && $refresh_i3status
-# bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && $refresh_i3status
+set $refresh_i3status killall -SIGUSR1 i3status
+# f1
 # bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle && $refresh_i3status
+# f2
+# bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -10% && $refresh_i3status
+# f3
+# bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && $refresh_i3status
+# f4
 # bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && $refresh_i3status
 
 # * start a terminal
-bindsym $mod+Return exec alacritty
-bindsym $mod+Shift+Return exec wezterm
+bindsym $mod+Return exec kitty
 
-# * (a program launcher)
+# start dmenu (a program launcher)
+# bindsym $mod+d exec dmenu_run
+# There also is the (new) i3-dmenu-desktop which only displays applications
+# shipping a .desktop file. It is a wrapper around dmenu, so you need that
+# installed.
+# bindsym $mod+d exec --no-startup-id i3-dmenu-desktop
 bindsym $mod+d exec rofi -show drun
 bindsym $mod+Shift+d exec rofi -show run
 

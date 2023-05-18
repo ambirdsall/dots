@@ -1,0 +1,76 @@
+#+title: a personal API for i3/sway actions
+
+Also an experiment in using doom's CLI to tangle arbitrary literate programs.
+
+* Working with this file
+
+** Evaluate this source block to write it all to files
+#+begin_src elisp :tangle no :results none
+(defun guile-shebang-tho ()
+  "returns a good shebang for guiling within this file"
+  "#!/usr/bin/env -S guile -e main -s\n!#")
+
+(call-interactively 'org-babel-tangle)
+#+end_src
+
+** Here's how it looks to create a new command:
+#+begin_src scheme :tangle api/i3-hello :shebang "#!/usr/bin/env -S guile -e main -s\n!#"
+(define (main)
+  (display "hello, tangled world\n"))
+#+end_src
+
+And here's how to know it works:
+#+begin_src sh :tangle no :results raw
+~/.config/i3/api/i3-hello
+#+end_src
+
+#+RESULTS:
+hola, tangled world
+
+* navigation
+** move windows
+#+begin_src scheme :tangle api/move :shebang (guile-shebang-tho)
+(define (main args)
+  (write args)
+  (newline))
+#+end_src
+
+#+begin_src sh :tangle no :results raw
+~/.config/i3/api/move left
+#+end_src
+
+#+RESULTS:
+("/home/amb/.config/i3/api/move" "left")
+** move focus
+#+begin_src scheme :tangle api/focus :shebang (guile-shebang-tho) :noweb yes
+<<use-modules>>
+
+(define (main args)
+  (write
+   (let* ((port (open-input-pipe "ls ~/.config/i3/api"))
+          (str  (read-line port))) ; from (ice-9 rdelim)
+     (close-pipe port)
+     str))
+  (newline))
+#+end_src
+
+#+begin_src sh :tangle no :results raw
+~/.config/i3/api/focus left
+#+end_src
+
+#+RESULTS:
+"focus"
+"focus"
+"Wed Jan 25 08:52:17 AM UTC 2023"
+"Wed Jan 25 08:45:05 AM UTC 2023"
+("/home/amb/.config/i3/api/focus" "left")
+* Workspaces
+I want a navigable history of workspaces; rather, I want a back button.
+
+* Appendices
+** use-modules
+#+NAME: use-modules
+#+begin_src scheme :tangle no
+(use-modules (ice-9 popen)
+             (ice-9 rdelim))
+#+end_src

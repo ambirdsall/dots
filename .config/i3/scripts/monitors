@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# TODO order menu items with prior selection last (maybe as stored somewhere in
+# $XDG_DATA_HOME, i.e. and e.g. ~/.local/share/amb/prior-monitor-selection), so
+# toggling between two monitor arrangements (i.e. going btw "laptop on the run"
+# and "work desk") is the default, happy path.
+#
+# TODO populate the selection menu with prettier, prose-formatted filenames; e.g., it'd be
+# nicer to interact with "dell monitor via HDMI" than "dell-monitor-via-HDMI.sh"
+main () {
+    local SCRIPT=~/.screenlayout/$(ls ~/.screenlayout | rofi -dmenu -p "Monitor Setup:" -a 0 -no-custom)
+    source $SCRIPT
+}
+
+main

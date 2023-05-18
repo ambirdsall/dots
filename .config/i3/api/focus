@@ -1,0 +1,12 @@
+#!/usr/bin/env -S guile -e main -s
+!#
+(use-modules (ice-9 popen)
+             (ice-9 rdelim))
+
+(define (main args)
+  (write
+   (let* ((port (open-input-pipe "ls ~/.config/i3/api"))
+          (str  (read-line port))) ; from (ice-9 rdelim)
+     (close-pipe port)
+     str))
+  (newline))

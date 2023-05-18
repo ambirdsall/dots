@@ -24,7 +24,7 @@
 # is used in the bar {} block below.
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
-font pango: Noto Sans Regular 10
+font pango: Overpass Regular 11
 
 # set the mod key to the winkey:
 set $mod Mod4
@@ -49,7 +49,7 @@ workspace_layout default
 ##############################
 
 #border indicator on windows:
-new_window pixel 1
+new_window pixel 0
 
 # thin borders
 # hide_edge_borders both
@@ -60,10 +60,10 @@ smart_borders on
 gaps inner 6
 
 # show window title bars (not officially supported with i3gaps)
-#default_border normal
+# default_border pixel 4
 
 # window title alignment
-#title_align center
+title_align center
 
 # * window management
 # ** Use Mouse+$mod to drag floating windows to their wanted position
@@ -211,8 +211,13 @@ mode "fold" {
 
 # * keybindings for different actions
 
+# run an arbitrary shell command
+# TODO polish this turd lol, this is too ugly to use, both in terms of UI and UX
+# bindsym $mod+x exec --no-startup-id rofi -show drun -run-shell-command '{terminal} -e zsh -ic "{cmd} && read"'
+
 # start a terminal
-bindsym $mod+Return exec xfce4-terminal
+bindsym $mod+Return exec kitty                # the future
+bindsym $mod+Shift+Return exec xfce4-terminal # the past
 
 # kill focused window
 bindsym $mod+q kill
@@ -308,6 +313,7 @@ bindsym XF86AudioRaiseVolume exec amixer -D pulse sset Master 5%+ && pkill -RTMI
 bindsym XF86AudioLowerVolume exec amixer -D pulse sset Master 5%- && pkill -RTMIN+1 i3blocks
 
 # gradular volume control
+# (Editor's note: Did I mean "granular"? "gradualer"? We will never know.)
 bindsym $mod+XF86AudioRaiseVolume exec amixer -D pulse sset Master 1%+ && pkill -RTMIN+1 i3blocks
 bindsym $mod+XF86AudioLowerVolume exec amixer -D pulse sset Master 1%- && pkill -RTMIN+1 i3blocks
 
@@ -457,9 +463,9 @@ exec --no-startup-id feh --bg-scale ~/Pictures/crescent-pluto.jpg
 #exec --no-startup-id xscreensaver --no-splash
 
 # Desktop notifications
-exec --no-startup-id dbus-launch dunst --config ~/.config/dunst/dunstrc
+# exec --no-startup-id dbus-launch dunst --config ~/.config/dunst/dunstrc
 # alternative if you installed aside with XFCE4:
-# exec --no-startup-id /usr/lib/xfce4/notifyd/xfce4-notifyd &
+exec --no-startup-id /usr/lib/xfce4/notifyd/xfce4-notifyd &
 
 # autotiling script
 # https://github.com/nwg-piotr/autotiling
@@ -506,7 +512,7 @@ for_window [class="Pamac-manager"] floating enable
 for_window [window_role="About"] floating enable
 
 # set border of floating window
-for_window [class="urxvt"] border pixel 1
+# for_window [class="urxvt"] border pixel 1
 
 # set size of floating window
 #for_window [window_role="(?i)GtkFileChooserDialog"] resize set 640 480 #to set size of file choose dialog
@@ -551,7 +557,7 @@ bar {
 		font pango: Noto Sans Regular 10
 		status_command i3blocks -c ~/.config/i3/i3blocks.conf
 	    position bottom
-		mode hide
+		# mode hide
 		hidden_state hide
 		modifier Mod4
 		#	i3bar_command transparency --i3bar
@@ -570,7 +576,7 @@ strip_workspace_name no
 	    separator          $purple
 	    background         $darkgrey
 	    statusline         $white
-#                      		border 		        bg		txt		indicator
+#                      		border 		        bg			txt			indicator
 		focused_workspace	$mediumgrey	   		$grey		$darkgrey	$purple
 		active_workspace	$lightblue      	$mediumgrey	$darkgrey	$purple
 		inactive_workspace	$darkgrey   		$darkgrey	$grey		$purple
@@ -618,6 +624,7 @@ strip_workspace_name no
 bindsym $mod+d exec rofi -modi drun -show drun \
 		-config ~/.config/rofi/rofidmenu.rasi
 
+# TODO maybe revisit this? superspace is wicked valuable real estate.
 bindsym $mod+space exec xfce4-popup-whiskermenu
 
 #bindsym F9 exec rofi -modi drun -show drun \

@@ -1,0 +1,4 @@
+#!/usr/bin/env -S guile -e main -s
+!#
+(define (main)
+  (display "hello, tangled world\n"))
