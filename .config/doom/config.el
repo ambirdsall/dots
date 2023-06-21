@@ -248,8 +248,8 @@ projectile would recognize your root directory as a project."
                                                           (split-string (shell-command-to-string "dots ls-files ~") "\n"))))
         :desc "Take me $HOME, country roads" "f~" (cmd! (+vertico/find-file-in "~/"))
         :prefix ("fj" . "Jump into specific projects")
-        :desc "Browse ~/.config/" :ne "c" (file-jumper-for-project "~/.config")
-        :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin")))
+        :desc "Browse ~/.config/" :ne "c" (file-jumper-for-project "~/.config/")
+        :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin/")))
 
 (setq standard-indent 2)
 
