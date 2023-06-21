@@ -1,63 +1,15 @@
-#+TITLE: Alex Birdsall's doom emacs config
-
-This is my doom config. It's a literate config, so the code snippets are living documentation; they
-get exported to specific init files.
-
-At present, this /almost/ only tangles to elisp files for doom emacs to load; it also builds ~/.guile
-
-* structural detritus: file preambles that should come first in the output
-There is a way to address this; look up noweb syntax in Info.
-
-** top-of-file comment sections
-*** TODO clean this up, it's not cute up at the top of the page
-**** option one :: mark this top-level subtree as folded by default with property drawer
-**** option two :: use noweb double angle bracket syntax to decouple source order and output order
-
-*** packages.el
-#+begin_src elisp :tangle packages.el
-;; -*- no-byte-compile: t; -*-
-
-#+end_src
-
-*** config.el
-#+begin_src elisp
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-#+end_src
-
-* whoami
-Some functionality uses this to identify you, e.g. GPG configuration, email clients, file templates and snippets.
-
-#+begin_src elisp
 (setq user-full-name "Alex Birdsall"
       user-mail-address "ambirdsall@gmail.com")
 
 ;; I said what I said.
 (setq confirm-kill-emacs nil)
-#+end_src
 
-* Who configures the configuration?
-I do.
-
-[a definitely very cool picture goes here eventually, probably]
-
-#+begin_src elisp
 (map! :leader
       :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
       :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir))))
-#+end_src
 
-** what kind of spaceship doesn't come with a spedometer?
-#+begin_src elisp :tangle packages.el
-(package! benchmark-init)
-#+end_src
-
-** a literate config, tangled asynchronously
-This is shamelessly lifted from [[https://tecosaur.github.io/emacs-config/config.html][Tecosaur's config]]; since you seem to be the sort of
-eccentric who reads emacs configs, odds are good that either you're already familiar with
-it or you should be.
-
-#+begin_src emacs-lisp
 (defvar +literate-tangle--proc nil)
 (defvar +literate-tangle--proc-start-time nil)
 
@@ -114,22 +66,11 @@ it or you should be.
     (switch-to-buffer " *tangle config*")
     (signal 'quit nil)))
 (add-hook! 'kill-emacs-hook #'+literate-tangle-check-finished)
-#+end_src
-** this config [[https://en.wikipedia.org/wiki/Unitarian_Universalist_Association#Principles_and_purposes][covenants to affirm and promote the inherent worth and dignity]] of every computer it's installed on
-I was raised by and around a bunch of earnest, wordy people; deal with it.
 
-*** macOS?
-I should probably make these definitions conditional, eh.
-#+begin_src elisp
 (setq! mac-command-modifier 'meta
        mac-option-modifier 'meta
        ns-function-modifier 'super)
-#+end_src
 
-* TODO who doesn't like a nice dashboard
-cf. [[https://tecosaur.github.io/emacs-config/config.html#dashboard-quick-actions][tecosaur's config]], whence this came. Teco adds some additional code to clean
-up the appearance of the dashboard; this could use some similar TLC as a follow-up.
-#+begin_src elisp
 (defun +doom-dashboard-setup-modified-keymap ()
   (setq +doom-dashboard-mode-map (make-sparse-keymap))
   (map! :map +doom-dashboard-mode-map
@@ -152,17 +93,7 @@ up the appearance of the dashboard; this could use some similar TLC as a follow-
 (add-hook! 'doom-init-ui-hook :append (+doom-dashboard-setup-modified-keymap))
 
 (map! :leader :desc "Dashboard" "d" #'+doom-dashboard/open)
-#+end_src
-* appearance
-** typography
-On arch linux, here are the packages you'll want to download:
-- =ttf-fira-code=
-- =otf-overpass=
-- =ttc-iosevka=
-- =ttc-iosevka-slab=
 
-Fira Code is
-#+begin_src elisp
 (setq doom-font-increment 1
       doom-font (font-spec :family "Fira Code" :size (if IS-MAC 13 16) :style "Retina" :weight 'semi-bold)
       ;; doom-font (font-spec :family "Iosevka Fixed Slab" :size 16 :weight 'medium)
@@ -170,13 +101,7 @@ Fira Code is
       doom-variable-pitch-font (font-spec :family "Overpass" :size (if IS-MAC 15 20))
       doom-serif-font (font-spec :family "Iosevka Slab" :size (if IS-MAC 13 16))
       doom-unicode-font (font-spec :family "Iosevka" :size (if IS-MAC 13 16)))
-#+end_src
-We’d like to use mixed pitch in certain modes. If we simply add a hook, when directly
-opening a file with (a new) Emacs, ~mixed-pitch-mode~ runs before UI initialisation, which is
-problematic. To resolve this, we create a hook that runs after UI initialisation and both
-- conditionally enables ~mixed-pitch-mode~
-- sets up the mixed pitch hooks
-#+begin_src elisp
+
 (defvar mixed-pitch-modes '(org-mode markdown-mode gfm-mode Info-mode text-mode)
   "Modes that `mixed-pitch-mode' should be enabled in, but only after UI initialisation.")
 (defun init-mixed-pitch-h ()
@@ -187,33 +112,7 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
   (dolist (hook mixed-pitch-modes)
     (add-hook (intern (concat (symbol-name hook) "-hook")) #'mixed-pitch-mode)))
 (add-hook 'doom-init-ui-hook #'init-mixed-pitch-h)
-#+end_src
 
-Additionally, there are emojis:
-#+begin_src elisp :tangle packages.el
-(package! emojify)
-#+end_src
-
-*** TODO try out [[https://www.reddit.com/r/emacs/comments/shzif1/n%CE%BBno_font_stack/][NANO emacs font stack]]
-I mean, it's nice.
-
-** theme this bad boy
-*** TODO wrap all theme config in a single ~(unless noninteractive <theme config>)~ form and =noweb= in the different logical sections
-
-*** that said...
-The modus themes (included with emacs since version twenty-eight point something) are a
-thoughtfully-designed, goal-oriented set of color themes, designed for accessibility and
-readability (high-contrast, anti-deuteranopic variants) and sporting delightfully-paired
-names:
-- /modus operandi/ :: Mode, or manner, of that which is to be worked. The light color theme, for one's toil under the sun.
-- /modus vivendi/ :: Mode, or manner, of living. The dark color theme, for one's toil under monitor glare.
-
-Sometimes (usually) I want dark mode; sometimes (presenting, in direct sunlight, or just
-mixing it up) I want light mode. What I do /not/ want is to have to pick a specific theme
-out of a haystack by name each time I want to toggle between light and dark; give me
-instead the blithe simplicity of a lightswitch flipped in passing. Or rather, let me give
-it to myself, so I can flit over to a different light and/or dark theme at my pleasure:
-#+begin_src elisp
 (unless noninteractive
   (setq
    ;; amb/doom-dark-theme 'modus-vivendi
@@ -225,19 +124,7 @@ it to myself, so I can flit over to a different light and/or dark theme at my pl
     (interactive)
     (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
           (t (load-theme amb/doom-dark-theme)))))
-#+end_src
 
-Speaking of toggling switches, the modus themes expose quite a few semantically-named
-variables for users to tweak; let's do so.
-
-By default, as of writing, ~modus-vivendi~ uses a background color of ~#000000~ and text color
-of ~#ffffff~. This pairing provides a /glaring/ degree of contrast; while that's in line with
-the stated goals of the themes, let's tone it down just a touch. A touch of blue gives the
-background a subtle "night sky" vibe; a touch of red makes the foreground text warmer.
-We'll also want a corresponding adjustment to the background color of highlighted (i.e.
-current) lines.
-
-#+begin_src elisp
 (unless noninteractive
   (require-theme 'modus-themes)
 
@@ -250,22 +137,12 @@ current) lines.
           (bg-hl-line . "#29272f"))
         modus-themes-operandi-color-overrides
         '((bg-hl-line . "#eeeeee"))))
-#+end_src
-** line numbers
-This determines the style of line numbers in effect. If set to ~nil~, line numbers are disabled. For
-relative line numbers, set this to ~relative~.
-#+begin_src elisp
+
 (setq display-line-numbers-type 'relative)
-#+end_src
-** long lines: don't do 'em
-#+begin_src elisp
+
 (setq! fill-column 90)
 (global-visual-line-mode -1)
-#+end_src
-** Window title
-I’d like to have just the buffer name, then if applicable the project folder
 
-#+begin_src elisp
 (setq frame-title-format
       '(""
         (:eval
@@ -278,13 +155,7 @@ I’d like to have just the buffer name, then if applicable the project folder
          (let ((project-name (projectile-project-name)))
            (unless (string= "-" project-name)
              (format (if (buffer-modified-p)  " ◉ %s" "  ●  %s") project-name))))))
-#+end_src
 
-
-For example when I open my config file it the window will be titled config.org ● doom then as soon as I make a change it will become config.org ◉ doom.
-* odds and ends
-** text manipulation utilities
-#+begin_src elisp
 (defmacro on-string-or-region (fn)
   "Given a string-manipulation function FN, defines an interactive command which will apply that
 function to either a string argument or to selected text, depending on context."
@@ -322,10 +193,7 @@ used interactively."
 (def-text-transform 'snake-case #'s-snake-case)
 (def-text-transform 'screaming-snake-case #'(lambda (str) (s-upcase (s-snake-case str))))
 (def-text-transform 'lower-words-case #'(lambda (str) (s-join " " (-map #'s-downcase (s-split-words str)))))
-#+end_src
 
-** TODO uncategorized keybindings :: clean up
-#+begin_src elisp
 (map!
  :leader
  :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer
@@ -346,10 +214,7 @@ used interactively."
  :ni "C-(" #'sp-backward-slurp-sexp
  :n "M-/" #'+default/search-buffer
  (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
-#+end_src
 
-** copy filename relative to buffer
-#+begin_src elisp
 (after! projectile
   (defun yank-buffer-filename-relative-to-project ()
     "Copy the current buffer's path, relative to the project root, to the kill ring."
@@ -359,20 +224,11 @@ used interactively."
       (error "Couldn't find filename in current buffer"))))
 
 (map! :leader "fY" #'yank-buffer-filename-relative-to-project)
-#+end_src
 
-** scratch buffers
-#+begin_src elisp
 (setq! doom-scratch-initial-major-mode 'org-mode)
-#+end_src
 
-** don't automatically open a new workspace for each new emacsclient frame
-I like freely opening client instances in the terminal and i3 alike.
-#+begin_src elisp
 (after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
-#+end_src
-** jump to arbitrary files in specific projects/directories from anywhere
-#+begin_src elisp
+
 (after! projectile
   (defmacro file-jumper-for-project (project-root)
     "Defines an anonymous interactive function for picking an arbitrary file from the given PROJECT-ROOT.
@@ -394,34 +250,14 @@ projectile would recognize your root directory as a project."
         :prefix ("fj" . "Jump into specific projects")
         :desc "Browse ~/.config/" :ne "c" (file-jumper-for-project "~/.config/")
         :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin/")))
-#+end_src
 
-* programming
-** Indent however you wish, as long as you do it right
-#+begin_src elisp
 (setq standard-indent 2)
-#+end_src
 
-** there are more languages under the sun than ~:lang~ can speak
-*** fennel
-#+begin_src elisp :tangle packages.el
-(package! fennel-mode)
-#+end_src
-
-#+begin_src elisp
 (use-package! fennel-mode
   :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
-#+end_src
-*** graphql
-#+begin_src elisp :tangle packages.el
-(package! graphql-mode)
-#+end_src
 
-#+begin_src elisp
 (use-package! graphql-mode)
-#+end_src
-*** elixir
-#+begin_src elisp
+
 (after! alchemist-mode
   (map! (:when (modulep! :lang elixir)    ; local conditional
         (:map alchemist-mode-map
@@ -432,54 +268,6 @@ projectile would recognize your root directory as a project."
          "tt" #'exunit-toggle-file-and-test
          "tT" #'exunit-toggle-file-and-test-other-window))))
 
-#+end_src
-*** yuck
-#+begin_src elisp :tangle packages.el
-(package! yuck-mode)
-#+end_src
-*** the four most frustrating words in the english language: web development in emacs
-First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckruse/doom.d/src/commit/c6c7163e79a0fecdda6df9e81e60dc246170213a/config.el
-**** {t,j}s
-#+begin_src elisp :tangle (and "packages.el" "no")
-(package! tsi :recipe (:type git :host github :repo "orzechowskid/tsi.el"))
-(package! tsx-mode :recipe (:type git :host github :repo "orzechowskid/tsx-mode.el"))
-#+end_src
-
-#+begin_src elisp :tangle no
-(setq typescript-indent-level 2
-      js-indent-level 2)
-
-(use-package! tsx-mode
-  :mode (("\\.tsx\\'" . tsx-mode))
-  :hook (tsx-mode . lsp!)
-  :hook (tsx-mode . rainbow-delimiters-mode)
-  :hook (tsx-mode . add-node-modules-path)
-  :custom (tsx-mode-tsx-auto-tags  t)
-  :defer t
-  :init
-  (after! flycheck
-    (flycheck-add-mode 'javascript-eslint 'tsx-mode))
-
-  (add-hook! 'tsx-mode-hook
-    (defun ck/tsx-setup ()
-      (flycheck-select-checker 'javascript-eslint)
-      (flycheck-add-next-checker 'javascript-eslint 'lsp)
-      (pushnew! flycheck-disabled-checkers
-                'javascript-jshint
-                'tsx-tide
-                'jsx-tide)))
-
-  (set-electric! 'tsx-mode
-    :chars '(?\} ?\))
-    :words '("||" "&&")))
-#+end_src
-
-**** prettier et al with apheleia (until elken's module drops lol)
-#+begin_src elisp :tangle packages.el
-(package! apheleia)
-  #+end_src
-
-#+begin_src elisp
 (use-package! apheleia
   :hook ((tsx-mode . apheleia-mode)
          (typescript-mode . apheleia-mode)
@@ -493,10 +281,7 @@ First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckrus
   (push '(tsx-mode . prettier) apheleia-mode-alist)
   (push '(scss-mode . prettier) apheleia-mode-alist)
   (push '(css-mode . prettier) apheleia-mode-alist))
-  #+end_src
 
-**** web-mode
-#+begin_src elisp
 (setq! web-mode-markup-indent-offset 2
        web-mode-css-indent-offset 2
        web-mode-code-indent-offset 2)
@@ -506,42 +291,24 @@ First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckrus
         ("vue" . "\\.vue")
         ("phoenix" . "\\.html\\.eex")
         ("erb" . "\\.html\\.erb")))
-#+end_src
 
-**** TODO vue
-Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This must be improved.
-#+begin_quote
- '(auto-insert-alist
-   '((("\\.vue\\'" . "Vue component")
-      .
-      ["template.vue" web-mode autoinsert-yas-expand])))
-#+end_quote
-
-**** tailwindcss
-#+begin_src elisp :tangle packages.el
-(package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
-#+end_src
-
-#+begin_src elisp
 (use-package! lsp-tailwindcss
   :after lsp)
-#+end_src
-** git
-With apologies to vc-mode, magit is the gold standard. So:
-#+begin_src elisp :noweb yes
+
 (after! magit
-  <<magit-window-management>>
+  ;; strictly speaking unnecessary (it's the default)
+  ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
+  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+  (setq magit-bury-buffer-function #'magit-restore-window-configuration)
 
-  <<magit-auto-dash>>
+  (defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
+    (interactive)
+    (self-insert-command 1 ?-))
+  
+  (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
 
-  <<magit-sections>>)
-#+end_src
+  (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show))))
 
-*** nice git conflic resolution hydra
-Gold standard, yes, but not be all and end all. This defines a nice hydra for working with
-files containing git conflicts.
-
-#+begin_src elisp
 ;; all thanks and apologies to https://github.com/alphapapa/unpackaged.el
 (use-package! smerge-mode
   :after (hydra magit)
@@ -582,55 +349,25 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (magit-diff-visit-file . (lambda ()
                                    (when smerge-mode
                                      (unpackaged/smerge-hydra/body)))))
-#+end_src
 
-*** magit status, like the cat in the hat, should clean up after itself
-#+name: magit-window-management
-#+begin_src elisp
-  ;; strictly speaking unnecessary (it's the default)
-  ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
-  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-  (setq magit-bury-buffer-function #'magit-restore-window-configuration)
-#+end_src
+;; strictly speaking unnecessary (it's the default)
+;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
+(setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+(setq magit-bury-buffer-function #'magit-restore-window-configuration)
 
-*** If I can't type a space, why let me?
-In scenarios like branch names, whitespace is disallowed. But using the spacebar as a word
-separator is deep, deep muscle memory. Why fight it?
-#+name: magit-auto-dash
-#+begin_src elisp
-  (defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
-    (interactive)
-    (self-insert-command 1 ?-))
+(defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
+  (interactive)
+  (self-insert-command 1 ?-))
 
-  (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
-#+end_src
+(advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
 
-*** magit-status sections
-#+name: magit-sections
-#+begin_src elisp
 (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
-#+end_src
-*** TODO hide my dotfiles away (until magit can handle separate work trees)
-Doom recognizes my home directory as a git dir, but it doesn't find any of its config
-whatsoever, which can cause projectile to act silly when it can't find an intermediate
-project root (either because of error or because I used the wrong muscle memory).
 
-#+begin_src elisp
 ;; (after! projectile (setq projectile-project-root-files-bottom-up (remove ".git"
 ;;           projectile-project-root-files-bottom-up)))
-#+end_src
 
-** projectile
-#+begin_src elisp
 (setq! projectile-project-search-path '("~/c/"))
-#+end_src
-** code compass
-#+begin_src elisp :tangle packages.el
-(package! code-compass
-  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
-#+end_src
 
-#+begin_src elisp
 (use-package! code-compass :defer t
               :commands (c/show-hotspots-sync
                          c/show-hotspot-snapshot-sync
@@ -644,24 +381,9 @@ project root (either because of error or because I used the wrong muscle memory)
               :config
               (setq c/exclude-directories (list "node_modules" "bower_components" "vendor" "tmp" "images"))
               (if IS-MAC (setq c/preferred-browser "open")))
-#+end_src
-** scheme, or: you've got gall, you've got guile
-Apologies to racket, which is a nicer language per se, but guile's already got its grubby
-little +mitts+ C ABI in lots of interesting parts of the linux ecosystem and I just don't
-have time to shop around. If the list stored at ~geiser-active-implementations~ has length >
-1, then every time I restart emacs, I'll be prompted to choose which implementation to
-associate with every. single. scheme. buffer. that. I. have. ever. opened. in. my. life.
-It gets old fast:
-#+begin_src elisp
+
 (setq! geiser-active-implementations '(guile))
-#+end_src
 
-Guile's shebang convention is surprisingly well-considered from first principles, in terms
-of how it relates to the rest of the language syntax and being a good cross-platform
-citizen. It's also weird, complex, and idiosyncratic, and I am apparently incapable of
-remembering it.
-
-#+begin_src elisp
 (defun insert-guile-shebang ()
   (interactive)
   (save-excursion
@@ -671,155 +393,30 @@ remembering it.
 !#
 
 ")))
-#+end_src
 
-*** pimp my +ride+ .guile
-This is my guile repl config. Let's frontload the potentially confusing bit: I would like to rely on the [[https://gitlab.com/NalaGinrut/guile-colorized][guile-colorized]] library, which
-is
-a) a lovely little quality-of-life improvement, and
-b) not packaged with the language
-
-This adds up to a bit of a hassle if one's aim is a config which can be dropped into
-different computers and operating systems. My path through the thicket (as of now) is to
-add an elisp snippet which shells out to guile to check whether the ~(ice-9 colorized)~
-module can be found in the load path; this lets me conditionally tangle the appropriate
-version of =~/.guile= accordingly.
-
-Most config is defined outside the conditional top-level src blocks in noweb cookies to
-keep things DRY and maintainable.
-
-**** augment load path
-#+name: guile-augment-load-path
-#+begin_src guile :tangle no
-(add-to-load-path (string-append (getenv "HOME") "/lib/scheme"))
-#+end_src
-
-**** shared modules
-The first line here has ugly indentation so the corresponding noweb cookie (or whatever
-the term is) in the source blocks that actually get tangled to =.guile= files can have
-pretty indentation.
-#+name: guile-shared-modules
-#+begin_src guile :tangle no
- (oop goops)
- (srfi srfi-1)
- (srfi srfi-26) ;; cut
- (ice-9 match)
- (ice-9 readline)
-#+end_src
-
-**** setup repl
-#+name: guile-setup-repl
-#+begin_src guile :tangle no
-(activate-readline)
-#+end_src
-
-**** conditional file templates
-#+begin_src guile :noweb yes :tangle (if (string-equal "exists" (shell-command-to-string "test -e `guile -c \"(display (string-append (car %load-path) \\\"/ice-9/colorized.scm\\\"))\"` && echo -n exists")) "~/.guile" "no")
-<<guile-augment-load-path>>
-
-(use-modules
- <<guile-shared-modules>>
- (ice-9 colorized))
-
- <guile-setup-repl>>
-(activate-colorized)
-#+end_src
-
-But installing a special guile lib and running its (rather manual) installation
-process is annoying; until I properly automate it in [[file:~/Makefile][my dotfiles' Makefile]], a
-hideously copy-pasted near-duplicate will have to do.
-#+begin_src guile :noweb yes :tangle (if (not (string-equal "exists" (shell-command-to-string "test -e `guile -c \"(display (string-append (car %load-path) \\\"/ice-9/colorized.scm\\\"))\"` && echo -n exists"))) "~/.guile" "no")
-<<guile-augment-load-path>>
-
-(use-modules
- <<guile-shared-modules>>)
-
-<<guile-setup-repl>>
-#+end_src
-* evil config
-** additional packages
-*** wait, is this split two tmux panes or two emacs windows?
-WHO CARES
-#+begin_src elisp :tangle packages.el
-(package! evil-tmux-navigator
-  :recipe (:host github :repo "ambirdsall/evil-tmux-navigator"))
-(unpin! evil-tmux-navigator)
-#+end_src
-
-#+begin_src elisp
 (use-package! evil-tmux-navigator
   :config (evil-tmux-navigator-bind-keys))
-#+end_src
 
-*** replace with register
-#+begin_src elisp :tangle packages.el
-(package! evil-replace-with-register)
-#+end_src
-
-#+begin_src elisp
 (use-package! evil-replace-with-register
   :init (setq evil-replace-with-register-key (kbd "gr"))
   :config (evil-replace-with-register-install))
-#+end_src
-*** evil-exchange
-#+begin_src elisp :tangle packages.el
-(package! evil-exchange)
-#+end_src
 
-#+begin_src elisp
 (use-package! evil-exchange
   :config (evil-exchange-install))
-#+end_src
-*** match all the pairs
-#+begin_src elisp :tangle packages.el
-(package! evil-matchit)
-#+end_src
 
-#+begin_src elisp
 (use-package! evil-matchit
   :config (global-evil-matchit-mode 1))
-#+end_src
-*** additional text objects
-#+begin_src elisp :tangle packages.el
-(package! evil-textobj-line
-  :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
-#+end_src
 
-#+begin_src elisp
 (use-package! evil-textobj-line
   :after evil)
-#+end_src
-** changing up some default settings
-#+begin_src elisp
+
 (setq! evil-ex-search-persistent-highlight nil
        +evil-want-o/O-to-continue-comments nil)
-#+end_src
 
-You can have my ~evil-substitute~ when you pry it from my cold, dead fingers.
-#+begin_src elisp :tangle packages.el
-(package! evil-snipe :disable t)
-#+end_src
-
-** TODO jump into/around a visual selection
-=SPC v= is (or was, at time of writing) not a default binding in [[file:~/.emacs.d/modules/config/default/+evil-bindings.el][doom's default evil bindings]]; that seems like a potential oversight.
-
-- If region is not active, works like vim's =gv=
-- else, DWIM selection changes
-  + cycle through structural selectors?
-    - if tree mode is available?
-  + that "expand visual selection" package
-  + ?
-
-* org-mode config
-Notes must be at hand to be helpful, ideally on any of several computers:
-#+begin_src elisp
 (let ((dir "~/Dropbox/org/"))
   (and (file-exists-p dir)
        (setq org-directory dir)))
-#+end_src
 
-With that out of the way, a grab-bag of tweaks and variables.
-#+begin_src elisp
 (setq! org-log-into-drawer t
        org-hierarchical-todo-statistics nil
        org-refile-use-outline-path 'full-file-path
@@ -840,16 +437,9 @@ With that out of the way, a grab-bag of tweaks and variables.
  org-agenda-filter-preset '("-quotidian"))
 
 (add-hook! (org-mode) (org-appear-mode 1))
-#+end_src
 
-** roam
-First, I need a roam directory to serve as the "slipbox":
-#+begin_src elisp
 (setq org-roam-directory "~/Dropbox/roam/")
-#+end_src
 
-I'd like a pretty and interactive graph visualization, too, while I'm at it:
-#+begin_src elisp
 (use-package! websocket
     :after org-roam)
 
@@ -864,21 +454,7 @@ I'd like a pretty and interactive graph visualization, too, while I'm at it:
           org-roam-ui-follow t
           org-roam-ui-update-on-save t
           org-roam-ui-open-on-start t))
-#+end_src
 
-Org-roam-ui tries to keep up with the latest features of org-roam, which conflicts with Doom Emacs's desire for stability. To make sure nothing breaks, use the latest version of org-roam by unpinning it:
-#+begin_src elisp :tangle packages.el
-(unpin! org-roam)
-(package! org-roam-ui)
-#+end_src
-
-** every project has a =todo.org= and every =todo.org= can just be hardlinks of the same underlying file
-This pair of variables is required to let you open the same hardlinked todo.org inode in multiple
-project-specific locations in the filesystem, and have each maintain its local context (e.g. when
-running projectile functions acting on what filesystem heuristics see as the surrounding VC
-project). It's an idiosyncratic pattern, but it works brilliantly for me on work computers.
-
-#+begin_src elisp
 (setq! find-file-existing-other-name nil
        find-file-visit-truename nil)
 
@@ -887,10 +463,7 @@ project). It's an idiosyncratic pattern, but it works brilliantly for me on work
     (interactive)
     ;; TODO dynamically create one if missing? This system can be improved further.
     (find-file (concat (projectile-project-root) "todo.org"))))
-#+end_src
 
-** the yet-neglected agenda view
-#+begin_src elisp
 ;; TODO verify whether explicitly setting agenda files prevents automatic
 ;; detection of new files in ~/notes/*.org
 (setq! org-agenda-files '("~/Dropbox/org/todo.org"
@@ -916,54 +489,24 @@ project). It's an idiosyncratic pattern, but it works brilliantly for me on work
 
 (setq org-agenda-auto-exclude-function 'org-my-auto-exclude-fn)
 
-#+end_src
-
-** keybinding fixes
-#+begin_src elisp
 (map! :after org
  :map 'org-mode-map
       "<tab>" 'org-cycle)
-#+end_src
 
-** outlines ✨ everywhere ✨with outshine
-#+begin_src elisp :tangle packages.el
-(package! outshine
-  :recipe (:host github :repo "alphapapa/outshine"))
-#+end_src
-
-#+begin_src elisp
 (use-package! outshine
   :after org
   :config
   (add-hook 'prog-mode-hook 'outshine-mode))
-#+end_src
-** 📉_(ツ)_📈
-#+begin_src elisp :tangle packages.el
-(package! graphviz-dot-mode)
-#+end_src
 
-#+begin_src elisp
 (use-package! graphviz-dot-mode
   :after org)
-#+end_src
-** export backends
-#+begin_src elisp :tangle packages.el
-(package! ox-gfm)
-#+end_src
 
-#+begin_src elisp
 ;; TODO: figure out doom's org exporter API
 ;; (after! org
 ;;   '(require 'ox-gfm nil t))
 (use-package! ox-gfm
   :after org)
 
-#+end_src
-
-* The secrets I keep with myself, or: praise the Lord and pass the =.gitignore=
-This snippet loads a computer-specific config file if it's present. It goes
-last, giving me a convenient place for ad hoc overrides of any setting in here.
-#+begin_src elisp
 (defvar amb/computer-specific-config (expand-file-name "local.el" doom-private-dir)
   "A file for computer-specific config, hidden from git; for
 example, configuration for a work computer and its (possibly
@@ -974,10 +517,3 @@ private) product projects.")
 
 (map! :leader
       :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
-#+end_src
-* random bugfixes and whatnot
-** magit/with-editor/transient-base-map snafu
-#+begin_src elisp :tangle packages.el
-(package! transient :pin "c2bdf7e12c530eb85476d3aef317eb2941ab9440")
-(package! with-editor :pin "391e76a256aeec6b9e4cbd733088f30c677d965b")
-#+end_src

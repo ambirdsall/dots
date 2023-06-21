@@ -8,6 +8,8 @@
 
 (package! graphql-mode)
 
+(package! yuck-mode)
+
 (package! apheleia)
 
 (package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
