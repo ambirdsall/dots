@@ -1,15 +1,17 @@
 #+title: Hyprland config
 
+This file is the source of truth; let's make it easy to work with:
+#+begin_src elisp :tangle no :results none
+(org-babel-tangle-file (buffer-file-name))
+#+end_src
+
+Now then.
+
 #+begin_quote
 Hyprland, light of my wayland, fire of my =r/unixporn=. My crutch, my compositor.
 Hy-pr-land: the tip of the tongue taking a trip of three steps down the palate to tap, at
 "d", on the teeth.
 #+end_quote
-
-Okay, but if this file is the source of truth, let's make it easy to work with:
-#+begin_src elisp :tangle no :results none
-(org-babel-tangle-file (buffer-file-name))
-#+end_src
 
 * how to configure you a hyprland
 For all categories, see https://wiki.hyprland.org/Configuring/Variables/.
@@ -160,11 +162,8 @@ keyboard backlight
 bindle =, XF86MonBrightnessUp, exec, brightnessctl set +5% && notify-send "Brightness - $(brightnessctl get)%"
 bindle =, XF86MonBrightnessDown, exec, brightnessctl set 5%- && notify-send "Brightness - $(brightnessctl get)%"
 
-#
-#
-bindle = , XF86LaunchA, exec, ~/bin/kbd-backlight-down
-bindle = , XF86Search, exec, ~/bin/kbd-backlight-up
-
+bindle = , XF86LaunchA, exec, ~/bin/kbd-light-down
+bindle = , XF86Search, exec, ~/bin/kbd-light-up
 #+end_src
 
 ** open key apps
