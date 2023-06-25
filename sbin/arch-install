@@ -1,0 +1,10 @@
+#!/bin/bash
+
+for dep in $(cat $HOME/lib/arch-deps); do
+  sudo pacman -S --noconfirm --needed $dep
+done
+
+for dep in $(cat $HOME/lib/aur-deps); do
+  yay -S --noconfirm --needed $dep
+done
+
