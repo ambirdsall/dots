@@ -1,0 +1,288 @@
+#+title: Kmonad config
+
+#+begin_src elisp :tangle no :results none
+(org-babel-tangle-file (buffer-file-name))
+#+end_src
+
+#+NAME: keyboard-device-file
+#+begin_src shell :results tangle
+/bin/ls /dev/input/by-path/*-kbd | head -n 1 | tr -d "\n"
+#+end_src
+
+#+begin_src kbd :tangle kmonad.kbd :noweb yes
+(defcfg
+  input (device-file "<<keyboard-device-file()>>")
+  output (uinput-sink "My KMonad output")
+  fallthrough true)
+
+(defsrc
+  caps lsft rsft sys)
+
+(deflayer qwerty
+  @cap @lshft @rshft rmeta)
+
+(defalias
+  cap   (tap-hold-next 333 esc lctl)
+  lshft (tap-hold-next 333 S-9 lsft)
+  rshft (tap-hold-next 333 S-0 rsft))
+#+end_src
+
+* TODO home row mods
+#+begin_quote
+  Perhaps one of the most useful features of KMonad, where a lot of work has
+  gone into, but also an area with many buttons that are ever so slightly
+  different. The naming and structuring of these buttons might change sometime
+  soon, but for now, this is what there is.
+
+  For the next section being able to talk about examples is going to be handy,
+  so consider the following scenario and mini-language that will be the same
+  between scenarios.
+    - We have some button `foo` that will be different between scenarios
+    - `foo` is bound to 'Esc' on the input keyboard
+    - the letters a s d f are bound to themselves
+    - Px  signifies the press of button x on the keyboard
+    - Rx  signifies the release of said button
+    - Tx  signifies the sequential and near instantaneous press and release of x
+    - 100 signifies 100ms pass
+
+  So for example:
+    Tesc Ta:
+      tap of 'Esc' (triggering `foo`), tap of 'a' triggering `a`
+    Pesc 100 Ta Tb Resc:
+      press of 'Esc', 100ms pause, tap of 'a', tap of 'b', release of 'Esc'
+
+  The `tap-next` button takes 2 buttons, one for tapping, one for holding, and
+  combines them into a single button. When pressed, if the next event is its own
+  release, we tap the 'tapping' button. In all other cases we first press the
+  'holding' button then we handle the event. Then when the `tap-next` gets
+  released, we release the 'holding' button.
+
+  So, using our mini-language, we set foo to:
+    (tap-next x lsft)
+  Then:
+    Tesc            -> x
+    Tesc Ta         -> xa
+    Pesc Ta Resc    -> A
+    Pesc Ta Tr Resc -> AR
+
+  The `tap-hold` button is very similar to `tap-next` (a theme, trust me). The
+  difference lies in how the decision is made whether to tap or hold. A
+  `tap-hold` waits for a particular timeout, if the `tap-hold` is released
+  anywhere before that moment we execute a tap immediately. If the timeout
+  occurs and the `tap-hold` is still held, we switch to holding mode.
+
+  The additional feature of a `tap-hold` is that it pauses event-processing
+  until it makes its decision and then rolls back processing when the decision
+  has been made.
+
+  So, again with the mini-language, we set foo to:
+    (tap-hold 200 x lsft) ;; Like tap-next, but with a 200ms timeout
+  Then:
+    Tesc            -> x
+    Tesc Ta         -> xa
+    Pesc 300 a      -> A (the moment you press a)
+    Pesc a 300      -> A (after 200 ms)
+    Pesc a 100 Resc -> xa (both happening immediately on Resc)
+
+  The `tap-hold-next` button is a combination of the previous 2. Essentially,
+  think of it as a `tap-next` button, but it also switches to held after a
+  period of time. This is useful, because if you have a (tap-next ret ctl) for
+  example, and you press it thinking you want to press C-v, but then you change
+  your mind, you now cannot release the button without triggering a 'ret', that
+  you then have to backspace. With the `tap-hold-next` button, you simply
+  outwait the delay, and you're good. I see no benefit of `tap-next` over
+  `tap-hold-next` with a decent timeout value.
+
+  You can use the `:timeout-button` keyword to specify a button other than the
+  hold button which should be held when the timeout expires. For example, we
+  can construct a button which types one x when tapped, multiple x's when held,
+  and yet still acts as shift when another button is pressed before the timeout
+  expires. So, using the minilanguage and foo as:
+    (tap-hold-next 200 x lsft :timeout-button x)
+  Then:
+    Tesc           -> Tx
+    Pesc 100 a     -> A (the moment you press a)
+    Pesc 5000 Resc -> xxxxxxx (some number of auto-repeated x's)
+
+  Note that KMonad does not itself auto-repeat the key. In this last example,
+  KMonad emits 200 Px 4800 Rx, and the operating system's auto-repeat feature,
+  if any, emits multiple x's because it sees that the x key is held for 4800 ms.
+
+  The `tap-next-release` is like `tap-next`, except it decides whether to tap or
+  hold based on the next release of a key that was *not* pressed before us. This
+  also performs rollback like `tap-hold`. So, using the minilanguage and foo as:
+    (tap-next-release x lsft)
+  Then:
+    Tesc Ta         -> xa
+    Pa Pesc Ra Resc -> ax (because 'a' was already pressed when we started, so
+                           foo decides it is tapping)
+    Pesc Pa Resc Ra -> xa (because the first release we encounter is of esc)
+    Pesc Ta Resc    -> A (because a was pressed *and* released after we started,
+                          so foo decides it is holding)
+
+  `tap-next-press` is also a lot like `tap-next`, but decides whether to tap or
+  hold based on whether another key is pressed before this one is released.
+  Using the minilanguage:
+    (tap-next-press x lsft)
+  Then:
+    Tesc Ta -> xa
+    Pa Pesc Ra Resc -> ax (because esc is released before another key is pressed)
+    Pesc Pa Resc Ra -> A (because a is pressed before esc is released)
+    Pesc Ta Resc    -> A (a is pressed before esc is released here as well)
+
+  These increasingly stranger buttons are, I think, coming from the stubborn
+  drive of some of my more eccentric (and I mean that in the most positive way)
+  users to make typing with modifiers on the home-row more comfortable.
+  Especially layouts that encourage a lot of rolling motions are nicer to use
+  with the `release` style buttons.
+
+  The `tap-hold-next-release` (notice a trend?) is just like `tap-next-release`,
+  but it comes with an additional timeout that, just like `tap-hold-next` will
+  jump into holding-mode after a timeout.
+
+  I honestly think that `tap-hold-next-release`, although it seems the most
+  complicated, probably is the most comfortable to use. But I've put all of them
+  in a testing layer down below, so give them a go and see what is nice.
+
+  -------------------------------------------------------------------------- |#
+
+
+(defalias
+  xtn (tap-next x lsft)         ;; Shift that does 'x' on tap
+  xth (tap-hold 400 x lsft)     ;; Long delay for easier testing
+  thn (tap-hold-next 400 x lsft)
+  tnr (tap-next-release x lsft)
+  tnp (tap-next-press x lsft)
+  tnh (tap-hold-next-release 2000 x lsft)
+
+  ;; Used it the colemak layer
+  xcp (tap-hold-next 400 esc ctl)
+)
+
+;; Some of the buttons used here are defined in the next section
+(deflayer multi-overlay
+  @mt  _    _    _    _    _    _    _    _    _    _    _    @rem _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  @thn _    _    _    _    _    _    _    _    _    _    _    _
+  @xtn _    _    _    _    _    _    _    _    _    _    @xth
+  @tnr @tnp _              _              _    _    _    @tnh
+)
+#+end_quote
+
+* TODO command buttons
+#+begin_quote
+- allow-cmd: `true` or `false`, defaults to `false`
+
+    If this is set to `false`, any action that runs a shell-command will simply
+    log to `stdout` without ever running (log-level info). Don't ever enable
+    this on a configuration that you do not trust, because:
+
+      (cmd-button "rm -rf ~/*")
+
+    is a thing. For more information on the `cmd-button' function, see the
+    section on Command buttons below.
+
+#| --------------------------------------------------------------------------
+                        Optional: Command buttons
+
+  Currently we also provide the ability to launch arbitrary shell-commands from
+  inside kmonad. These commands are simply handed off to the command-shell
+  without any further checking or waiting.
+
+  NOTE: currently only tested on Linux, but should work on any platform, as long
+  as the command is valid for that platform.
+
+  The `cmd-button' function takes two arguments, the second one of which is
+  optional. These represent the commands to be executed on pressing and
+  releasing the button respectively.
+
+  BEWARE: never run anyone's configuration without looking at it. You wouldn't
+  want to push:
+
+    (cmd-button "rm -rf ~/*") ;; Delete all this user's data
+
+
+  -------------------------------------------------------------------------- |#
+
+(defalias
+  dat (cmd-button "date >> /tmp/kmonad_example.txt")   ;; Append date to tmpfile
+  pth (cmd-button "echo $PATH > /tmp/kmonad_path.txt") ;; Write out PATH
+  ;; `dat' on press and `pth' on release
+  bth (cmd-button "date >> /tmp/kmonad_example.txt"
+                  "echo $PATH > /tmp/kmonad_path.txt")
+)
+
+(deflayer command-test
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    _    _    _    _    _    _    _    _    @dat @pth _
+  _    _    _              _              _    _    _    _
+)
+#+end_quote
+
+* TODO compose key setup
+From the ~defcfg~ section:
+#+begin_quote
+  ;; To understand the importance of the following line, see the section on
+    ;; Compose-key sequences at the near-bottom of this file.
+    "/run/current-system/sw/bin/sleep 1 && /run/current-system/sw/bin/setxkbmap -option compose:ralt")
+  cmp-seq ralt    ;; Set the compose key to `RightAlt'
+  cmp-seq-delay 5 ;; 5ms delay between each compose-key sequence press
+#+end_quote
+
+And below, the "Compose-key sequences" section:
+#+begin_quote
+                        Optional: Compose-key sequences
+
+  Compose-key sequences are series of button-presses that your operating system
+  will interpret as the insertion of a special character, like accented
+  characters, or various special-languages. In that sense, they are just
+  syntactic sugar for keyboard macros.
+
+  To get this to work on Linux you will need to set your compose-key with a tool
+  like `setxkbmap', as well as tell kmonad that information. See the `defcfg'
+  block at the top of this file for a working example. Note that you need to
+  wait ever so slightly for the keyboard to register with linux before the
+  command gets executed, that's why the `sleep 1`. Also, note that all the
+  `/run/current-system' stuff is because the author uses NixOS. Just find a
+  shell-command that will:
+
+    1. Sleep a moment
+    2. Set the compose-key to your desired key
+
+  Please be aware that what `setxkbmap' calls the `menu' key is not actually the
+  `menu' key! If you want to use the often suggested
+
+      setxkbmap -option compose:menu
+
+  you will have to set your compose key within kmonad to `compose' and not
+  `menu'.
+
+  After this, this should work out of the box under Linux. Windows does not
+  recognize the same compose-key sequences, but WinCompose will make most of the
+  sequences line up with KMonad: http://wincompose.info/
+  This has not in any way been tested on Mac.
+
+  In addition to hard-coded symbols, we also provide 'uncompleted' macros. Since
+  a compose-key sequence is literally just a series of keystrokes, we can omit
+  the last one, and enter the sequence for 'add an umlaut' and let the user then
+  press some letter to add this umlaut to. These are created using the `+"`
+  syntax.
+
+  -------------------------------------------------------------------------- |#
+
+(defalias
+  sym (layer-toggle symbols)
+
+)
+
+(deflayer symbols
+  _    _    _    _    _    _    _    _    _    _    _    _    _    _
+  _    ä    é    ©    _    _    _    _    _    _    _    _    _    _
+  _    +'   +~   +`   +^   _    _    _    _    _    _    _    _
+  _    +"   +,   _    _    _    _    _    _    _    _    _
+  _    _    _              _              _    _    _    _)
+
+#| --------------------------------------------------------------------------
+#+end_quote

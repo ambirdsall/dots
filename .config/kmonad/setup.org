@@ -1,0 +1,59 @@
+#+title: Kmonad System Setup
+
+This setup is designed to run ~kmonad~ in a systemd user service without ~sudo~. In order to
+do so, you must be able to work with ~/dev/uinput~, which by default is only accessible to
+the root user. Here's the high-level strategy to change that default:
+1. Create a group, ~uinput~, which will be granted permissions to interact with ~/dev/uinput~
+2. Add yourself to that group
+3. Create a udev rule to actually grant said permissions
+4. Make sure the kernel has loaded uinput drivers
+
+So let's do that.
+
+* 1 :: Create a group, ~uinput~, which will be granted permissions to interact with ~/dev/uinput~
+#+begin_src shell
+sudo groupadd uinput
+#+end_src
+
+* 2 :: Add yourself to that group
+#+begin_src shell
+sudo usermod -aG input $USER
+sudo usermod -aG uinput $USER
+#+end_src
+
+You can double-check your work by running
+#+begin_src shell
+groups
+#+end_src
+
+* 3 :: Create a udev rule to actually grant said permissions
+Put the following in a file like =/lib/udev/rules.d/99-kmonad.rules= or
+=/etc/udev/rules.d/40-uinput.rules=. The exact filename isn't very meaningful (although
+since udev rules are loaded in lexically-sorted order, it's customary to give these files
+a numeric prefix to make the ordering obvious), but it must be in one of the
+~/{lib,etc}/udev/rules.d/~ directories.
+#+begin_src
+KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=input"
+#+end_src
+
+* 4 :: Make sure the kernel has loaded uinput drivers
+#+begin_src shell
+sudo modprobe uinput
+#+end_src
+
+* 5 :: Reboot your computer
+You didn't think we could go all this way without some nonsense like this, right? Reboot
+the computer so the kernel loads the udev/uinput subsystems with your new configuration.
+
+* 6 :: Start and enable ~kmonad.service~
+Does it work? It should work. Let's see:
+#+begin_src shell
+systemctl --user start kmonad
+#+end_src
+
+If things are wonky, you'll have to debug on your own. ~stop~ the service, run ~journalctl --follow~ in another terminal, and start the service anew. Hopefully the error will be clear.
+
+If it worked, then go ahead and enable the service so it will start up automatically from now on:
+#+begin_src shell
+systemctl --user enable kmonad
+#+end_src

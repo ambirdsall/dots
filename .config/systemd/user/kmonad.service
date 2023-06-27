@@ -1,0 +1,13 @@
+[Unit]
+Description=Kmonad keyboard remapper
+Documentation=https://github.com/kmonad/kmonad
+
+[Service]
+Environment=PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/bin
+Environment=DISPLAY=:0
+Type=simple
+ExecStart=/usr/bin/kmonad %E/kmonad/kmonad.kbd
+Restart=never
+
+[Install]
+WantedBy=default.target
