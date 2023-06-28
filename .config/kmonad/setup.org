@@ -37,6 +37,7 @@ KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=input"
 #+end_src
 
 * 4 :: Make sure the kernel has loaded uinput drivers
+This ought to do it:
 #+begin_src shell
 sudo modprobe uinput
 #+end_src
@@ -44,6 +45,18 @@ sudo modprobe uinput
 * 5 :: Reboot your computer
 You didn't think we could go all this way without some nonsense like this, right? Reboot
 the computer so the kernel loads the udev/uinput subsystems with your new configuration.
+
+Check that the uinput kernel module was loaded by running
+#+begin_src shell
+lsmod | grep uinput
+#+end_src
+
+If you find that it wasn't reloaded after rebooting, run this:
+#+begin_src shell
+echo uinput | sudo tee /etc/modules-load.d/uinput.conf
+#+end_src
+
+You will, of fucking course, have to reboot again.
 
 * 6 :: Start and enable ~kmonad.service~
 Does it work? It should work. Let's see:

@@ -6,8 +6,12 @@
 
 Programmatically get the keyboard device file! Don't tangle this config with an external keyboard plugged in until I test this, unless you're feeling lucky I guess.
 #+NAME: keyboard-device-file
-#+begin_src shell :results tangle
-/bin/ls /dev/input/by-path/*-kbd | head -n 1 | tr -d "\n"
+#+begin_src shell
+/bin/ls /dev/input/by-id/*-kbd | head -n 1 | tr -d "\n"
+#+end_src
+
+#+begin_src shell
+/bin/ls /dev/input/by-path/*-kbd 
 #+end_src
 
 Confusing name, historical reasons, yada yada yada
