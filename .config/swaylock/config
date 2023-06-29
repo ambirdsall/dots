@@ -5,3 +5,5 @@ key-hl-color=55aadd
 ring-clear-color=777777
 inside-clear-color=777777
 image=~/Pictures/crescent-pluto.jpg
+indicator-caps-lock
+indicator-idle-visible
