@@ -1,16 +1,16 @@
 # -*- mode: conf -*-
 # Assign workspaces
-assign [app_id="firefox"] 2
-for_window [app_id="firefox"] focus
+# assign [app_id="firefox"] 2
+# for_window [app_id="firefox"] focus
 
-assign [class="firefox"] 2
-for_window [class="firefox"] focus
+# assign [class="firefox"] 2
+# for_window [class="firefox"] focus
 
-assign [app_id=thunar] 3
-for_window [app_id=thunar] focus
+# assign [app_id=thunar] 3
+# for_window [app_id=thunar] focus
 
-assign [class="Telegram"] 4
-for_window [class="Telegram"] focus
+# assign [class="Telegram"] 4
+# for_window [class="Telegram"] focus
 
 
 for_window [app_id="xed"] focus
@@ -20,6 +20,7 @@ for_window [app_id="xed"] focus
 for_window [class="Yad" instance="yad"] floating enable
 for_window [app_id="yad"] floating enable
 for_window [app_id="blueman-manager"] floating enable,  resize set width 40 ppt height 30 ppt
+for_window [app_id="xfce4"] floating enable
 
 # set floating (nontiling) for special apps:
 for_window [class="Xsane" instance="xsane"] floating enable
