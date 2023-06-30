@@ -242,11 +242,11 @@ and scroll down to the "Switches" section for the name of the lid switch. Use th
 might have a ridiculous name!
 
 #+begin_src conf :tangle (if (string-equal "Apple SMC power\n" (shell-command-to-string "hyprctl devices | grep -o 'Apple SMC power'")) "hyprland.conf" "no")
-bind = , switch:Apple SMC power/lid events, exec, swaylock -i ~/Pictures/crescent-pluto.jpg
+bind = , switch:Apple SMC power/lid events, exec, swaylock
 #+end_src
 
 #+begin_src conf :tangle (if (string-equal "Lid Switch\n" (shell-command-to-string "hyprctl devices | grep -o 'Lid Switch'")) "hyprland.conf" "no")
-bind = , switch:Lid Switch, exec, swaylock -i ~/Pictures/crescent-pluto.jpg
+bind = , switch:Lid Switch, exec, swaylock
 #+end_src
 
 * startup things
