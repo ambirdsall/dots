@@ -1,13 +1,13 @@
 (defcfg
-  linux-dev /dev/input/by-path/platform-39b10c000.spi-cs-0-event-kbd)
+  linux-dev /dev/input/by-path/platform-i8042-serio-0-event-kbd)
 
 (defsrc
-  caps lsft rsft lalt ralt lmeta rmeta)
+  caps lsft rsft esc)
 
 (deflayer qwerty
-  @cap @lshft @rshft lmeta rmeta lalt ralt)
+  @cap @lshft @rshft esc)
 
 (defalias
-  cap   (tap-hold-press 100 100 esc lctl)
-  lshft (tap-hold-press 100 100 S-9 lsft)
-  rshft (tap-hold-press 100 100 S-0 rsft))
+  cap   (tap-hold-press 200 150 esc lctl)
+  lshft (tap-hold-press 222 222 S-9 lsft)
+  rshft (tap-hold-press 222 222 S-0 rsft))
