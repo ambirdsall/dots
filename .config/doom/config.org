@@ -284,8 +284,11 @@ I’d like to have just the buffer name, then if applicable the project folder
 For example when I open my config file it the window will be titled config.org ● doom then as soon as I make a change it will become config.org ◉ doom.
 * odds and ends
 ** text manipulation utilities
+*** TODO helper macros (which should be tidied off to an appendix with noweb)
+Working with text combines a huge variety of content-specific considerations with a very
+narrow, consistent API; there are a lot of repetitive definitions. Let's improve that:
 #+begin_src elisp
-(defmacro on-string-or-region (fn)
+(defmacro cmds--on-string-or-region (fn)
   "Given a string-manipulation function FN, defines an interactive command which will apply that
 function to either a string argument or to selected text, depending on context."
   `(lambda (string &optional from to)
@@ -314,8 +317,14 @@ function to either a string argument or to selected text, depending on context."
 string manipulation function FN. It will work given a string
 argument programmatically or by operating on selected text when
 used interactively."
-  `(fset ,name (on-string-or-region ,fn)))
+  `(fset ,name (cmds--on-string-or-region ,fn)))
+#+end_src
 
+*** ~(not-every programming_language({conventionallyUses: "THE_SAME_CASING"}))~
+Let's make some helper commands for manipulating the casing of programming symbols. Since
+they are defined with ~def-text-transform~, they're usable as elisp string utilities and as
+a command on region both.
+#+begin_src elisp
 (def-text-transform 'kebab-case #'s-dashed-words)
 (def-text-transform 'pascal-case #'s-upper-camel-case)
 (def-text-transform 'camel-case #'s-lower-camel-case)

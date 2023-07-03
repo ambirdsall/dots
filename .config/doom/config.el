@@ -156,7 +156,7 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
            (unless (string= "-" project-name)
              (format (if (buffer-modified-p)  " ◉ %s" "  ●  %s") project-name))))))
 
-(defmacro on-string-or-region (fn)
+(defmacro cmds--on-string-or-region (fn)
   "Given a string-manipulation function FN, defines an interactive command which will apply that
 function to either a string argument or to selected text, depending on context."
   `(lambda (string &optional from to)
@@ -185,7 +185,7 @@ function to either a string argument or to selected text, depending on context."
 string manipulation function FN. It will work given a string
 argument programmatically or by operating on selected text when
 used interactively."
-  `(fset ,name (on-string-or-region ,fn)))
+  `(fset ,name (cmds--on-string-or-region ,fn)))
 
 (def-text-transform 'kebab-case #'s-dashed-words)
 (def-text-transform 'pascal-case #'s-upper-camel-case)
