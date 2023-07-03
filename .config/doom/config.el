@@ -194,6 +194,28 @@ used interactively."
 (def-text-transform 'screaming-snake-case #'(lambda (str) (s-upcase (s-snake-case str))))
 (def-text-transform 'lower-words-case #'(lambda (str) (s-join " " (-map #'s-downcase (s-split-words str)))))
 
+(defun decrement-number-at-point ()
+  "Decrement the number at point by 1."
+  (interactive)
+  (save-excursion
+    (skip-chars-backward "0-9")
+    (when (looking-at "[0-9]+")
+      (let ((num (string-to-number (match-string 0))))
+        (replace-match (number-to-string (1- num)))))))
+
+(defun increment-number-at-point ()
+  "Increment the number at point by 1."
+  (interactive)
+  (save-excursion
+    (skip-chars-backward "0-9")
+    (when (looking-at "[0-9]+")
+      (let ((num (string-to-number (match-string 0))))
+        (replace-match (number-to-string (1+ num)))))))
+
+(map! :leader
+      :desc "decrement at point" "nj" #'decrement-number-at-point
+      :desc "increment at point" "nk" #'increment-number-at-point)
+
 (map!
  :leader
  :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer
