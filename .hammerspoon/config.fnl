@@ -19,7 +19,9 @@
         : window/left
         : window/right
         : window/up
-        : window/down} (require :windows))
+        : window/down
+        : window/enlarge
+        : window/shrink} (require :windows))
 
 ;; * script loading setup
 ;; ** load init-local.lua
@@ -27,14 +29,24 @@
   (and (hs.fs.attributes localfile)
        (dofile localfile)))
 
+;; ** CLI
+(hs.ipc.cliInstall)
+
+;; * bind those keys, make that user env
+;; ** rehammer the spoon
+;; TODO make some kind of fennel repl
 (bearclaw :i hs.toggleConsole)
+(puppy-paw :x hs.toggleConsole)
 (bearclaw :r hs.reload)
 
-;; ** window management
-;; *** switchers
-
-;; *** open specific apps
+;; ** open specific apps
 ;; TODO Make the apps shortcuts toggle instead of unconditionally focusing
+(bearclaw :c #(hs.application.launchOrFocus "Google Chrome"))
+(BEARCLAW :c #(let [cypress (hs.application.get "Cypress")]
+                ;; because the directory emacs was launched from matters, don't use
+                ;; (hs.application.launchOrFocus "Emacs")
+                (if cypress (: cypress :setFrontmost)
+                    (alert "Bruh. How do I focus cypress if you aren't running it."))))
 (bearclaw :e #(let [emacs (hs.application.get "Emacs")
                     emacs-ng (hs.application.get "emacs")]
                 ;; because the directory emacs was launched from matters, don't use
@@ -42,24 +54,18 @@
                 (if emacs (: emacs :setFrontmost)
                     emacs-ng (: emacs-ng :setFrontmost)
                     (alert "Bruh. How do I focus an emacs GUI if you aren't running one."))))
+(BEARCLAW :m #(hs.application.launchOrFocus "Messages"))
 
 ;; (bearclaw :t #(hs.application.launchOrFocus "iTerm"))
-(bearclaw :t #(hs.application.launchOrFocus "WezTerm"))
-
 (bearclaw :s #(hs.application.launchOrFocus "Slack"))
+(bearclaw :t #(hs.application.launchOrFocus "WezTerm"))
+(puppy-paw :z #(hs.application.launchOrFocus "zoom.us"))
 
-(bearclaw :c #(hs.application.launchOrFocus "Google Chrome"))
-
-(BEARCLAW :c #(let [cypress (hs.application.get "Cypress")]
-                ;; because the directory emacs was launched from matters, don't use
-                ;; (hs.application.launchOrFocus "Emacs")
-                (if cypress (: cypress :setFrontmost)
-                    (alert "Bruh. How do I focus cypress if you aren't running it."))))
-
-;; *** grid
+;; ** window management
 (bearclaw :g hs.grid.show)
+(puppy-paw "." window/enlarge)
+(puppy-paw "," window/shrink)
 
-;; *** custom window management
 (bearclaw "=" window/center)
 
 (bearclaw :m window/fullscreen)
@@ -79,11 +85,15 @@
 (bearclaw :up window/top-half)
 (bearclaw :right window/right-half)
 
+;; (local windows-prefix
+;;        (let [modal (hs.hotkey.modal.new)]
+;;          (modal:bind [] :h )))
+
 (local dev-switcher (hs.window.switcher.new ["Emacs" "WezTerm"]))
-(local chrome-windows (hs.window.filter.new ["Emacs" "WezTerm" "Google Chrome"]))
-(spacehammer :c #(hs.hints.windowHints (chrome-windows:getWindows)))
+(local dev-windows (hs.window.filter.new ["Emacs" "WezTerm" "Google Chrome"]))
+(spacehammer :space #(hs.hints.windowHints (dev-windows:getWindows)))
 (spacehammer :d #(dev-switcher:next))
-(hs.console.darkMode true)
+(hs.console.darkMode false)
 
 ;; * You're fresh and you know it. Let 'em know.
 (alert "hammer: spooned")

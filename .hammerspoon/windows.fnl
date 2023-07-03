@@ -1,5 +1,7 @@
 ;; First we set the grid, then we define helper functions for export
 (hs.grid.setGrid :3x2)
+;; TODO needs geometry argument
+(hs.grid.setMargins [0 0])
 
 ;; Underdocumented: the grid *must* include at least 5 rows, regardless of how many rows
 ;; you actually need. Ergo ipso facto, since I only actually want to use
@@ -73,9 +75,11 @@ h :: bottom-right corner -> top of screen
                          (set window.h screen.h))))
 
 (local window/left #(: (current) :focusWindowWest))
-(local window/down #(: (current) :focusWindowSouth))
-(local window/up #(: (current) :focusWindowNorth))
 (local window/right #(: (current) :focusWindowEast))
+(local window/up #(: (current) :focusWindowNorth))
+(local window/down #(: (current) :focusWindowSouth))
+(local window/enlarge #(hs.grid.resizeWindowWider (current)))
+(local window/shrink #(hs.grid.resizeWindowThinner (current)))
 
 {: window/center
  : window/fullscreen
@@ -86,4 +90,6 @@ h :: bottom-right corner -> top of screen
  : window/left
  : window/right
  : window/up
- : window/down}
+ : window/down
+ : window/enlarge
+ : window/shrink}
