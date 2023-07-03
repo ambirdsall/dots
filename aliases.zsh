@@ -2,7 +2,7 @@
 # TODO auto-start server, this is a solved problem lol
 alias e="qed"
 E () {
- emacsclient -c --alternate-editor="" "$@" & disown
+  emacsclient -c --alternate-editor="" "$@" & disown
 }
 
 # Don't want to mess with the existing session?
@@ -404,22 +404,56 @@ alias gbl="git branch -l"
 l () {
   # no args
   if [[ $# -eq 0 ]]; then
-    git log --oneline --decorate -8
+    git log --oneline -8
   # one arg which is an integer
   elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
-    git log --oneline --decorate -$1
+    git log --oneline -$1
   else
     echo "Usage: l [number of commits]" >&2
   fi
 }
 
 L () {
+  # First we calculate how much space we have for the commit summary lines so we can
+  # format the output nicely; this lets us easily scan the dates at the end of each line.
+  # To do so, we measure the terminal width with `tput cols` and subtract the known length of
+  # the prefix and suffix data, using the result unless it's shorter than a minimum
+  # readable summary width: the sha, author, and date are only useful if we know which
+  # commit they are associated with, after all.
+  #
+  # Why does prefix_length = 21?
+  #   10 (length of commit short hash)
+  # + 10 (space allotted for author name, truncating as needed)
+  # + 2  (brackets around author name)
+  # + 2  (one space after each datum)
+  #
+  # Why does suffix_length = 11?
+  #   10 (length of YYYY-MM-DD)
+  # + 1  (space)
+  local summary_width=$(ruby -e '
+term_width = `tput cols`.to_i
+min = 40
+max = 80
+prefix_length = 26
+suffix_length = 11
+available_cols = term_width - prefix_length - suffix_length
+
+width = if (available_cols > min and available_cols <= max)
+          available_cols
+        elsif available_cols > min
+          max
+        else
+          min
+        end
+
+print width')
+
   # no args
   if [[ $# -eq 0 ]]; then
-    git log --pretty=reference --decorate -8
+    git log --pretty="format:%C(auto)%h %C(auto)%<(12,trunc)[%an] %<($summary_width,trunc)%s %C(auto)%as" -8
   # one arg which is an integer
   elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
-    git log --pretty=reference --decorate -$1
+    git log --pretty="format:%C(auto)%h %C(auto)%<(12,trunc)[%an] %<($summary_width,trunc)%s %C(auto)%as" -$1
   else
     echo "Usage: l [number of commits]" >&2
   fi
