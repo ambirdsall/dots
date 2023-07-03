@@ -42,6 +42,11 @@ This ought to do it:
 sudo modprobe uinput
 #+end_src
 
+If it doesn't, this will:
+#+begin_src shell
+echo uinput | sudo tee /etc/modules-load.d/kmonad.conf
+#+end_src
+
 * 5 :: Reboot your computer
 You didn't think we could go all this way without some nonsense like this, right? Reboot
 the computer so the kernel loads the udev/uinput subsystems with your new configuration.
