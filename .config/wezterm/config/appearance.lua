@@ -44,9 +44,23 @@ end)
 --   window:set_right_status(window:active_workspace())
 -- end)
 
+local color_schemes = { 'DanQing (base16)', 'DanQing Light (base16)' }
+local color_scheme_toggle_counter = 0
+
 return {
+  -- TODO make a theme toggler that actually works
+  make_color_scheme_toggle = function (config)
+    return function ()
+      color_scheme_toggle_counter = color_scheme_toggle_counter + 1
+      local next_index = 1 + (color_scheme_toggle_counter % #color_schemes)
+      config.color_scheme = color_schemes[next_index]
+    end
+  end,
   apply = function (config)
     config.hide_tab_bar_if_only_one_tab = true
     config.use_fancy_tab_bar = false
+    config.color_scheme = 'DanQing (base16)'
+    config.color_scheme = 'DanQing Light (base16)'
+    config.color_scheme = 'Dracula+'
   end
 }

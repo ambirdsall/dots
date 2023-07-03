@@ -12,6 +12,8 @@ return {
       { key = 'x', mods = 'META', action = act.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' } },
 
       leader('Space', act.ActivateCopyMode),
+      -- TODO make a theme toggler that actually works
+      leader('T', wezterm.action_callback(require("config/appearance").make_color_scheme_toggle(config))),
 
       -- open/shut them, open/shut them, give a little clap clap clap
       leader("c", act.SpawnTab "CurrentPaneDomain"),
