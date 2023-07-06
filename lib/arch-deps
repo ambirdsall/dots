@@ -15,3 +15,4 @@ gdm
 ripgrep
 tmux
 fd
+python-i3ipc

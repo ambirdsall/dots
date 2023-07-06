@@ -148,6 +148,9 @@ exec swayidle -w\
 
     # Move focus to the parent container
     bindsym $mod+a focus parent
+
+    # "promote" window: swap with largest container
+    bindsym $mod+u exec ~/.config/sway/scripts/promote-window
 #
 # Scratchpad:
 #
