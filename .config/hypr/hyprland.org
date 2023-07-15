@@ -1,6 +1,3 @@
-#+title: Hyprland config
-
-This file is the source of truth; let's make it easy to work with:
 #+begin_src elisp :tangle no :results none
 (org-babel-tangle-file (buffer-file-name))
 #+end_src
@@ -132,7 +129,7 @@ dwindle {
 }
 
 master {
-    new_is_master = true
+    new_is_master = false
 }
 
 #+end_src
@@ -167,8 +164,10 @@ bindle = , XF86Search, exec, ~/bin/kbd-light-up
 #+end_src
 
 ** open key apps
+begin_conf{bind = $mainMod, return, exec, kitty}
+
 #+begin_src conf :tangle hyprland.conf
-bind = $mainMod, return, exec, kitty
+bind = $mainMod, return, exec, wezterm
 # bind = $mainMod, F, exec, thunar
 bind = $mainMod SHIFT, F, exec, dolphin
 bind = $mainMod, D, exec, wofi --show drun
@@ -221,6 +220,12 @@ bind = $mainMod SHIFT, 9, movetoworkspace, 9
 bind = $mainMod SHIFT, 0, movetoworkspace, 10
 
 #+end_src
+** restart eww
+#+begin_src conf :tangle hyprland.conf
+bind = $mainMod SHIFT, b, exec, eww --restart open bar
+
+#+end_src
+
 ** mouse/trackpad events
 #+begin_src conf :tangle hyprland.conf
 # Scroll through existing workspaces with mainMod + scroll
@@ -250,8 +255,15 @@ bind = , switch:Lid Switch, exec, swaylock
 #+end_src
 
 * startup things
-#+begin_src conf :tangle hyprland.conf
+#+begin_src conf :tangle no
 exec-once = eww --restart open bar
+#+end_src
+
+#+begin_src conf :tangle hyprland.conf
+exec-once = waybar -c ~/.config/waybar/config.hypr
+#+end_src
+
+#+begin_src conf :tangle hyprland.conf
 exec-once = swaybg -i /home/amb/Pictures/crescent-pluto.jpg
 exec-once = dunst
 #+end_src
