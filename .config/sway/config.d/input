@@ -6,8 +6,9 @@
 # Put your touchpad's ID to replace "Touchpad-ID" (keep the quotation marks)
 
 input type:touchpad {
-    # "dwt" = "disable-while-typing"
+    # "dwt" stands for "disable-while-typing"
     dwt enabled
+    click_method clickfinger
 
     # know your enemy:
     # tap enabled

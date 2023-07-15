@@ -45,6 +45,7 @@ exec swayidle -w\
 #
     # Start a floating terminal
     bindsym $mod+Return exec $term-float
+    bindsym $mod+Shift+Return exec wezterm
 
     # Open the power menu
     bindsym $mod+Shift+e exec $powermenu
@@ -66,7 +67,7 @@ exec swayidle -w\
     floating_modifier $mod normal
 
     # Reload the configuration file
-    bindsym $mod+Shift+c reload
+    bindsym $mod+Shift+r reload
 
 #
 # Moving around:
@@ -227,6 +228,9 @@ bindsym $mod+r mode "resize"
 #
 # Screenshots
 #
+    bindsym $mod+Ctrl+4 exec ~/.config/sway/scripts/screenshot.sh
+    bindsym $mod+Ctrl+s exec ~/.config/sway/scripts/screenshot.sh
+    bindsym $mod+Shift+s exec ~/.config/sway/scripts/screenshot.sh
     bindsym print exec /usr/share/sway/scripts/grimshot --notify save output
     bindsym Shift+print exec ~/.config/sway/scripts/screenshot.sh
 #

@@ -1,6 +1,6 @@
 #!/bin/bash
  
-entries="Active Screen Output Area Window"
+entries="Area Active Screen Output Window"
  
 selected=$(printf '%s\n' $entries | wofi --style=$HOME/.config/wofi/style.widgets.css --conf=$HOME/.config/wofi/config.screenshot | awk '{print tolower($1)}')
  
