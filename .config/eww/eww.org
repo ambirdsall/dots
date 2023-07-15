@@ -1,0 +1,234 @@
+#+begin_src elisp :results none :tangle no
+(org-babel-tangle-file (buffer-file-name))
+#+end_src
+
+* preamble
+#+begin_src lisp :tangle eww.yuck
+;; -*- mode: yuck -*-
+
+#+end_src
+
+* widgets
+** clock
+#+begin_src lisp :tangle eww.yuck
+(defpoll datetime :interval "1s" "date '+%d/%m %a ⦙ %H:%M:%S'")
+#+end_src
+
+** volume
+#+begin_src lisp :tangle eww.yuck
+(defpoll volume :interval "1s" "~/.config/eww/scripts/get-volume")
+#+end_src
+
+** window title
+#+begin_src lisp :tangle eww.yuck
+(deflisten window :initial "..." "sh ~/.config/eww/scripts/get-window-title")
+#+end_src
+
+** workspaces
+#+begin_src lisp :tangle eww.yuck :noweb tangle
+(deflisten workspaces :initial "[]" "bash ~/.config/eww/scripts/get-workspaces")
+(deflisten current_workspace :initial "1" "bash ~/.config/eww/scripts/get-active-workspace")
+
+(defwidget workspaces []
+  (eventbox :onscroll "bash ~/.config/eww/scripts/change-active-workspace {} ${current_workspace}" :class "workspaces-widget"
+    (box :space-evenly true
+      (label :text "${workspaces}${current_workspace}" :visible false)
+      (for workspace in workspaces
+        (eventbox :onclick "hyprctl dispatch workspace ${workspace.id}"
+          (box :class "workspace-entry ${workspace.id == current_workspace ? "current" : ""} ${workspace.windows > 0 ? "occupied" : "empty"}"
+            (label :text "${workspace.id}")))))))
+#+end_src
+
+** metric
+#+begin_src lisp :tangle eww.yuck
+(defwidget metric [label value onchange onclick]
+  (box :orientation "h"
+       :class "metric"
+       :space-evenly false
+    (box :class "label" :onclick onclick label)
+    (scale :min 0
+           :max 101
+           :active {onchange != ""}
+           :value value
+           :onchange onchange)))
+
+#+end_src
+
+** bar
+#+begin_src lisp :tangle eww.yuck :noweb tangle
+(defwidget bar []
+  (box :space-evenly true
+       <<left>>
+       <<middle>>
+       <<right>>))
+
+#+end_src
+
+#+name: left
+#+begin_src lisp :tangle no
+(workspaces)
+#+end_src
+
+#+begin_src lisp :tangle no
+(defwidget left-side []
+  (workspaces))
+#+end_src
+
+#+name: middle
+#+begin_src lisp :tangle no
+(label :text "${window}")
+#+end_src
+
+#+name: right
+#+begin_src lisp :tangle no
+(box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
+    (metric :label "🔊"
+            :value volume
+            :onchange "amixer -D pulse sset Master {}%"
+            :onclick "pavucontrol")
+    (metric :label ""
+            :value {EWW_RAM.used_mem_perc}
+            :onchange ""
+            :onclick "xfce4-terminal -e 'htop'")
+    (label "🔋" :value {EWW_BATTERY.status}
+               :onchange "")
+    datetime)
+#+end_src
+
+** right side
+#+begin_src lisp :tangle eww.yuck
+(defwidget right-side []
+  (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
+       (metric :label "🔊"
+               :value volume
+               :onchange "amixer -D pulse sset Master {}%")
+       (metric :label ""
+               :value {EWW_RAM.used_mem_perc}
+               :onchange "")
+       (metric :label "🔋"
+               :value {EWW_BATTERY.status}
+               :onchange "")
+       datetime))
+
+#+end_src
+
+** left side
+#+begin_src lisp :tangle eww.yuck
+(defwidget left-side []
+  (workspaces))
+#+end_src
+
+
+* windows
+** Ronnie the Bar
+#+begin_src lisp :tangle eww.yuck
+(defwindow bar
+    :monitor 0
+    :geometry (geometry :x "0%"
+                        :y "0%"
+                        :width "100%"
+                        :height "30px"
+                        :anchor "top center")
+    :stacking "fg"
+    :exclusive true
+    ;; :reserve (struts :distance "40px" :side "top")
+    :windowtype "dock"
+    :wm-ignore false
+    (bar))
+#+end_src
+
+* dumping ground, scss
+#+begin_src scss :tangle eww.scss
+.occupied {
+    background-color: #444444;
+}
+
+.empty {
+    background-color: #000000;
+}
+
+.current {
+    background-color: #507f3e;
+}
+
+// must be indented to prevent org parsing error
+ * {
+  all: unset; //Unsets everything so you can style everything from scratch
+}
+
+//Global Styles
+.bar {
+  background-color: #3a3a3a;
+  color: #b0b4bc;
+  padding: 10px;
+}
+
+// Styles on classes (see eww.yuck for more information)
+
+.sidestuff slider {
+  all: unset;
+  color: #ffd5cd;
+}
+
+.metric scale trough highlight {
+  all: unset;
+  background-color: #D35D6E;
+  color: #000000;
+  border-radius: 10px;
+}
+.metric scale trough {
+  all: unset;
+  background-color: #4e4e4e;
+  border-radius: 50px;
+  min-height: 3px;
+  min-width: 50px;
+  margin-left: 10px;
+  margin-right: 20px;
+}
+.metric scale trough highlight {
+  all: unset;
+  background-color: #D35D6E;
+  color: #000000;
+  border-radius: 10px;
+}
+.metric scale trough {
+  all: unset;
+  background-color: #4e4e4e;
+  border-radius: 50px;
+  min-height: 3px;
+  min-width: 50px;
+  margin-left: 10px;
+  margin-right: 20px;
+}
+.label-ram {
+  font-size: large;
+}
+.workspaces button:hover {
+  color: #D35D6E;
+}
+#+end_src
+
+* TODO pop up system monitoring [0/3]
+- [ ] reorient contents vertically
+- [ ] improve labels
+- [ ] wrap in a window or w/e
+
+#+begin_src lisp :tangle no
+(defwidget system-monitors []
+           (box :class "sidestuff" :orientation "h" :space-evenly false :halign "end"
+    (metric :label "🔊"
+            :value volume
+            :onchange "amixer -D pulse sset Master {}%")
+    (metric :label "💻"
+            :value {EWW_RAM.used_mem_perc}
+            :onchange "")
+    (metric :label "💾"
+            :value {round((1 - (EWW_DISK["/"].free / EWW_DISK["/"].total)) * 100, 0)}
+            :onchange "")
+    datetime))
+#+end_src
+
+* TODO battery
+#+begin_src json :tangle no
+{ "format-icons": ["", "", "", "", ""] }
+#+end_src
