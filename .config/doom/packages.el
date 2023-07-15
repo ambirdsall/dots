@@ -17,6 +17,11 @@
 (package! code-compass
   :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
 
+(package! copilot
+  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
+
+(package! gptel)
+
 (package! evil-tmux-navigator
   :recipe (:host github :repo "ambirdsall/evil-tmux-navigator"))
 (unpin! evil-tmux-navigator)

@@ -71,28 +71,8 @@
        mac-option-modifier 'meta
        ns-function-modifier 'super)
 
-(defun +doom-dashboard-setup-modified-keymap ()
-  (setq +doom-dashboard-mode-map (make-sparse-keymap))
-  (map! :map +doom-dashboard-mode-map
-        :desc "Find file" :ne "f" #'find-file
-        :desc "Recent files" :ne "r" #'consult-recent-file
-        :desc "Config dir" :ne "C" #'doom/open-private-config
-        :desc "Open config.org" :ne "c" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
-        :desc "Open dotfile" :ne "." (cmd! (doom-project-find-file "~/.config/"))
-        :desc "Notes (roam)" :ne "n" #'org-roam-node-find
-        :desc "Switch buffer" :ne "b" #'+vertico/switch-workspace-buffer
-        :desc "Switch buffers (all)" :ne "B" #'consult-buffer
-        :desc "IBuffer" :ne "i" #'ibuffer
-        :desc "Previous buffer" :ne "p" #'previous-buffer
-        :desc "Set theme" :ne "t" #'consult-theme
-        :desc "Quit" :ne "Q" #'save-buffers-kill-terminal
-        :desc "Show keybindings" :ne "h" (cmd! (which-key-show-keymap '+doom-dashboard-mode-map))))
-
-(add-transient-hook! #'+doom-dashboard-mode (+doom-dashboard-setup-modified-keymap))
-(add-transient-hook! #'+doom-dashboard-mode :append (+doom-dashboard-setup-modified-keymap))
-(add-hook! 'doom-init-ui-hook :append (+doom-dashboard-setup-modified-keymap))
-
-(map! :leader :desc "Dashboard" "d" #'+doom-dashboard/open)
+(setq fancy-splash-image (concat doom-private-dir "emacs-gnu.png"))
+(remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-shortmenu)
 
 (setq doom-font-increment 1
       doom-font (font-spec :family "Fira Code" :size (if IS-MAC 13 16) :style "Retina" :weight 'semi-bold)
@@ -317,6 +297,45 @@ projectile would recognize your root directory as a project."
 (use-package! lsp-tailwindcss
   :after lsp)
 
+(setq! projectile-project-search-path '("~/c/"))
+
+(use-package! code-compass :defer t
+              :commands (c/show-hotspots-sync
+                         c/show-hotspot-snapshot-sync
+                         c/show-code-churn-sync
+                         c/show-coupling-graph-sync
+                         c/show-code-communication-sync
+                         c/show-knowledge-graph-sync
+                         c/show-code-age-sync
+                         c/show-fragmentation-sync
+                         c/show-hotspot-cluster-sync)
+              :config
+              (setq c/exclude-directories (list "node_modules" "bower_components" "vendor" "tmp" "images"))
+              (if IS-MAC (setq c/preferred-browser "open")))
+
+(setq! geiser-active-implementations '(guile))
+
+(defun insert-guile-shebang ()
+  (interactive)
+  (save-excursion
+   (beginning-of-buffer)
+   (insert "#!/usr/local/bin/guile \\
+-e main -s
+!#
+
+")))
+
+;; accept completion from copilot and fallback to company
+(use-package! copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . 'copilot-accept-completion)
+              ("TAB" . 'copilot-accept-completion)
+              ("C-TAB" . 'copilot-accept-completion-by-word)
+              ("C-<tab>" . 'copilot-accept-completion-by-word)))
+
+(use-package! gptel)
+
 (after! magit
   ;; strictly speaking unnecessary (it's the default)
   ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
@@ -384,37 +403,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
 
 (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
-
-;; (after! projectile (setq projectile-project-root-files-bottom-up (remove ".git"
-;;           projectile-project-root-files-bottom-up)))
-
-(setq! projectile-project-search-path '("~/c/"))
-
-(use-package! code-compass :defer t
-              :commands (c/show-hotspots-sync
-                         c/show-hotspot-snapshot-sync
-                         c/show-code-churn-sync
-                         c/show-coupling-graph-sync
-                         c/show-code-communication-sync
-                         c/show-knowledge-graph-sync
-                         c/show-code-age-sync
-                         c/show-fragmentation-sync
-                         c/show-hotspot-cluster-sync)
-              :config
-              (setq c/exclude-directories (list "node_modules" "bower_components" "vendor" "tmp" "images"))
-              (if IS-MAC (setq c/preferred-browser "open")))
-
-(setq! geiser-active-implementations '(guile))
-
-(defun insert-guile-shebang ()
-  (interactive)
-  (save-excursion
-   (beginning-of-buffer)
-   (insert "#!/usr/local/bin/guile \\
--e main -s
-!#
-
-")))
 
 (use-package! evil-tmux-navigator
   :config (evil-tmux-navigator-bind-keys))

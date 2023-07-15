@@ -126,10 +126,30 @@ I should probably make these definitions conditional, eh.
        ns-function-modifier 'super)
 #+end_src
 
-* TODO who doesn't like a nice dashboard
-cf. [[https://tecosaur.github.io/emacs-config/config.html#dashboard-quick-actions][tecosaur's config]], whence this came. Teco adds some additional code to clean
-up the appearance of the dashboard; this could use some similar TLC as a follow-up.
+* splash screen
+For additional reference, see [[https://discourse.doomemacs.org/t/how-to-change-your-splash-screen/57][this doom discourse post]].
+
+** make it look nice
+I don't rely on the short menu anymore; I know how to get around in doom/emacs just fine now. Let's get rid of that. And while we're at it, let's replace the splash image with something nice:
 #+begin_src elisp
+(setq fancy-splash-image (concat doom-private-dir "emacs.png"))
+(remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-shortmenu)
+#+end_src
+
+** TODO make it super useful
+Hat tip to [[https://tecosaur.github.io/emacs-config/config.html#dashboard-quick-actions][tecosaur's config]], whence much of this came. First off, let's make it easy to
+open the dashboard:
+#+begin_src elisp :tangle no
+(map! :leader :desc "Dashboard" "d" #'+doom-dashboard/open)
+#+end_src
+
+Teco adds some additional code to clean
+up the appearance of the dashboard; this could use some similar TLC as a follow-up.
+
+*For now, this is disabled (via ~:tangle no~); despite the bindings being tagged with ~:ne~,
+they are, in practice, only being added to the emacs-state map.*
+
+#+begin_src elisp :tangle no
 (defun +doom-dashboard-setup-modified-keymap ()
   (setq +doom-dashboard-mode-map (make-sparse-keymap))
   (map! :map +doom-dashboard-mode-map
@@ -150,9 +170,8 @@ up the appearance of the dashboard; this could use some similar TLC as a follow-
 (add-transient-hook! #'+doom-dashboard-mode (+doom-dashboard-setup-modified-keymap))
 (add-transient-hook! #'+doom-dashboard-mode :append (+doom-dashboard-setup-modified-keymap))
 (add-hook! 'doom-init-ui-hook :append (+doom-dashboard-setup-modified-keymap))
-
-(map! :leader :desc "Dashboard" "d" #'+doom-dashboard/open)
 #+end_src
+
 * appearance
 ** typography
 On arch linux, here are the packages you'll want to download:
@@ -560,100 +579,6 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 (use-package! lsp-tailwindcss
   :after lsp)
 #+end_src
-** git
-With apologies to vc-mode, magit is the gold standard. So:
-#+begin_src elisp :noweb yes
-(after! magit
-  <<magit-window-management>>
-
-  <<magit-auto-dash>>
-
-  <<magit-sections>>)
-#+end_src
-
-*** nice git conflic resolution hydra
-Gold standard, yes, but not be all and end all. This defines a nice hydra for working with
-files containing git conflicts.
-
-#+begin_src elisp
-;; all thanks and apologies to https://github.com/alphapapa/unpackaged.el
-(use-package! smerge-mode
-  :after (hydra magit)
-  :config
-  (defhydra unpackaged/smerge-hydra
-    (:color pink :hint nil :post (smerge-auto-leave))
-    "
-^Move^       ^Keep^               ^Diff^                 ^Other^
-^^-----------^^-------------------^^---------------------^^-------
-_n_ext       _b_ase               _<_: upper/base        _C_ombine
-_p_rev       _u_pper              _=_: upper/lower       _r_esolve
-^^           _l_ower              _>_: base/lower        _k_ill current
-^^           _a_ll                _R_efine
-^^           _RET_: current       _E_diff
-"
-    ("n" smerge-next)
-    ("p" smerge-prev)
-    ("b" smerge-keep-base)
-    ("u" smerge-keep-upper)
-    ("l" smerge-keep-lower)
-    ("a" smerge-keep-all)
-    ("RET" smerge-keep-current)
-    ("\C-m" smerge-keep-current)
-    ("<" smerge-diff-base-upper)
-    ("=" smerge-diff-upper-lower)
-    (">" smerge-diff-base-lower)
-    ("R" smerge-refine)
-    ("E" smerge-ediff)
-    ("C" smerge-combine-with-next)
-    ("r" smerge-resolve)
-    ("k" smerge-kill-current)
-    ("ZZ" (lambda ()
-            (interactive)
-            (save-buffer)
-            (bury-buffer))
-     "Save and bury buffer" :color blue)
-    ("q" nil "cancel" :color blue))
-  :hook (magit-diff-visit-file . (lambda ()
-                                   (when smerge-mode
-                                     (unpackaged/smerge-hydra/body)))))
-#+end_src
-
-*** magit status, like the cat in the hat, should clean up after itself
-#+name: magit-window-management
-#+begin_src elisp
-  ;; strictly speaking unnecessary (it's the default)
-  ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
-  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-  (setq magit-bury-buffer-function #'magit-restore-window-configuration)
-#+end_src
-
-*** If I can't type a space, why let me?
-In scenarios like branch names, whitespace is disallowed. But using the spacebar as a word
-separator is deep, deep muscle memory. Why fight it?
-#+name: magit-auto-dash
-#+begin_src elisp
-  (defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
-    (interactive)
-    (self-insert-command 1 ?-))
-
-  (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
-#+end_src
-
-*** magit-status sections
-#+name: magit-sections
-#+begin_src elisp
-(setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
-#+end_src
-*** TODO hide my dotfiles away (until magit can handle separate work trees)
-Doom recognizes my home directory as a git dir, but it doesn't find any of its config
-whatsoever, which can cause projectile to act silly when it can't find an intermediate
-project root (either because of error or because I used the wrong muscle memory).
-
-#+begin_src elisp
-;; (after! projectile (setq projectile-project-root-files-bottom-up (remove ".git"
-;;           projectile-project-root-files-bottom-up)))
-#+end_src
-
 ** projectile
 #+begin_src elisp
 (setq! projectile-project-search-path '("~/c/"))
@@ -770,6 +695,126 @@ hideously copy-pasted near-duplicate will have to do.
 
 <<guile-setup-repl>>
 #+end_src
+* "I hear lisp is good for AI"
+** copilot
+#+begin_src elisp :tangle packages.el
+(package! copilot
+  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
+#+end_src
+
+#+begin_src elisp
+;; accept completion from copilot and fallback to company
+(use-package! copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . 'copilot-accept-completion)
+              ("TAB" . 'copilot-accept-completion)
+              ("C-TAB" . 'copilot-accept-completion-by-word)
+              ("C-<tab>" . 'copilot-accept-completion-by-word)))
+#+end_src
+** chatGPT
+#+begin_src elisp :tangle packages.el
+(package! gptel)
+#+end_src
+
+#+begin_src elisp
+(use-package! gptel)
+#+end_src
+
+* {ma,}git
+With apologies to vc-mode, magit is the gold standard. So:
+#+begin_src elisp :noweb yes
+(after! magit
+  <<magit-window-management>>
+
+  <<magit-auto-dash>>
+
+  <<magit-sections>>)
+#+end_src
+
+** nice git conflic resolution hydra
+Gold standard, yes, but not be all and end all. This defines a nice hydra for working with
+files containing git conflicts.
+
+#+begin_src elisp
+;; all thanks and apologies to https://github.com/alphapapa/unpackaged.el
+(use-package! smerge-mode
+  :after (hydra magit)
+  :config
+  (defhydra unpackaged/smerge-hydra
+    (:color pink :hint nil :post (smerge-auto-leave))
+    "
+^Move^       ^Keep^               ^Diff^                 ^Other^
+^^-----------^^-------------------^^---------------------^^-------
+_n_ext       _b_ase               _<_: upper/base        _C_ombine
+_p_rev       _u_pper              _=_: upper/lower       _r_esolve
+^^           _l_ower              _>_: base/lower        _k_ill current
+^^           _a_ll                _R_efine
+^^           _RET_: current       _E_diff
+"
+    ("n" smerge-next)
+    ("p" smerge-prev)
+    ("b" smerge-keep-base)
+    ("u" smerge-keep-upper)
+    ("l" smerge-keep-lower)
+    ("a" smerge-keep-all)
+    ("RET" smerge-keep-current)
+    ("\C-m" smerge-keep-current)
+    ("<" smerge-diff-base-upper)
+    ("=" smerge-diff-upper-lower)
+    (">" smerge-diff-base-lower)
+    ("R" smerge-refine)
+    ("E" smerge-ediff)
+    ("C" smerge-combine-with-next)
+    ("r" smerge-resolve)
+    ("k" smerge-kill-current)
+    ("ZZ" (lambda ()
+            (interactive)
+            (save-buffer)
+            (bury-buffer))
+     "Save and bury buffer" :color blue)
+    ("q" nil "cancel" :color blue))
+  :hook (magit-diff-visit-file . (lambda ()
+                                   (when smerge-mode
+                                     (unpackaged/smerge-hydra/body)))))
+#+end_src
+
+** magit status, like the cat in the hat, should clean up after itself
+#+name: magit-window-management
+#+begin_src elisp
+  ;; strictly speaking unnecessary (it's the default)
+  ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
+  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+  (setq magit-bury-buffer-function #'magit-restore-window-configuration)
+#+end_src
+
+** If I can't type a space, why let me?
+In scenarios like branch names, whitespace is disallowed. But using the spacebar as a word
+separator is deep, deep muscle memory. Why fight it?
+#+name: magit-auto-dash
+#+begin_src elisp
+  (defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
+    (interactive)
+    (self-insert-command 1 ?-))
+
+  (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
+#+end_src
+
+** magit-status sections
+#+name: magit-sections
+#+begin_src elisp
+(setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
+#+end_src
+** TODO hide my dotfiles away (until magit can handle separate work trees)
+Doom recognizes my home directory as a git dir, but it doesn't find any of its config
+whatsoever, which can cause projectile to act silly when it can't find an intermediate
+project root (either because of error or because I used the wrong muscle memory).
+
+#+begin_src elisp :tangle no
+(after! projectile (setq projectile-project-root-files-bottom-up (remove ".git"
+projectile-project-root-files-bottom-up)))
+#+end_src
+
 * evil config
 ** additional packages
 *** wait, is this split two tmux panes or two emacs windows?
