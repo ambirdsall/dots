@@ -36,6 +36,11 @@ a numeric prefix to make the ordering obvious), but it must be in one of the
 KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=input"
 #+end_src
 
+If you aren't sure if this exists yet, try the following:
+#+begin_src shell
+find /{etc,lib}/udev/rules.d/ | grep -E 'kmonad|uinput'
+#+end_src
+
 * 4 :: Make sure the kernel has loaded uinput drivers
 This ought to do it:
 #+begin_src shell
