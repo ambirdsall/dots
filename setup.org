@@ -9,9 +9,7 @@
 ** Install hammerspoon
 
 * linux
-
 ** distro-specific setup
-
 *** arch
 **** start by installing endeavourOS sway edition rather than vanilla arch
 This isn't a must-do, just a convenience. EOS has nice defaults, many of which I have
@@ -29,7 +27,8 @@ parallelism, etc
 Add the following lines to =/etc/dnf/dnf.conf=:
 #+begin_src conf
 defaultyes=True
-max_parallel_downloads=True
+max_parallel_downloads=15
+fastestmirror=True
 #+end_src
 
 **** enable rpmfusion
@@ -39,4 +38,6 @@ the following command:
 sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 #+end_src
 
-**** TODO create =~/lib/dnf-deps=, =~lib/copr-deps=, and =~/sbin/fedora-install=
+**** enable all the repos in =~lib/copr-repos=
+**** TODO create =~/sbin/fedora-install=
+For now, manually ~sudo dnf install~ all the deps in =~/lib/fedora-deps=.
