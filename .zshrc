@@ -138,9 +138,20 @@ zle -N zle-line-init
 zle -N zle-keymap-select
 
 # * PAGERs
-if command -v bat > /dev/null; then
+if _at_hand bat; then
     export PAGER='bat --plain'
+    # FIXME: currently displaying ansi escape codes as literal text
     export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+fi
+
+if _at_hand doom; then
+    emacsman () {
+        emacsclient -nw -e "
+        (let ((Man-notify-method 'bully))
+          (add-transient-hook! 'quit-window-hook (delete-frame))
+          (man \"$1\"))"
+    }
+    # alias man=emacsman
 fi
 
 # * Prompt
