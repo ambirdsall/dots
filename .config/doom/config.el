@@ -3,9 +3,6 @@
 (setq user-full-name "Alex Birdsall"
       user-mail-address "ambirdsall@gmail.com")
 
-;; I said what I said.
-(setq confirm-kill-emacs nil)
-
 (map! :leader
       :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
       :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir))))
@@ -71,7 +68,7 @@
        mac-option-modifier 'meta
        ns-function-modifier 'super)
 
-(setq fancy-splash-image (concat doom-private-dir "emacs-gnu.png"))
+(setq fancy-splash-image (concat doom-private-dir "emacs.png"))
 (remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-shortmenu)
 
 (setq doom-font-increment 1
@@ -255,6 +252,39 @@ projectile would recognize your root directory as a project."
 
 (setq standard-indent 2)
 
+(setq! projectile-project-search-path '("~/c/"))
+
+(use-package! code-compass :defer t
+              :commands (c/show-hotspots-sync
+                         c/show-hotspot-snapshot-sync
+                         c/show-code-churn-sync
+                         c/show-coupling-graph-sync
+                         c/show-code-communication-sync
+                         c/show-knowledge-graph-sync
+                         c/show-code-age-sync
+                         c/show-fragmentation-sync
+                         c/show-hotspot-cluster-sync)
+              :config
+              (setq c/exclude-directories (list "node_modules" "bower_components" "vendor" "tmp" "images"))
+              (if IS-MAC (setq c/preferred-browser "open")))
+
+(setq treesit-language-source-alist
+   '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+     (cmake "https://github.com/uyha/tree-sitter-cmake")
+     (css "https://github.com/tree-sitter/tree-sitter-css")
+     (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+     (go "https://github.com/tree-sitter/tree-sitter-go")
+     (html "https://github.com/tree-sitter/tree-sitter-html")
+     (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+     (json "https://github.com/tree-sitter/tree-sitter-json")
+     (make "https://github.com/alemuller/tree-sitter-make")
+     (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+     (python "https://github.com/tree-sitter/tree-sitter-python")
+     (toml "https://github.com/tree-sitter/tree-sitter-toml")
+     (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+     (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+     (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+
 (use-package! fennel-mode
   :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
 
@@ -297,22 +327,6 @@ projectile would recognize your root directory as a project."
 (use-package! lsp-tailwindcss
   :after lsp)
 
-(setq! projectile-project-search-path '("~/c/"))
-
-(use-package! code-compass :defer t
-              :commands (c/show-hotspots-sync
-                         c/show-hotspot-snapshot-sync
-                         c/show-code-churn-sync
-                         c/show-coupling-graph-sync
-                         c/show-code-communication-sync
-                         c/show-knowledge-graph-sync
-                         c/show-code-age-sync
-                         c/show-fragmentation-sync
-                         c/show-hotspot-cluster-sync)
-              :config
-              (setq c/exclude-directories (list "node_modules" "bower_components" "vendor" "tmp" "images"))
-              (if IS-MAC (setq c/preferred-browser "open")))
-
 (setq! geiser-active-implementations '(guile))
 
 (defun insert-guile-shebang ()
@@ -324,6 +338,9 @@ projectile would recognize your root directory as a project."
 !#
 
 ")))
+
+(use-package! yaml-pro
+  :config (add-to-list 'auto-mode-alist '("\\.ya?ml'" . yaml-pro-ts-mode)))
 
 ;; accept completion from copilot and fallback to company
 (use-package! copilot
@@ -421,7 +438,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after evil)
 
 (setq! evil-ex-search-persistent-highlight nil
-       +evil-want-o/O-to-continue-comments nil)
+       +evil-want-o/O-to-continue-comments nil
+       select-enable-clipboard nil)
 
 (let ((dir "~/Dropbox/org/"))
   (and (file-exists-p dir)
@@ -527,3 +545,5 @@ private) product projects.")
 
 (map! :leader
       :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
+
+(setq confirm-kill-emacs nil)

@@ -4,6 +4,9 @@
 
 (package! emojify)
 
+(package! code-compass
+  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
+
 (package! fennel-mode)
 
 (package! graphql-mode)
@@ -14,8 +17,7 @@
 
 (package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
 
-(package! code-compass
-  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
+(package! yaml-pro)
 
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
@@ -46,6 +48,3 @@
 (package! graphviz-dot-mode)
 
 (package! ox-gfm)
-
-(package! transient :pin "c2bdf7e12c530eb85476d3aef317eb2941ab9440")
-(package! with-editor :pin "391e76a256aeec6b9e4cbd733088f30c677d965b")

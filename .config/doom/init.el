@@ -4,7 +4,7 @@
 ;; in. Remember to run 'doom sync' after modifying it!
 
 ;; it also has a few bits of config which should be loaded as early as possible
-(setq evil-disable-insert-state-bindings t)
+;; (setq evil-disable-insert-state-bindings t)
 
 ;; NOTE Press 'SPC h d h' (or 'C-h d h' for non-vim users) to access Doom's
 ;;      documentation. There you'll find a "Module Index" link where you'll find
@@ -60,7 +60,7 @@
        zen               ; distraction-free coding or writing
 
        :editor
-       (evil +everywhere) ; come to the dark side, we have cookies
+       (evil +everywhere +hybrid) ; come to the dark side, we have cookies
        file-templates     ; auto-snippets for empty files
        fold               ; (nigh) universal code folding
        ;;(format +onsave) ; automated prettiness

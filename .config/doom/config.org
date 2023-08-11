@@ -5,24 +5,14 @@ get exported to specific init files.
 
 At present, this /almost/ only tangles to elisp files for doom emacs to load; it also builds ~/.guile
 
-* structural detritus: file preambles that should come first in the output
-There is a way to address this; look up noweb syntax in Info.
-
+* file preambles that should come first in the output
 ** top-of-file comment sections
-*** TODO clean this up, it's not cute up at the top of the page
-**** option one :: mark this top-level subtree as folded by default with property drawer
-**** option two :: use noweb double angle bracket syntax to decouple source order and output order
-
-*** packages.el
-#+begin_src elisp :tangle packages.el
-;; -*- no-byte-compile: t; -*-
-
+#+begin_src elisp :tangle packages.el :noweb yes
+<<packages-preamble>>
 #+end_src
 
-*** config.el
-#+begin_src elisp
-;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
-
+#+begin_src elisp :noweb yes
+<<config-preamble>>
 #+end_src
 
 * whoami
@@ -31,9 +21,6 @@ Some functionality uses this to identify you, e.g. GPG configuration, email clie
 #+begin_src elisp
 (setq user-full-name "Alex Birdsall"
       user-mail-address "ambirdsall@gmail.com")
-
-;; I said what I said.
-(setq confirm-kill-emacs nil)
 #+end_src
 
 * Who configures the configuration?
@@ -455,6 +442,57 @@ projectile would recognize your root directory as a project."
 (setq standard-indent 2)
 #+end_src
 
+** projectile
+#+begin_src elisp
+(setq! projectile-project-search-path '("~/c/"))
+#+end_src
+** code compass
+#+begin_src elisp :tangle packages.el
+(package! code-compass
+  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
+#+end_src
+
+#+begin_src elisp
+(use-package! code-compass :defer t
+              :commands (c/show-hotspots-sync
+                         c/show-hotspot-snapshot-sync
+                         c/show-code-churn-sync
+                         c/show-coupling-graph-sync
+                         c/show-code-communication-sync
+                         c/show-knowledge-graph-sync
+                         c/show-code-age-sync
+                         c/show-fragmentation-sync
+                         c/show-hotspot-cluster-sync)
+              :config
+              (setq c/exclude-directories (list "node_modules" "bower_components" "vendor" "tmp" "images"))
+              (if IS-MAC (setq c/preferred-browser "open")))
+#+end_src
+** tree sitter
+#+begin_src elisp
+(setq treesit-language-source-alist
+   '((bash "https://github.com/tree-sitter/tree-sitter-bash")
+     (cmake "https://github.com/uyha/tree-sitter-cmake")
+     (css "https://github.com/tree-sitter/tree-sitter-css")
+     (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+     (go "https://github.com/tree-sitter/tree-sitter-go")
+     (html "https://github.com/tree-sitter/tree-sitter-html")
+     (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
+     (json "https://github.com/tree-sitter/tree-sitter-json")
+     (make "https://github.com/alemuller/tree-sitter-make")
+     (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+     (python "https://github.com/tree-sitter/tree-sitter-python")
+     (toml "https://github.com/tree-sitter/tree-sitter-toml")
+     (tsx "https://github.com/tree-sitter/tree-sitter-typescript" "master" "tsx/src")
+     (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
+     (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
+#+end_src
+
+here's a snippet to install you some language libraries
+#+begin_src elisp :tangle no
+(mapc #'treesit-install-language-grammar
+      (mapcar #'car treesit-language-source-alist))
+#+end_src
+
 ** there are more languages under the sun than ~:lang~ can speak
 *** fennel
 #+begin_src elisp :tangle packages.el
@@ -579,32 +617,7 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 (use-package! lsp-tailwindcss
   :after lsp)
 #+end_src
-** projectile
-#+begin_src elisp
-(setq! projectile-project-search-path '("~/c/"))
-#+end_src
-** code compass
-#+begin_src elisp :tangle packages.el
-(package! code-compass
-  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
-#+end_src
-
-#+begin_src elisp
-(use-package! code-compass :defer t
-              :commands (c/show-hotspots-sync
-                         c/show-hotspot-snapshot-sync
-                         c/show-code-churn-sync
-                         c/show-coupling-graph-sync
-                         c/show-code-communication-sync
-                         c/show-knowledge-graph-sync
-                         c/show-code-age-sync
-                         c/show-fragmentation-sync
-                         c/show-hotspot-cluster-sync)
-              :config
-              (setq c/exclude-directories (list "node_modules" "bower_components" "vendor" "tmp" "images"))
-              (if IS-MAC (setq c/preferred-browser "open")))
-#+end_src
-** scheme, or: you've got gall, you've got guile
+*** scheme, or: you've got gall, you've got guile
 Apologies to racket, which is a nicer language per se, but guile's already got its grubby
 little +mitts+ C ABI in lots of interesting parts of the linux ecosystem and I just don't
 have time to shop around. If the list stored at ~geiser-active-implementations~ has length >
@@ -632,7 +645,7 @@ remembering it.
 ")))
 #+end_src
 
-*** pimp my +ride+ .guile
+**** pimp my +ride+ .guile
 This is my guile repl config. Let's frontload the potentially confusing bit: I would like to rely on the [[https://gitlab.com/NalaGinrut/guile-colorized][guile-colorized]] library, which
 is
 a) a lovely little quality-of-life improvement, and
@@ -647,13 +660,13 @@ version of =~/.guile= accordingly.
 Most config is defined outside the conditional top-level src blocks in noweb cookies to
 keep things DRY and maintainable.
 
-**** augment load path
+***** augment load path
 #+name: guile-augment-load-path
 #+begin_src guile :tangle no
 (add-to-load-path (string-append (getenv "HOME") "/lib/scheme"))
 #+end_src
 
-**** shared modules
+***** shared modules
 The first line here has ugly indentation so the corresponding noweb cookie (or whatever
 the term is) in the source blocks that actually get tangled to =.guile= files can have
 pretty indentation.
@@ -666,13 +679,13 @@ pretty indentation.
  (ice-9 readline)
 #+end_src
 
-**** setup repl
+***** setup repl
 #+name: guile-setup-repl
 #+begin_src guile :tangle no
 (activate-readline)
 #+end_src
 
-**** conditional file templates
+***** conditional file templates
 #+begin_src guile :noweb yes :tangle (if (string-equal "exists" (shell-command-to-string "test -e `guile -c \"(display (string-append (car %load-path) \\\"/ice-9/colorized.scm\\\"))\"` && echo -n exists")) "~/.guile" "no")
 <<guile-augment-load-path>>
 
@@ -694,6 +707,15 @@ hideously copy-pasted near-duplicate will have to do.
  <<guile-shared-modules>>)
 
 <<guile-setup-repl>>
+#+end_src
+*** yaml
+#+begin_src elisp :tangle packages.el
+(package! yaml-pro)
+#+end_src
+
+#+begin_src elisp
+(use-package! yaml-pro
+  :config (add-to-list 'auto-mode-alist '("\\.ya?ml'" . yaml-pro-ts-mode)))
 #+end_src
 * "I hear lisp is good for AI"
 ** copilot
@@ -871,7 +893,8 @@ WHO CARES
 ** changing up some default settings
 #+begin_src elisp
 (setq! evil-ex-search-persistent-highlight nil
-       +evil-want-o/O-to-continue-comments nil)
+       +evil-want-o/O-to-continue-comments nil
+       select-enable-clipboard nil)
 #+end_src
 
 You can have my ~evil-substitute~ when you pry it from my cold, dead fingers.
@@ -1056,7 +1079,30 @@ private) product projects.")
 #+end_src
 * random bugfixes and whatnot
 ** magit/with-editor/transient-base-map snafu
-#+begin_src elisp :tangle packages.el
+used to go to ~packages.el~; currently seems to be working, but as of <2023-07-15 Sat>,
+there's a bit more testing required before I'm ready to delete this.
+#+begin_src elisp :tangle no
 (package! transient :pin "c2bdf7e12c530eb85476d3aef317eb2941ab9440")
 (package! with-editor :pin "391e76a256aeec6b9e4cbd733088f30c677d965b")
+#+end_src
+
+* appendices
+** top-of-file preambles
+*** packages.el
+#+name: packages-preamble
+#+begin_src elisp :tangle no
+;; -*- no-byte-compile: t; -*-
+
+#+end_src
+
+*** config.el
+#+name: config-preamble
+#+begin_src elisp :tangle no
+;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
+
+#+end_src
+** undoing bad defaults
+I said what I said.
+#+begin_src elisp
+(setq confirm-kill-emacs nil)
 #+end_src
