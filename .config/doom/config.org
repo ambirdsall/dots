@@ -121,6 +121,7 @@ I don't rely on the short menu anymore; I know how to get around in doom/emacs j
 #+begin_src elisp
 (setq fancy-splash-image (concat doom-private-dir "emacs.png"))
 (remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-shortmenu)
+(remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-footer)
 #+end_src
 
 ** TODO make it super useful

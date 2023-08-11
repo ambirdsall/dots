@@ -70,6 +70,7 @@
 
 (setq fancy-splash-image (concat doom-private-dir "emacs.png"))
 (remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-shortmenu)
+(remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-footer)
 
 (setq doom-font-increment 1
       doom-font (font-spec :family "Fira Code" :size (if IS-MAC 13 16) :style "Retina" :weight 'semi-bold)
