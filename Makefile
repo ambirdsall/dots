@@ -7,7 +7,7 @@
 
 .POSIX:
 .SUFFIXES:
-.PHONY: x11
+.PHONY: x11 wayland
 
 install: .emacs.d tpm
 
@@ -21,3 +21,13 @@ tpm:
 x11:
 	systemctl --user enable xmodmap xcape
 	systemctl --user start xmodmap xcape
+
+wayland: /usr/bin/kmonad .config/kmonad/kmonad.kbd
+	systemctl --user enable kmonad
+	systemctl --user start kmonad
+
+/usr/bin/kmonad:
+	bash ~/.config/kmonad/linux-build-from-docker.sh
+
+.config/kmonad/kmonad.kbd:
+	emacs -nw ~/.config/kmonad/config.org
