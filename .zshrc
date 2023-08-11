@@ -137,8 +137,7 @@ zle -N zle-keymap-select
 # * PAGERs
 if _at_hand bat; then
     export PAGER='bat --plain'
-    # FIXME: currently displaying ansi escape codes as literal text
-    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+    export MANPAGER="bat -l man -p'"
 fi
 
 if _at_hand doom; then
