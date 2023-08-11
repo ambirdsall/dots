@@ -15,6 +15,8 @@ Arc-Dark Color Scheme
 */
 @define-color highlight #5294e2;
 @define-color base1  #404552;
+@define-color text1 #bebebe;
+@define-color text2 #6e6e6e;
 
 @keyframes blink-warning {
   70% {
@@ -54,7 +56,7 @@ Arc-Dark Color Scheme
 /* The whole bar */
 #waybar {
   background: transparent;
-  color: #bebebe;
+  color: @text1;
   background-color: @base1;
   font-family: UbuntuMono;
   font-size: 14px;
@@ -167,6 +169,7 @@ Arc-Dark Color Scheme
 
 #workspaces button {
   border-bottom: 3px solid transparent;
+  color: @text2;
   margin-bottom: 0px;
   padding: 0px;
 }
@@ -174,6 +177,7 @@ Arc-Dark Color Scheme
 #workspaces button.focused,
 #workspaces button.active {
   border-bottom: 3px solid @highlight;
+  color: @text1;
   margin-bottom: 1px;
   padding-left: 0;
 }

@@ -218,7 +218,7 @@
         "tooltip": false,
     },
     "custom/window-title": {
-        "exec": "swaymsg -t get_tree | jq -r '.. | select(.type?) | select(.focused==true) | .name' | sed 's/>/&gt;/g; s/</&lt;/g; s/&/&amp;/g'",
+        "exec": "swaymsg -t get_tree | jq -r '.. | select(.type?) | select(.focused==true) | .name' | sed 's/>/›/g; s/</‹/g; s/&/﹠/g'",
         "interval": 1,
         "max-length": 120
     }
