@@ -36,18 +36,39 @@ a numeric prefix to make the ordering obvious), but it must be in one of the
 KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=input"
 #+end_src
 
-If you aren't sure if this exists yet, try the following:
+What this actually does for you is ensure that the =uinput= group has read/write file
+permissions on =/dev/uinput=; without that, ~kmonad~ will fail with a permissions error every
+time unless you manually run the right ~sudo chmod~ invocation beforehand every single time
+you reboot.
+
+If you aren't sure whether the rule file exists yet, run the following:
 #+begin_src shell
 find /{etc,lib}/udev/rules.d/ | grep -E 'kmonad|uinput'
 #+end_src
 
+If that query gives you no joy? Copy; paste; profit:
+#+begin_src shell
+echo 'KERNEL=="uinput", MODE="0660", GROUP="uinput", OPTIONS+="static_node=input"' \
+    | sudo tee /etc/udev/rules.d/99-kmonad-uinput.rules
+#+end_src
+
+To benefit from these changes, you will have to either reboot or manually run
+#+begin_src shell
+sudo chmod 0660 /dev/uinput
+#+end_src
+
 * 4 :: Make sure the kernel has loaded uinput drivers
-This ought to do it:
+Here's how to check if you're not sure:
+#+begin_src shell
+lsmod | grep uinput
+#+end_src
+
+For just your current session, this will do the trick:
 #+begin_src shell
 sudo modprobe uinput
 #+end_src
 
-If it doesn't, this will:
+But if you want things to work across reboots, you'll want to run this:
 #+begin_src shell
 echo uinput | sudo tee /etc/modules-load.d/kmonad.conf
 #+end_src
