@@ -30,9 +30,6 @@ export HISTCONTROL=ignorespace
 setopt autocd extendedglob notify
 unsetopt beep nomatch
 
-# * make the keyboard work how I want on (x11) linux
-# TODO long term: kmonad-ad-ad-ad-ad-ad you oughta know by now
-
 # * side effects & printed output when sourcing config
 
 if [[ -n $TMUX ]]; then
@@ -154,73 +151,6 @@ if _at_hand doom; then
     # alias man=emacsman
 fi
 
-# * Prompt
-# ** util
-strip_newline () {
-    tr -d '\n'
-}
-
-# ** reverse dir stack (the more intuitive order IMO)
-# TODO fix handling of directories with spaces in their names
-reverse_dir_stack () {
-    dirs | awk '{ for (i=NF; i>1; i--) printf("%s %%F{238}᎒%%f", $i) }'
-}
-
-# ** ...roll my own git status!
-current_branch () {
-    local BRANCH=$(git rev-parse --abbrev-ref HEAD 2>&/dev/null | strip_newline)
-    if [[ $BRANCH == "HEAD" ]]; then printf "%%F{136}:"
-    else
-        if [[ -n $BRANCH ]]; then printf "($BRANCH) "; fi
-    fi
-}
-
-current_commit () {
-    git rev-parse --short HEAD 2>&/dev/null | strip_newline
-}
-
-dirty_check () {
-    # TODO: number of staged files, number of modified files
-    local GIT_DIRTY_CHECK_STATUS=$(git status --porcelain 2>& /dev/null)
-    local GIT_DIRTY_CHECK_STATUS_COLUMNS=$(echo $GIT_DIRTY_CHECK_STATUS | awk '{print $1}')
-
-    # display something if any tracked files have been modified
-    echo $GIT_DIRTY_CHECK_STATUS_COLUMNS | grep 'M' > /dev/null && printf "%%F{160} ⁂ %%f" || true
-    # echo $GIT_DIRTY_CHECK_STATUS | grep 'M' > /dev/null && printf " shit" || true
-
-    # display something if there are untracked files
-    echo $GIT_DIRTY_CHECK_STATUS_COLUMNS | grep '??' > /dev/null && printf "..." || true
-}
-
-
-# ** but for real
-if [ -f /opt/homebrew/opt/zsh-git-prompt/zshrc.sh ]; then
-    # brew install zsh-git-prompt
-    source /opt/homebrew/opt/zsh-git-prompt/zshrc.sh
-    _HAS_ZSH_GIT_PROMPT_PKG=t
-elif [ -f /usr/share/zsh/plugins/zsh-git-prompt/zshrc.sh ]; then
-    # aura -S zsh-git-prompt-hs-git
-    export GIT_PROMPT_EXECUTABLE="haskell"
-    source /usr/share/zsh/plugins/zsh-git-prompt/zshrc.sh
-    _HAS_ZSH_GIT_PROMPT_PKG=t
-elif [ -f  /usr/lib/zsh-git-prompt/zshrc.sh ]; then
-    source /usr/lib/zsh-git-prompt/zshrc.sh
-    _HAS_ZSH_GIT_PROMPT_PKG=t
-elif [ -f  ~/c/zsh-git-prompt/zshrc.sh ]; then
-    source ~/c/zsh-git-prompt/zshrc.sh
-    _HAS_ZSH_GIT_PROMPT_PKG=t
-else
-    echo "Can't find zsh-git-prompt directory" >&2
-fi
-
-if [[ -n $_HAS_ZSH_GIT_PROMPT_PKG ]]; then
-    PS1='%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-work-tree &>/dev/null && git_super_status || echo -e "\b") $(~/bin/moon-phase) %F{3}$(current_commit 2>/dev/null)%f
-%F{239}└%f%(?.%F{239}.%F{196})➣%f '
-else
-    PS1='$(reverse_dir_stack)%F{cyan}%~%f $(current_branch)%F{136}$(current_commit)%f$(dirty_check) $(~/bin/moon-phase)
-%(?.%F{239}.%F{196})ᐇ%f '
-fi
-
 # * asdf
 # source /opt/asdf-vm/asdf.sh
 # source /opt/asdf-vm/completions/asdf.bash
@@ -274,9 +204,19 @@ dots () {
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+# * Source modular config files
 for conf in ~/.config/zsh/conf.d/*.zsh; do
     source "$conf"
 done
+
+# * Prompt
+# TODO fix handling of directories with spaces in their names
+reverse_dir_stack () {
+    dirs | awk '{ for (i=NF; i>1; i--) printf("%s %%F{238}᎒%%f", $i) }'
+}
+
+PROMPT='%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-work-tree &>/dev/null && gitprompt || echo -e "\b ")$(~/bin/moon-phase)
+%F{239}└%f%(?.%F{239}.%F{196})➣%f '
 
 # * local config
 # this should always go last, to allow local overrides of anything
