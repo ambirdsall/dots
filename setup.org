@@ -41,3 +41,23 @@ sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-releas
 **** enable all the repos in =~lib/copr-repos=
 **** TODO create =~/sbin/fedora-install=
 For now, manually ~sudo dnf install~ all the deps in =~/lib/fedora-deps=.
+
+* Securely migrating the contents of a home directory
+To create an encrypted tarball of the directory, run:
+#+begin_src shell
+tar -czf - * | openssl enc -e -aes256 -out secured.tar.gz
+#+end_src
+
+To decrypt and extract into a subdirectory (either to test or to unpackage the downloaded tarball):
+#+begin_src shell
+openssl enc -d -aes256 -in secured.tar.gz | tar xz -C tmphome
+#+end_src
+
+If everything in there is in order, you can move everything to the ~$HOME~ toplevel:
+#+begin_src shell
+rsync --recursive \
+      --verbose \
+      --backup --suffix=.installed.orig \
+      tmphome/ $HOME/
+rm -r tmphome
+#+end_src
