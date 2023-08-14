@@ -214,7 +214,7 @@ reverse_dir_stack () {
     dirs | awk '{ for (i=NF; i>1; i--) printf("%s %%F{238}᎒%%f", $i) }'
 }
 
-PROMPT='%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-work-tree &>/dev/null && gitprompt || echo -e "\b ")$(~/bin/moon-phase)
+PROMPT='%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-work-tree &>/dev/null && echo "$(gitprompt)%F{yellow}$(git rev-parse --short HEAD)%f " || echo -e "\b ")$(~/bin/moon-phase)
 %F{239}└%f%(?.%F{239}.%F{196})➣%f '
 
 # * local config
