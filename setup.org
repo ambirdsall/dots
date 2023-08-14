@@ -44,11 +44,15 @@ If you are on x86, rather than ARM, add the ~--with-copr~ flag to the script inv
 * Securely migrating the contents of a home directory
 To create an encrypted tarball of the directory, run:
 #+begin_src shell
+# should probably run as root so you don't see a long-running job die on some random
+# file's permissions
 tar -czf - * | openssl enc -e -aes256 -out secured.tar.gz
 #+end_src
 
 To decrypt and extract into a subdirectory (either to test or to unpackage the downloaded tarball):
 #+begin_src shell
+mkdir tmphome
+# don't run this one as root if you want to own your own files
 openssl enc -d -aes256 -in secured.tar.gz | tar xz -C tmphome
 #+end_src
 
