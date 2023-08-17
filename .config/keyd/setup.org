@@ -1,0 +1,24 @@
+#+title: keyd setup
+
+* Prerequisites
+
+** linux
+
+** keyd installed
+Very easy to do from source; cf. https://github.com/rvaiya/keyd.
+#+begin_src shell
+cd ~/c
+git clone https://github.com/rvaiya/keyd
+cd keyd
+make && sudo make install
+#+end_src
+** config installed
+The config:
+#+begin_src shell
+sudo cp default.conf /etc/keyd/default.conf
+#+end_src
+** keyd running
+#+begin_src shell
+sudo systemctl enable keyd && sudo systemctl start keyd
+#+end_src
+** 🤠🎉
