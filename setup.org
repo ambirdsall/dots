@@ -38,9 +38,8 @@ the following command:
 sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 #+end_src
 
-**** enable all the repos in =~lib/copr-repos=
-**** TODO create =~/sbin/fedora-install=
-For now, manually ~sudo dnf install~ all the deps in =~/lib/fedora-deps=.
+**** run =~/sbin/fedora-install=
+If you are on x86, rather than ARM, add the ~--with-copr~ flag to the script invocation.
 
 * Securely migrating the contents of a home directory
 To create an encrypted tarball of the directory, run:

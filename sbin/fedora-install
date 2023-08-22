@@ -1,0 +1,7 @@
+#!/bin/bash
+
+case $1 in
+  --with-copr) for repo in $(cat ~/lib/copr-repos); do sudo dnf copr enable $repo; done ;;
+esac
+
+sudo dnf install $(cat ~/lib/fedora-deps)
