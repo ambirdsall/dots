@@ -36,6 +36,6 @@ defaults to ~git status -s~ when called with no arguments, and ~dots c some comm
 
 * todo list
 - [ ] find way to invoke magit-status with a separate git dir and work tree
-    I think there's an emacs package that sets up a ~yadm~ / ~magit~ integration (via TRAMP, I
-    think?); since, IIUC, ~yadm~ is more or less a thin wrapper over a bare git repo, this same
-    approach ought to be usable here.
+  I think there's an emacs package that sets up a ~yadm~ / ~magit~ integration (via TRAMP, I
+  think?); since, IIUC, ~yadm~ is more or less a thin wrapper over a bare git repo, this same
+  approach ought to be usable here.
