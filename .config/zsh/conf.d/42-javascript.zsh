@@ -28,3 +28,16 @@ elif [ -f "$HOME/.nvm/nvm.sh" ]; then
 	source "$HOME/.nvm/nvm.sh"
 	add-zsh-hook precmd check_node_version
 fi
+
+alias scripts='jq .scripts < package.json'
+alias s=scripts
+run-npm-script () {
+  local run=$(if test -f pnpm-lock.yaml; then echo pnpm; else echo npm run; fi)
+
+  # using separate sed invocations instead of something simpler like `tr -d` to
+  # avoid mangling script keys containing colons
+  local chosen_script=$(scripts | grep -Eo '".+": ' | sed 's/"//' | sed 's/": //' | fzf)
+
+  test -n $chosen_script && $run $chosen_script
+}
+alias S=run-npm-script
