@@ -23,9 +23,11 @@ check_node_version() {
 
 if [ -f "/usr/share/nvm/init-nvm.sh" ]; then
 	source /usr/share/nvm/init-nvm.sh
+	[ -f /usr/share/nvm/bash_completion ] && source /usr/share/nvm/init-nvm.sh
 	add-zsh-hook precmd check_node_version
 elif [ -f "$HOME/.nvm/nvm.sh" ]; then
 	source "$HOME/.nvm/nvm.sh"
+	[ -f "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/bash_completion"
 	add-zsh-hook precmd check_node_version
 fi
 
