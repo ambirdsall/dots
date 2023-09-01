@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 
+# SIDE EFFECT
 if [[ -n $TMUX ]]; then
     echo "Tmux sessions:"
     tmux list-sessions
@@ -10,6 +11,7 @@ alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
 
 alias t=tmux
 alias ta="tmux attach -t"
+alias tt="tmux attach -t"
 alias tk="tmux kill-session -t"
 tn () {
     if [[ $# -gt 0 ]]; then
