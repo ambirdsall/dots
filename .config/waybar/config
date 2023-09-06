@@ -92,7 +92,7 @@
 
     "memory": {
         "interval": 5,
-        "format": " {}%", // Icon: memory
+        "format": "🧠 {}%", // Icon: memory
         "on-click": "xfce4-terminal -e 'htop'", 
         "states": {
             "warning": 70,
@@ -144,7 +144,7 @@
         "format": "{volume}% {icon}",
         "format-bluetooth": "{volume}% {icon}  {format_source}",
         "format-bluetooth-muted": " {icon}  {format_source}",
-        "format-muted": "婢 {format_source}",
+        "format-muted": "🔇",
         "format-source": "{volume}% ",
         "format-source-muted": "",
         "format-icons": {
