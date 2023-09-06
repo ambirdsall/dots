@@ -9,6 +9,7 @@
 	p = add -p
 	latest = "!git reflog | grep checkout: | awk '{print $6}' | awk '!H[$0]++'"
 	shove = push --force-with-lease
+	l = log --oneline
 [rerere]
 	enabled = true
 [github]
