@@ -14,9 +14,11 @@
 Arc-Dark Color Scheme
 */
 @define-color highlight #5294e2;
+@define-color alt-highlight #5f577a;
 @define-color base1  #404552;
 @define-color text1 #bebebe;
 @define-color text2 #6e6e6e;
+@define-color text3 #4e4e4e;
 
 @keyframes blink-warning {
   70% {
@@ -174,12 +176,22 @@ Arc-Dark Color Scheme
   padding: 0px;
 }
 
-#workspaces button.focused,
-#workspaces button.active {
-  border-bottom: 3px solid @highlight;
+#workspaces button:not(.current_output) {
+  color: @text3;
+}
+
+#workspaces button.focused {
   color: @text1;
   margin-bottom: 1px;
   padding-left: 0;
+}
+
+#workspaces button.focused.current_output {
+  border-bottom: 3px solid @highlight;
+}
+
+#workspaces button.focused:not(.current_output) {
+  border-bottom: 3px solid @alt-highlight;
 }
 
 #workspaces button.urgent {
