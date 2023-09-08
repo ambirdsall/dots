@@ -109,7 +109,11 @@ exec swayidle -w\
     bindsym $mod+0 workspace number 10
 
     bindgesture swipe:3:right workspace next
+    bindsym $mod+$alt+l workspace next
+    bindsym $mod+$alt+Right workspace next
     bindgesture swipe:3:left workspace prev
+    bindsym $mod+$alt+h workspace prev
+    bindsym $mod+$alt+Left workspace next
 
     # Move focused container to workspace
     bindsym $mod+Shift+1 move container to workspace number 1
