@@ -5,14 +5,12 @@
 # You can get the names of your inputs by running: swaymsg -t get_inputs
 # Put your touchpad's ID to replace "Touchpad-ID" (keep the quotation marks)
 
-input type:touchpad {
+input "*" {
     # "dwt" stands for "disable-while-typing"
     dwt enabled
     click_method clickfinger
-
-    # know your enemy:
-    # tap enabled
-    # natural_scroll enabled
+    natural_scroll disabled
+    tap disabled
 }
 
 # Read `man 5 sway-input` for more information about this section.
