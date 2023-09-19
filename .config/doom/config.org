@@ -730,10 +730,10 @@ hideously copy-pasted near-duplicate will have to do.
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
   :bind (:map copilot-completion-map
-              ("<tab>" . 'copilot-accept-completion)
-              ("TAB" . 'copilot-accept-completion)
-              ("C-TAB" . 'copilot-accept-completion-by-word)
-              ("C-<tab>" . 'copilot-accept-completion-by-word)))
+              ("<tab>" . 'copilot-accept-completion-by-word)
+              ("TAB" . 'copilot-accept-completion-by-word)
+              ("C-TAB" . 'copilot-accept-completion)
+              ("C-<tab>" . 'copilot-accept-completion)))
 #+end_src
 ** chatGPT
 #+begin_src elisp :tangle packages.el

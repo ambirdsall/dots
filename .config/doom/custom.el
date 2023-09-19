@@ -10,7 +10,7 @@
      (outshine-mode . 1)
      (checkdoc-package-keywords-flag)
      (outshine-mode . t)))
- '(warning-suppress-types '((lsp-mode) (defvaralias))))
+ '(warning-suppress-types '((emacs) (lsp-mode) (defvaralias))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
