@@ -16,7 +16,7 @@ compdef g=git
 
 # ** oh, oh, it's ~magit~
 # TODO expand into a proper elisp script
-gs () {
+magit () {
     emacsclient --socket=magit -nw -e "
 (progn
   (or (advice-member-p 'save-buffers-kill-terminal '+magit/quit)
