@@ -44,7 +44,7 @@ h :: bottom-right corner -> top of screen
 
 (fn window/center [] (: (current) :centerOnScreen))
 
-(fn window/fullscreen [] (: (current) :toggleFullScreen))
+(fn window/fullscreen [] (: (current) :maximize))
 
 (local window/left-half
        (window-resizer (fn [window screen]
