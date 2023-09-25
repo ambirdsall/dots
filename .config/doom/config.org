@@ -996,15 +996,7 @@ project). It's an idiosyncratic pattern, but it works brilliantly for me on work
 #+begin_src elisp
 ;; TODO verify whether explicitly setting agenda files prevents automatic
 ;; detection of new files in ~/notes/*.org
-(setq! org-agenda-files '("~/Dropbox/org/todo.org"
-                          "~/Dropbox/org/notes.org"
-                          "~/Dropbox/org/car.org"
-                          "~/Dropbox/org/doom.org"
-                          "~/Dropbox/org/food.org"
-                          "~/Dropbox/org/igg.org"
-                          "~/Dropbox/org/linux.org"
-                          "~/Dropbox/org/nba.org"
-                          "~/Dropbox/org/house.org"))
+(setq! org-agenda-files '("~/Dropbox/org/"))
 
 (defun org-my-auto-exclude-fn (tag)
   (if (cond
