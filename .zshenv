@@ -27,10 +27,6 @@ elif _at_hand xfce4-terminal; then
     export TERMINAL=xfce4-terminal
 fi
 
-if _at_hand /opt/homebrew/bin/brew; then
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
-
 _add_to_path "$HOME/.yarn/bin"
 _add_to_path "$HOME/.cargo/bin"
 [ -s "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
