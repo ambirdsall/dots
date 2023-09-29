@@ -139,6 +139,49 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
            (unless (string= "-" project-name)
              (format (if (buffer-modified-p)  " ◉ %s" "  ●  %s") project-name))))))
 
+(custom-set-faces!
+  '(+workspace-tab-face :inherit default :family "Overpass" :height 135)
+  '(+workspace-tab-selected-face :inherit (highlight +workspace-tab-face)))
+
+(tab-bar-history-mode)
+
+(after! persp-mode
+  (defun workspaces-formatted ()
+    ;; fancy version as in screenshot
+    (+doom-dashboard--center (frame-width)
+                             (let ((names (or persp-names-cache nil))
+                                   (current-name (safe-persp-name (get-current-persp))))
+                               (mapconcat
+                                #'identity
+                                (cl-loop for name in names
+                                         for i to (length names)
+                                         collect
+                                         (concat (propertize (format " %d" (1+ i)) 'face
+                                                             `(:inherit ,(if (equal current-name name)
+                                                                             '+workspace-tab-selected-face
+                                                                           '+workspace-tab-face)
+                                                               :weight bold))
+                                                 (propertize (format " %s " name) 'face
+                                                             (if (equal current-name name)
+                                                                 '+workspace-tab-selected-face
+                                                               '+workspace-tab-face))))
+                                " "))))
+  (defun amb/invisible-current-workspace ()
+    "The tab bar doesn't update when only faces change (i.e. the
+current workspace), so we invisibly print the current workspace
+name as well to trigger updates"
+    (propertize (safe-persp-name (get-current-persp)) 'invisible t))
+
+  (customize-set-variable 'tab-bar-format '(workspaces-formatted tab-bar-format-align-right amb/invisible-current-workspace))
+
+  ;; don't show current workspaces when we switch, since we always see them
+  (advice-add #'+workspace/display :override #'ignore)
+  ;; same for renaming and deleting (and saving, but oh well)
+  (advice-add #'+workspace-message :override #'ignore))
+
+;; need to run this later for it to not break frame size for some reason
+(run-at-time nil nil (cmd! (tab-bar-mode +1)))
+
 (defmacro cmds--on-string-or-region (fn)
   "Given a string-manipulation function FN, defines an interactive command which will apply that
 function to either a string argument or to selected text, depending on context."
