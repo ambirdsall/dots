@@ -1000,6 +1000,14 @@ You can have my ~evil-substitute~ when you pry it from my cold, dead fingers.
 (package! evil-snipe :disable t)
 #+end_src
 
+** imenu
+I much prefer evil's indentation command set, making the default ~M-i~ binding,
+~tab-to-tab-stop~, a rather poor use of prime real estate. I would be much better served
+using it as a mnemonic binding for ~imenu~:
+#+begin_src elisp
+(map! :after consult "M-i" #'consult-imenu)
+#+end_src
+
 ** TODO jump into/around a visual selection
 =SPC v= is (or was, at time of writing) not a default binding in [[file:~/.emacs.d/modules/config/default/+evil-bindings.el][doom's default evil bindings]]; that seems like a potential oversight.
 

@@ -512,6 +512,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
        +evil-want-o/O-to-continue-comments nil
        select-enable-clipboard nil)
 
+(map! :after consult "M-i" #'consult-imenu)
+
 (let ((dir "~/Dropbox/org/"))
   (and (file-exists-p dir)
        (setq org-directory dir)))
