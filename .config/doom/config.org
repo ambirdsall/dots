@@ -1004,10 +1004,13 @@ project). It's an idiosyncratic pattern, but it works brilliantly for me on work
 #+end_src
 
 ** the yet-neglected agenda view
+These values can be dynamically constructed by concatenating the values of
+~org-roam-directory~ and ~org-roam-dailies-directory~; I did try to use those to make this
+more future-proof, but that just passed along the unresolved symbol names (I assume
+because ~setq~ is a macro) and everything went to heck.
 #+begin_src elisp
-;; TODO verify whether explicitly setting agenda files prevents automatic
-;; detection of new files in ~/notes/*.org
-(setq! org-agenda-files '("~/Dropbox/org/"))
+(setq! org-agenda-files '("~/Dropbox/org/"
+                          "~/Dropbox/roam/daily/"))
 
 (defun org-my-auto-exclude-fn (tag)
   (if (cond

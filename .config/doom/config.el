@@ -497,9 +497,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
     ;; TODO dynamically create one if missing? This system can be improved further.
     (find-file (concat (projectile-project-root) "todo.org"))))
 
-;; TODO verify whether explicitly setting agenda files prevents automatic
-;; detection of new files in ~/notes/*.org
-(setq! org-agenda-files '("~/Dropbox/org/"))
+(setq! org-agenda-files '("~/Dropbox/org/"
+                          "~/Dropbox/roam/daily/"))
 
 (defun org-my-auto-exclude-fn (tag)
   (if (cond
