@@ -469,6 +469,29 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
 
+(defun amb/magit-status-with-dotfiles-fallback ()
+  (interactive)
+  (if (magit-gitdir)
+      (magit-status)
+    (magit-status "~/")))
+
+(map! :after magit :leader "g g" #'amb/magit-status-with-dotfiles-fallback)
+
+;; from https://github.com/magit/magit/issues/460
+
+(defun amb/magit-process-environment (env)
+  "Add GIT_DIR and GIT_WORK_TREE to ENV when in a special directory."
+  (let ((here (file-name-as-directory (expand-file-name default-directory)))
+        (home (expand-file-name "~/")))
+    (when (string= here home)
+      (let ((gitdir (expand-file-name "~/.dots/")))
+        (push (format "GIT_WORK_TREE=%s" home) env)
+        (push (format "GIT_DIR=%s" gitdir) env))))
+  env)
+
+(advice-add 'magit-process-environment
+            :filter-return #'amb/magit-process-environment)
+
 (use-package! evil-tmux-navigator
   :config (evil-tmux-navigator-bind-keys))
 
