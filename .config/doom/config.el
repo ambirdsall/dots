@@ -101,7 +101,12 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
     "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
     (interactive)
     (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
-          (t (load-theme amb/doom-dark-theme)))))
+          (t (load-theme amb/doom-dark-theme))))
+
+  (map! :leader
+        "tt" #'amb/toggle-themes)
+
+  (load-theme amb/doom-dark-theme t))
 
 (unless noninteractive
   (require-theme 'modus-themes)
@@ -205,7 +210,6 @@ used interactively."
  :desc "jump to first non-blank" "of" #'evil-first-non-blank
  :desc "new frame" "oF" #'make-frame
  :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos
- "tt" #'amb/toggle-themes
  "W" #'subword-mode)
 
 (map!

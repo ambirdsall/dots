@@ -206,15 +206,8 @@ I mean, it's nice.
 
 ** theme this bad boy
 *** TODO wrap all theme config in a single ~(unless noninteractive <theme config>)~ form and =noweb= in the different logical sections
-
 *** that said...
-The modus themes (included with emacs since version twenty-eight point something) are a
-thoughtfully-designed, goal-oriented set of color themes, designed for accessibility and
-readability (high-contrast, anti-deuteranopic variants) and sporting delightfully-paired
-names:
-- /modus operandi/ :: Mode, or manner, of that which is to be worked. The light color theme, for one's toil under the sun.
-- /modus vivendi/ :: Mode, or manner, of living. The dark color theme, for one's toil under monitor glare.
-
+**** Define a theme switcher utility
 Sometimes (usually) I want dark mode; sometimes (presenting, in direct sunlight, or just
 mixing it up) I want light mode. What I do /not/ want is to have to pick a specific theme
 out of a haystack by name each time I want to toggle between light and dark; give me
@@ -231,8 +224,26 @@ it to myself, so I can flit over to a different light and/or dark theme at my pl
     "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
     (interactive)
     (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
-          (t (load-theme amb/doom-dark-theme)))))
+          (t (load-theme amb/doom-dark-theme))))
+
+  (map! :leader
+        "tt" #'amb/toggle-themes)
+
+  (load-theme amb/doom-dark-theme t))
 #+end_src
+
+***** TODO use a ring instead of imperatively toggling btw hardcoded vars
+- [ ] look up rings in elisp manual lol
+- [ ] create a container var that is, you guessed it,,,
+- [ ] iterate through that in ~amb/toggle-themes~
+
+**** tweak modus themes
+The modus themes (included with emacs since version twenty-eight point something) are a
+thoughtfully-designed, goal-oriented set of color themes, designed for accessibility and
+readability (high-contrast, anti-deuteranopic variants) and sporting delightfully-paired
+names:
+- /modus operandi/ :: Mode, or manner, of that which is to be worked. The light color theme, for one's toil under the sun.
+- /modus vivendi/ :: Mode, or manner, of living. The dark color theme, for one's toil under monitor glare.
 
 Speaking of toggling switches, the modus themes expose quite a few semantically-named
 variables for users to tweak; let's do so.
@@ -258,6 +269,7 @@ current) lines.
         modus-themes-operandi-color-overrides
         '((bg-hl-line . "#eeeeee"))))
 #+end_src
+
 ** line numbers
 This determines the style of line numbers in effect. If set to ~nil~, line numbers are disabled. For
 relative line numbers, set this to ~relative~.
@@ -378,7 +390,6 @@ a command on region both.
  :desc "jump to first non-blank" "of" #'evil-first-non-blank
  :desc "new frame" "oF" #'make-frame
  :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos
- "tt" #'amb/toggle-themes
  "W" #'subword-mode)
 
 (map!
