@@ -147,7 +147,7 @@ exec swayidle -w\
 
     # Switch the current container between different layout styles
     bindsym $mod+s layout stacking
-    bindsym $mod+w layout tabbed
+    bindsym $mod+t layout tabbed
     bindsym $mod+e layout toggle split
 
     # Make the current focus fullscreen
@@ -249,7 +249,3 @@ bindsym $mod+r mode "resize"
     bindsym $mod+Shift+s exec ~/.config/sway/scripts/screenshot.sh
     bindsym print exec /usr/share/sway/scripts/grimshot --notify save output
     bindsym Shift+print exec ~/.config/sway/scripts/screenshot.sh
-#
-# Keybindings List
-#
-    bindsym $mod+t exec xed ~/.config/sway/cheatsheet
