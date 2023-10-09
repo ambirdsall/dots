@@ -160,6 +160,7 @@ they are, in practice, only being added to the emacs-state map.*
 #+end_src
 
 ** typography
+*** fonts
 On arch linux, here are the packages you'll want to download:
 - =ttf-fira-code=
 - =otf-overpass=
@@ -202,6 +203,10 @@ Additionally, there are emojis:
 *** TODO try out [[https://www.reddit.com/r/emacs/comments/shzif1/n%CE%BBno_font_stack/][NANO emacs font stack]]
 I mean, it's nice.
 
+*** whitespace
+#+begin_src elisp
+(whitespace-mode 1)
+#+end_src
 ** theme this bad boy
 *** TODO wrap all theme config in a single ~(unless noninteractive <theme config>)~ form and =noweb= in the different logical sections
 *** that said...

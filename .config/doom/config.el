@@ -91,6 +91,8 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
     (add-hook (intern (concat (symbol-name hook) "-hook")) #'mixed-pitch-mode)))
 (add-hook 'doom-init-ui-hook #'init-mixed-pitch-h)
 
+(whitespace-mode 1)
+
 (unless noninteractive
   (setq
    ;; amb/doom-dark-theme 'modus-vivendi
