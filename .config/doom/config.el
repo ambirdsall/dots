@@ -182,6 +182,9 @@ name as well to trigger updates"
 ;; need to run this later for it to not break frame size for some reason
 (run-at-time nil nil (cmd! (tab-bar-mode +1)))
 
+(map! :leader
+      :desc "toggle tab bar" "tT" #'tab-bar-mode)
+
 (defmacro cmds--on-string-or-region (fn)
   "Given a string-manipulation function FN, defines an interactive command which will apply that
 function to either a string argument or to selected text, depending on context."

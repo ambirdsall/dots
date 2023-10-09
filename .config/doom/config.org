@@ -348,9 +348,21 @@ name as well to trigger updates"
 (run-at-time nil nil (cmd! (tab-bar-mode +1)))
 #+end_src
 
+Having made this nice tab bar, we need a way to toggle it: some modes (notably PDFView)
+have rendering logic that doesn't play nicely with (or is not properly aware of) the tab
+bar.
+
+#+begin_src elisp
+(map! :leader
+      :desc "toggle tab bar" "tT" #'tab-bar-mode)
+#+end_src
+
 *** TODO Mouse click bindings for the tab bar
 A normal click on a tab navigates to it (optionally, if not the current one). Right clicking brings up a menu of nice things to be able to do.
 
+*** TODO PDFView mode does not take tab bar height into account when rendering a page
+The end result is having to scroll a small amount whenever I (\*Bob Seger voice*) turn the
+page, which is frankly a bit annoying. A shitty workaround is to manually toggle, I guess.
 * odds and ends
 ** text manipulation utilities
 *** TODO helper macros (which should be tidied off to an appendix with noweb)
