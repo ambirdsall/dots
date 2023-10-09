@@ -492,6 +492,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (advice-add 'magit-process-environment
             :filter-return #'amb/magit-process-environment)
 
+(defun amb/magit-stage-file ()
+  (interactive)
+  (if (magit-gitdir)
+      (call-interactively #'magit-stage-file)
+      (shell-command (concat
+                      "git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME add "
+                      (buffer-file-name))
+                     t)))
+
+(map! :after magit :leader "g S" #'amb/magit-stage-file)
+
 (use-package! evil-tmux-navigator
   :config (evil-tmux-navigator-bind-keys))
 

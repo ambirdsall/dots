@@ -922,6 +922,21 @@ The song-and-dance is a two-step:
             :filter-return #'amb/magit-process-environment)
 #+end_src
 
+This works for almost everything, but there's not yet a good way to stage new files in the
+dotfiles repo. So:
+#+begin_src elisp
+(defun amb/magit-stage-file ()
+  (interactive)
+  (if (magit-gitdir)
+      (call-interactively #'magit-stage-file)
+      (shell-command (concat
+                      "git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME add "
+                      (buffer-file-name))
+                     t)))
+
+(map! :after magit :leader "g S" #'amb/magit-stage-file)
+#+end_src
+
 I also have to hide my dotfiles away from projectile to avoid caching /way/ too many files
 in ~~/~ (until magit can handle separate work trees) properly: Doom recognizes my home
 directory as a git dir, but it doesn't find any of its config whatsoever, which can cause
@@ -931,6 +946,14 @@ error or because I used the wrong muscle memory).
 #+begin_src elisp :tangle no
 (after! projectile (setq projectile-project-root-files-bottom-up (remove ".git"
 projectile-project-root-files-bottom-up)))
+
+(defun amb/projectile-find-file ()
+  (interactive)
+  (if (equal (expand-file-name "~/") (projectile-project-root))
+    (call-interactively #'find-file)
+    (projectile-find-file)))
+
+(map! :leader "SPC" #'amb/projectile-find-file)
 #+end_src
 * an opinionated mix of vim and emacs
 ** wait, is this split two tmux panes or two emacs windows?
