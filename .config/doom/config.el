@@ -245,6 +245,9 @@ used interactively."
       :desc "decrement at point" "nj" #'decrement-number-at-point
       :desc "increment at point" "nk" #'increment-number-at-point)
 
+(setq! select-enable-clipboard nil)
+(map! "C-M-y" #'clipboard-yank)
+
 (map!
  :leader
  :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer
@@ -523,8 +526,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after evil)
 
 (setq! evil-ex-search-persistent-highlight nil
-       +evil-want-o/O-to-continue-comments nil
-       select-enable-clipboard nil)
+       +evil-want-o/O-to-continue-comments nil)
 
 (map! :after consult "M-i" #'consult-imenu)
 

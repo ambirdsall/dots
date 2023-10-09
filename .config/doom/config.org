@@ -438,6 +438,11 @@ a command on region both.
       :desc "decrement at point" "nj" #'decrement-number-at-point
       :desc "increment at point" "nk" #'increment-number-at-point)
 #+end_src
+** clipboard
+#+begin_src elisp
+(setq! select-enable-clipboard nil)
+(map! "C-M-y" #'clipboard-yank)
+#+end_src
 
 ** TODO uncategorized keybindings :: clean up
 #+begin_src elisp
@@ -1022,8 +1027,7 @@ WHO CARES
 ** changing up some default settings
 #+begin_src elisp
 (setq! evil-ex-search-persistent-highlight nil
-       +evil-want-o/O-to-continue-comments nil
-       select-enable-clipboard nil)
+       +evil-want-o/O-to-continue-comments nil)
 #+end_src
 
 You can have my ~evil-substitute~ when you pry it from my cold, dead fingers.
