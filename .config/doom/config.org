@@ -1161,12 +1161,14 @@ because ~setq~ is a macro) and everything went to heck.
 
 #+end_src
 
-** keybinding fixes
+** keybinding fixes [0/1]
 #+begin_src elisp
 (map! :after org
  :map 'org-mode-map
       "<tab>" 'org-cycle)
 #+end_src
+
+*** TODO fix ~c-h~ in org mode and re-add the fucking motion bois
 
 ** outlines ✨ everywhere ✨with outshine
 #+begin_src elisp :tangle packages.el
@@ -1180,7 +1182,7 @@ because ~setq~ is a macro) and everything went to heck.
   :config
   (add-hook 'prog-mode-hook 'outshine-mode))
 #+end_src
-** 📉_(ツ)_📈
+** graphviz 📉_(ツ)_📈
 #+begin_src elisp :tangle packages.el
 (package! graphviz-dot-mode)
 #+end_src
