@@ -247,6 +247,8 @@ used interactively."
       :desc "decrement at point" "nj" #'decrement-number-at-point
       :desc "increment at point" "nk" #'increment-number-at-point)
 
+(map! [remap dabbrev-expand] #'hippie-expand)
+
 (setq! select-enable-clipboard nil)
 (map! "C-M-y" #'clipboard-yank)
 
@@ -267,8 +269,15 @@ used interactively."
  "C-;" #'evil-avy-goto-char-timer
  :ni "C-)" #'sp-forward-slurp-sexp
  :ni "C-(" #'sp-backward-slurp-sexp
- :n "M-/" #'+default/search-buffer
  (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
+
+(defun sudo ()
+  "Use TRAMP to `sudo' the current buffer."
+  (interactive)
+  (when buffer-file-name
+    (find-alternate-file
+     (concat "/sudo:root@localhost:"
+             buffer-file-name))))
 
 (after! projectile
   (defun yank-buffer-filename-relative-to-project ()

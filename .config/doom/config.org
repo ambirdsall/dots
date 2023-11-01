@@ -368,9 +368,8 @@ A normal click on a tab navigates to it (optionally, if not the current one). Ri
 *** TODO PDFView mode does not take tab bar height into account when rendering a page
 The end result is having to scroll a small amount whenever I (\*Bob Seger voice*) turn the
 page, which is frankly a bit annoying. A shitty workaround is to manually toggle, I guess.
-* odds and ends
-** text manipulation utilities
-*** TODO helper macros (which should be tidied off to an appendix with noweb)
+* text manipulation utilities
+** TODO helper macros (which should be tidied off to an appendix with noweb)
 Working with text combines a huge variety of content-specific considerations with a very
 narrow, consistent API; there are a lot of repetitive definitions. Let's improve that:
 #+begin_src elisp
@@ -406,7 +405,7 @@ used interactively."
   `(fset ,name (cmds--on-string-or-region ,fn)))
 #+end_src
 
-*** ~(not-every programming_language({conventionallyUses: "THE_SAME_CASING"}))~
+** ~(not-every programming_language({conventionallyUses: "THE_SAME_CASING"}))~
 Let's make some helper commands for manipulating the casing of programming symbols. Since
 they are defined with ~def-text-transform~, they're usable as elisp string utilities and as
 a command on region both.
@@ -419,7 +418,7 @@ a command on region both.
 (def-text-transform 'lower-words-case #'(lambda (str) (s-join " " (-map #'s-downcase (s-split-words str)))))
 #+end_src
 
-*** manipulate numbers at point
+** manipulate numbers at point
 #+begin_src elisp
 (defun decrement-number-at-point ()
   "Decrement the number at point by 1."
@@ -443,13 +442,18 @@ a command on region both.
       :desc "decrement at point" "nj" #'decrement-number-at-point
       :desc "increment at point" "nk" #'increment-number-at-point)
 #+end_src
-** clipboard
+* completion
+Might as well use the more powerful built-in expansion system:
+#+begin_src elisp
+(map! [remap dabbrev-expand] #'hippie-expand)
+#+end_src
+* clipboard
 #+begin_src elisp
 (setq! select-enable-clipboard nil)
 (map! "C-M-y" #'clipboard-yank)
 #+end_src
 
-** TODO uncategorized keybindings :: clean up
+* TODO uncategorized keybindings :: clean up
 #+begin_src elisp
 (map!
  :leader
@@ -468,10 +472,20 @@ a command on region both.
  "C-;" #'evil-avy-goto-char-timer
  :ni "C-)" #'sp-forward-slurp-sexp
  :ni "C-(" #'sp-backward-slurp-sexp
- :n "M-/" #'+default/search-buffer
  (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
 #+end_src
 
+* editing, both local and remote
+** oops, I need to ~sudo~ edit this file
+#+begin_src elisp
+(defun sudo ()
+  "Use TRAMP to `sudo' the current buffer."
+  (interactive)
+  (when buffer-file-name
+    (find-alternate-file
+     (concat "/sudo:root@localhost:"
+             buffer-file-name))))
+#+end_src
 ** copy filename relative to buffer
 #+begin_src elisp
 (after! projectile
@@ -485,17 +499,18 @@ a command on region both.
 (map! :leader "fY" #'yank-buffer-filename-relative-to-project)
 #+end_src
 
-** scratch buffers
+* scratch buffers
+If they're in org, that's good for notes and I can still write/exec code
 #+begin_src elisp
 (setq! doom-scratch-initial-major-mode 'org-mode)
 #+end_src
 
-** don't automatically open a new workspace for each new emacsclient frame
+* don't automatically open a new workspace for each new emacsclient frame
 I like freely opening client instances in the terminal and i3 alike.
 #+begin_src elisp
 (after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
 #+end_src
-** jump to arbitrary files in specific projects/directories from anywhere
+* jump to arbitrary files in specific projects/directories from anywhere
 #+begin_src elisp
 (after! projectile
   (defmacro file-jumper-for-project (project-root)
