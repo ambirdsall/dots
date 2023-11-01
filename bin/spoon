@@ -1,0 +1,45 @@
+#!/usr/bin/env zsh
+
+restart_hammerspoon () {
+    killall Hammerspoon
+    osascript -e 'tell application "Hammerspoon" to activate'
+}
+
+install_personal () {
+    rm -r ~/.hammerspoon
+    ln -s ~/.config/hammerspoon ~/.hammerspoon
+    restart_hammerspoon
+}
+
+install_spacehammer () {
+    rm -r ~/.hammerspoon
+    ln -s ~/c/spacehammer ~/.hammerspoon
+    restart_hammerspoon
+}
+
+# the script should be called with a single argument, which is either "spacehammer", "personal", or "restart"
+case $1 in
+    spacehammer | space)
+        install_spacehammer
+        ;;
+    personal | me)
+        install_personal
+        ;;
+    restart)
+        restart_hammerspoon
+        ;;
+    *)
+        echo "Toggle hammerspoon config? (y/n) "
+        read -q || exit
+        # print a newline after the user's input
+        echo
+
+        if [[ -f ~/.hammerspoon/keybindings.fnl ]]; then
+            echo "Installing spacehammer..."
+            install_spacehammer
+        else
+            echo "Installing personal config..."
+            install_personal
+        fi
+        ;;
+esac
