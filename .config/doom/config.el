@@ -249,27 +249,26 @@ used interactively."
 
 (map! [remap dabbrev-expand] #'hippie-expand)
 
-(setq! select-enable-clipboard nil)
-(map! "C-M-y" #'clipboard-yank)
+(use-package! evil-tmux-navigator
+  :config (evil-tmux-navigator-bind-keys))
 
-(map!
- :leader
- :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer
- "Nr" #'narrow-to-region
- "Nf" #'narrow-to-defun
- "Np" #'narrow-to-page
- "Ns" #'org-toggle-narrow-to-subtree
- "Nw" #'widen
- :desc "jump to first non-blank" "of" #'evil-first-non-blank
- :desc "new frame" "oF" #'make-frame
- :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos
- "W" #'subword-mode)
+(use-package! evil-replace-with-register
+  :init (setq evil-replace-with-register-key (kbd "gr"))
+  :config (evil-replace-with-register-install))
 
-(map!
- "C-;" #'evil-avy-goto-char-timer
- :ni "C-)" #'sp-forward-slurp-sexp
- :ni "C-(" #'sp-backward-slurp-sexp
- (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
+(use-package! evil-exchange
+  :config (evil-exchange-install))
+
+(use-package! evil-matchit
+  :config (global-evil-matchit-mode 1))
+
+(use-package! evil-textobj-line
+  :after evil)
+
+(setq! evil-ex-search-persistent-highlight nil
+       +evil-want-o/O-to-continue-comments nil)
+
+(map! :after consult "M-i" #'consult-imenu)
 
 (defun sudo ()
   "Use TRAMP to `sudo' the current buffer."
@@ -288,10 +287,6 @@ used interactively."
       (error "Couldn't find filename in current buffer"))))
 
 (map! :leader "fY" #'yank-buffer-filename-relative-to-project)
-
-(setq! doom-scratch-initial-major-mode 'org-mode)
-
-(after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
 
 (after! projectile
   (defmacro file-jumper-for-project (project-root)
@@ -314,6 +309,32 @@ projectile would recognize your root directory as a project."
         :prefix ("fj" . "Jump into specific projects")
         :desc "Browse ~/.config/" :ne "c" (file-jumper-for-project "~/.config/")
         :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin/")))
+
+(setq! doom-scratch-initial-major-mode 'org-mode)
+
+(after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
+
+(setq! select-enable-clipboard nil)
+(map! "C-M-y" #'clipboard-yank)
+
+(map!
+ :leader
+ :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer
+ "Nr" #'narrow-to-region
+ "Nf" #'narrow-to-defun
+ "Np" #'narrow-to-page
+ "Ns" #'org-toggle-narrow-to-subtree
+ "Nw" #'widen
+ :desc "jump to first non-blank" "of" #'evil-first-non-blank
+ :desc "new frame" "oF" #'make-frame
+ :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos
+ "W" #'subword-mode)
+
+(map!
+ "C-;" #'evil-avy-goto-char-timer
+ :ni "C-)" #'sp-forward-slurp-sexp
+ :ni "C-(" #'sp-backward-slurp-sexp
+ (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
 
 (setq standard-indent 2)
 
@@ -406,17 +427,6 @@ projectile would recognize your root directory as a project."
 
 (use-package! yaml-pro
   :config (add-to-list 'auto-mode-alist '("\\.ya?ml'" . yaml-pro-ts-mode)))
-
-;; accept completion from copilot and fallback to company
-(use-package! copilot
-  :hook (prog-mode . copilot-mode)
-  :bind (:map copilot-completion-map
-              ("<tab>" . 'copilot-accept-completion-by-word)
-              ("TAB" . 'copilot-accept-completion-by-word)
-              ("C-TAB" . 'copilot-accept-completion)
-              ("C-<tab>" . 'copilot-accept-completion)))
-
-(use-package! gptel)
 
 (after! magit
   ;; strictly speaking unnecessary (it's the default)
@@ -520,26 +530,12 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (map! :after magit :leader "g S" #'amb/magit-stage-file)
 
-(use-package! evil-tmux-navigator
-  :config (evil-tmux-navigator-bind-keys))
+(add-to-list '+evil-collection-disabled-list 'info)
+(set-evil-initial-state! 'info-mode 'emacs)
 
-(use-package! evil-replace-with-register
-  :init (setq evil-replace-with-register-key (kbd "gr"))
-  :config (evil-replace-with-register-install))
-
-(use-package! evil-exchange
-  :config (evil-exchange-install))
-
-(use-package! evil-matchit
-  :config (global-evil-matchit-mode 1))
-
-(use-package! evil-textobj-line
-  :after evil)
-
-(setq! evil-ex-search-persistent-highlight nil
-       +evil-want-o/O-to-continue-comments nil)
-
-(map! :after consult "M-i" #'consult-imenu)
+(map! :map 'info-mode-map
+      "j" #'next-line
+      "k" #'previous-line)
 
 (let ((dir "~/Dropbox/org/"))
   (and (file-exists-p dir)
@@ -625,6 +621,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 ;;   '(require 'ox-gfm nil t))
 (use-package! ox-gfm
   :after org)
+
+;; accept completion from copilot and fallback to company
+(use-package! copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . 'copilot-accept-completion-by-word)
+              ("TAB" . 'copilot-accept-completion-by-word)
+              ("C-TAB" . 'copilot-accept-completion)
+              ("C-<tab>" . 'copilot-accept-completion)))
+
+(use-package! gptel)
 
 (defvar amb/computer-specific-config (expand-file-name "local.el" doom-private-dir)
   "A file for computer-specific config, hidden from git; for

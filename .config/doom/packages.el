@@ -4,26 +4,6 @@
 
 (package! emojify)
 
-(package! code-compass
-  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
-
-(package! fennel-mode)
-
-(package! graphql-mode)
-
-(package! yuck-mode)
-
-(package! apheleia)
-
-(package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
-
-(package! yaml-pro)
-
-(package! copilot
-  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
-
-(package! gptel)
-
 (package! evil-tmux-navigator
   :recipe (:host github :repo "ambirdsall/evil-tmux-navigator"))
 (unpin! evil-tmux-navigator)
@@ -39,6 +19,21 @@
 
 (package! evil-snipe :disable t)
 
+(package! code-compass
+  :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
+
+(package! fennel-mode)
+
+(package! graphql-mode)
+
+(package! yuck-mode)
+
+(package! apheleia)
+
+(package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
+
+(package! yaml-pro)
+
 (unpin! org-roam)
 (package! org-roam-ui)
 
@@ -48,3 +43,8 @@
 (package! graphviz-dot-mode)
 
 (package! ox-gfm)
+
+(package! copilot
+  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
+
+(package! gptel)

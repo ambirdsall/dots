@@ -15,7 +15,12 @@ At present, this /almost/ only tangles to elisp files for doom emacs to load; it
 <<config-preamble>>
 #+end_src
 
-* whoami
+* Who configures the configuration?
+I do.
+
+[a definitely very cool picture goes here eventually, probably]
+
+** whoami
 Some functionality uses this to identify you, e.g. GPG configuration, email clients, file templates and snippets.
 
 #+begin_src elisp
@@ -23,18 +28,14 @@ Some functionality uses this to identify you, e.g. GPG configuration, email clie
       user-mail-address "ambirdsall@gmail.com")
 #+end_src
 
-* Who configures the configuration?
-I do.
-
-[a definitely very cool picture goes here eventually, probably]
-
+** shortcuts to open doom config file(s)
 #+begin_src elisp
 (map! :leader
       :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
       :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir))))
 #+end_src
 
-** what kind of spaceship doesn't come with a spedometer?
+** TODO what kind of spaceship doesn't come with a spedometer? :: disable tangling, leave as breakcrumb
 #+begin_src elisp :tangle packages.el
 (package! benchmark-init)
 #+end_src
@@ -101,7 +102,9 @@ it or you should be.
     (switch-to-buffer " *tangle config*")
     (signal 'quit nil)))
 (add-hook! 'kill-emacs-hook #'+literate-tangle-check-finished)
+
 #+end_src
+
 * this config [[https://en.wikipedia.org/wiki/Unitarian_Universalist_Association#Principles_and_purposes][covenants to affirm and promote the inherent worth and dignity]] of every computer it's installed on, even macs
 I was raised by and around a bunch of earnest, wordy people; deal with it.
 
@@ -368,8 +371,9 @@ A normal click on a tab navigates to it (optionally, if not the current one). Ri
 *** TODO PDFView mode does not take tab bar height into account when rendering a page
 The end result is having to scroll a small amount whenever I (\*Bob Seger voice*) turn the
 page, which is frankly a bit annoying. A shitty workaround is to manually toggle, I guess.
-* text manipulation utilities
-** TODO helper macros (which should be tidied off to an appendix with noweb)
+* text editing per se
+** text manipulation utilities
+*** TODO helper macros (which should be tidied off to an appendix with noweb)
 Working with text combines a huge variety of content-specific considerations with a very
 narrow, consistent API; there are a lot of repetitive definitions. Let's improve that:
 #+begin_src elisp
@@ -405,7 +409,7 @@ used interactively."
   `(fset ,name (cmds--on-string-or-region ,fn)))
 #+end_src
 
-** ~(not-every programming_language({conventionallyUses: "THE_SAME_CASING"}))~
+*** ~(not-every programming_language({conventionallyUses: "THE_SAME_CASING"}))~
 Let's make some helper commands for manipulating the casing of programming symbols. Since
 they are defined with ~def-text-transform~, they're usable as elisp string utilities and as
 a command on region both.
@@ -418,7 +422,7 @@ a command on region both.
 (def-text-transform 'lower-words-case #'(lambda (str) (s-join " " (-map #'s-downcase (s-split-words str)))))
 #+end_src
 
-** manipulate numbers at point
+*** manipulate numbers at point
 #+begin_src elisp
 (defun decrement-number-at-point ()
   "Decrement the number at point by 1."
@@ -442,12 +446,154 @@ a command on region both.
       :desc "decrement at point" "nj" #'decrement-number-at-point
       :desc "increment at point" "nk" #'increment-number-at-point)
 #+end_src
-* completion
+** completion
 Might as well use the more powerful built-in expansion system:
 #+begin_src elisp
 (map! [remap dabbrev-expand] #'hippie-expand)
 #+end_src
-* clipboard
+** an opinionated mix of the vim and emacs keybinding schemes
+*** wait, is this split two tmux panes or two emacs windows?
+WHO CARES
+#+begin_src elisp :tangle packages.el
+(package! evil-tmux-navigator
+  :recipe (:host github :repo "ambirdsall/evil-tmux-navigator"))
+(unpin! evil-tmux-navigator)
+#+end_src
+
+#+begin_src elisp
+(use-package! evil-tmux-navigator
+  :config (evil-tmux-navigator-bind-keys))
+#+end_src
+
+*** replace with register
+#+begin_src elisp :tangle packages.el
+(package! evil-replace-with-register)
+#+end_src
+
+#+begin_src elisp
+(use-package! evil-replace-with-register
+  :init (setq evil-replace-with-register-key (kbd "gr"))
+  :config (evil-replace-with-register-install))
+#+end_src
+*** evil-exchange
+#+begin_src elisp :tangle packages.el
+(package! evil-exchange)
+#+end_src
+
+#+begin_src elisp
+(use-package! evil-exchange
+  :config (evil-exchange-install))
+#+end_src
+*** matchit
+#+begin_src elisp :tangle packages.el
+(package! evil-matchit)
+#+end_src
+
+#+begin_src elisp
+(use-package! evil-matchit
+  :config (global-evil-matchit-mode 1))
+#+end_src
+*** line text object
+#+begin_src elisp :tangle packages.el
+(package! evil-textobj-line
+  :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
+#+end_src
+
+#+begin_src elisp
+(use-package! evil-textobj-line
+  :after evil)
+#+end_src
+*** changing up some default settings
+#+begin_src elisp
+(setq! evil-ex-search-persistent-highlight nil
+       +evil-want-o/O-to-continue-comments nil)
+#+end_src
+
+You can have my ~evil-substitute~ when you pry it from my cold, dead fingers.
+#+begin_src elisp :tangle packages.el
+(package! evil-snipe :disable t)
+#+end_src
+
+*** imenu
+I much prefer evil's indentation command set, making the default ~M-i~ binding,
+~tab-to-tab-stop~, a rather poor use of prime real estate. I would be much better served
+using it as a mnemonic binding for ~imenu~:
+#+begin_src elisp
+(map! :after consult "M-i" #'consult-imenu)
+#+end_src
+
+*** TODO jump into/around a visual selection
+=SPC v= is (or was, at time of writing) not a default binding in [[file:~/.emacs.d/modules/config/default/+evil-bindings.el][doom's default evil bindings]]; that seems like a potential oversight.
+
+- If region is not active, works like vim's =gv=
+- else, DWIM selection changes
+  + cycle through structural selectors?
+    - if tree mode is available?
+  + that "expand visual selection" package
+  + ?
+
+* files, both local and remote
+** oops, I need to ~sudo~ edit this file
+#+begin_src elisp
+(defun sudo ()
+  "Use TRAMP to `sudo' the current buffer."
+  (interactive)
+  (when buffer-file-name
+    (find-alternate-file
+     (concat "/sudo:root@localhost:"
+             buffer-file-name))))
+#+end_src
+** copy filename relative to buffer
+#+begin_src elisp
+(after! projectile
+  (defun yank-buffer-filename-relative-to-project ()
+    "Copy the current buffer's path, relative to the project root, to the kill ring."
+    (interactive)
+    (if-let (filename (or buffer-file-name (bound-and-true-p list-buffers-directory)))
+        (message (kill-new (f-relative filename (projectile-acquire-root))))
+      (error "Couldn't find filename in current buffer"))))
+
+(map! :leader "fY" #'yank-buffer-filename-relative-to-project)
+#+end_src
+
+** jump to arbitrary files in specific projects/directories from anywhere
+#+begin_src elisp
+(after! projectile
+  (defmacro file-jumper-for-project (project-root)
+    "Defines an anonymous interactive function for picking an arbitrary file from the given PROJECT-ROOT.
+
+Conveniently, by explicitly providing the project root, you can use the conveniently
+flattened file hierarchy generated by `projectile-project-files' regardless of whether
+projectile would recognize your root directory as a project."
+    `(cmd! (find-file (string-join
+                       (list
+                        ,project-root
+                        (projectile-completing-read "Find file: " (projectile-project-files ,project-root)))
+                       "/"))))
+
+  (map! :leader
+        :desc "Browse dotfiles" "f." (cmd! (find-file
+                                         (completing-read "Open dotfile: "
+                                                          (split-string (shell-command-to-string "dots ls-files ~") "\n"))))
+        :desc "Take me $HOME, country roads" "f~" (cmd! (+vertico/find-file-in "~/"))
+        :prefix ("fj" . "Jump into specific projects")
+        :desc "Browse ~/.config/" :ne "c" (file-jumper-for-project "~/.config/")
+        :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin/")))
+#+end_src
+* buffers, windows, frames, workspaces... you know, emacs shit
+** scratch buffer
+If they're in org, that's good for notes and I can still write/exec code
+#+begin_src elisp
+(setq! doom-scratch-initial-major-mode 'org-mode)
+#+end_src
+
+** don't automatically open a new workspace for each new emacsclient frame
+I like freely opening client instances in the terminal and i3 alike.
+#+begin_src elisp
+(after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
+#+end_src
+* work nicely with the surrounding computer
+** clipboard
 #+begin_src elisp
 (setq! select-enable-clipboard nil)
 (map! "C-M-y" #'clipboard-yank)
@@ -473,66 +619,6 @@ Might as well use the more powerful built-in expansion system:
  :ni "C-)" #'sp-forward-slurp-sexp
  :ni "C-(" #'sp-backward-slurp-sexp
  (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
-#+end_src
-
-* editing, both local and remote
-** oops, I need to ~sudo~ edit this file
-#+begin_src elisp
-(defun sudo ()
-  "Use TRAMP to `sudo' the current buffer."
-  (interactive)
-  (when buffer-file-name
-    (find-alternate-file
-     (concat "/sudo:root@localhost:"
-             buffer-file-name))))
-#+end_src
-** copy filename relative to buffer
-#+begin_src elisp
-(after! projectile
-  (defun yank-buffer-filename-relative-to-project ()
-    "Copy the current buffer's path, relative to the project root, to the kill ring."
-    (interactive)
-    (if-let (filename (or buffer-file-name (bound-and-true-p list-buffers-directory)))
-        (message (kill-new (f-relative filename (projectile-acquire-root))))
-      (error "Couldn't find filename in current buffer"))))
-
-(map! :leader "fY" #'yank-buffer-filename-relative-to-project)
-#+end_src
-
-* scratch buffers
-If they're in org, that's good for notes and I can still write/exec code
-#+begin_src elisp
-(setq! doom-scratch-initial-major-mode 'org-mode)
-#+end_src
-
-* don't automatically open a new workspace for each new emacsclient frame
-I like freely opening client instances in the terminal and i3 alike.
-#+begin_src elisp
-(after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
-#+end_src
-* jump to arbitrary files in specific projects/directories from anywhere
-#+begin_src elisp
-(after! projectile
-  (defmacro file-jumper-for-project (project-root)
-    "Defines an anonymous interactive function for picking an arbitrary file from the given PROJECT-ROOT.
-
-Conveniently, by explicitly providing the project root, you can use the conveniently
-flattened file hierarchy generated by `projectile-project-files' regardless of whether
-projectile would recognize your root directory as a project."
-    `(cmd! (find-file (string-join
-                       (list
-                        ,project-root
-                        (projectile-completing-read "Find file: " (projectile-project-files ,project-root)))
-                       "/"))))
-
-  (map! :leader
-        :desc "Browse dotfiles" "f." (cmd! (find-file
-                                         (completing-read "Open dotfile: "
-                                                          (split-string (shell-command-to-string "dots ls-files ~") "\n"))))
-        :desc "Take me $HOME, country roads" "f~" (cmd! (+vertico/find-file-in "~/"))
-        :prefix ("fj" . "Jump into specific projects")
-        :desc "Browse ~/.config/" :ne "c" (file-jumper-for-project "~/.config/")
-        :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin/")))
 #+end_src
 
 * programming
@@ -816,33 +902,9 @@ hideously copy-pasted near-duplicate will have to do.
 (use-package! yaml-pro
   :config (add-to-list 'auto-mode-alist '("\\.ya?ml'" . yaml-pro-ts-mode)))
 #+end_src
-* "I hear lisp is good for AI"
-** copilot
-#+begin_src elisp :tangle packages.el
-(package! copilot
-  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
-#+end_src
 
-#+begin_src elisp
-;; accept completion from copilot and fallback to company
-(use-package! copilot
-  :hook (prog-mode . copilot-mode)
-  :bind (:map copilot-completion-map
-              ("<tab>" . 'copilot-accept-completion-by-word)
-              ("TAB" . 'copilot-accept-completion-by-word)
-              ("C-TAB" . 'copilot-accept-completion)
-              ("C-<tab>" . 'copilot-accept-completion)))
-#+end_src
-** chatGPT
-#+begin_src elisp :tangle packages.el
-(package! gptel)
-#+end_src
-
-#+begin_src elisp
-(use-package! gptel)
-#+end_src
-
-* {ma,}git
+* configuring packages that feel like emacs apps
+** {ma,}git
 With apologies to vc-mode, magit is the gold standard. So:
 #+begin_src elisp :noweb yes
 (after! magit
@@ -853,7 +915,7 @@ With apologies to vc-mode, magit is the gold standard. So:
   <<magit-sections>>)
 #+end_src
 
-** nice git conflic resolution hydra
+*** nice git conflic resolution hydra
 Gold standard, yes, but not be all and end all. This defines a nice hydra for working with
 files containing git conflicts.
 
@@ -900,7 +962,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                      (unpackaged/smerge-hydra/body)))))
 #+end_src
 
-** magit status, like the cat in the hat, should clean up after itself
+*** magit status, like the cat in the hat, should clean up after itself
 #+name: magit-window-management
 #+begin_src elisp
   ;; strictly speaking unnecessary (it's the default)
@@ -909,7 +971,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (setq magit-bury-buffer-function #'magit-restore-window-configuration)
 #+end_src
 
-** If I can't type a space, why let me?
+*** If I can't type a space, why let me?
 In scenarios like branch names, whitespace is disallowed. But using the spacebar as a word
 separator is deep, deep muscle memory. Why fight it?
 #+name: magit-auto-dash
@@ -921,12 +983,12 @@ separator is deep, deep muscle memory. Why fight it?
   (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
 #+end_src
 
-** magit-status sections
+*** magit-status sections
 #+name: magit-sections
 #+begin_src elisp
 (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
 #+end_src
-** dotfiles
+*** dotfiles
 I manage my dotfiles with a bare git repository; this takes a little extra effort to set
 up properly. With a hat tip to [[https://github.com/hylophile/.files/blob/d2d41871bd6a74e4b55fadf44d46613d0bcacb53/.config/doom/config.org#dotfiles][hylo]], from whom much of this is adapted.
 
@@ -992,88 +1054,24 @@ projectile-project-root-files-bottom-up)))
 
 (map! :leader "SPC" #'amb/projectile-find-file)
 #+end_src
-* an opinionated mix of vim and emacs
-** wait, is this split two tmux panes or two emacs windows?
-WHO CARES
-#+begin_src elisp :tangle packages.el
-(package! evil-tmux-navigator
-  :recipe (:host github :repo "ambirdsall/evil-tmux-navigator"))
-(unpin! evil-tmux-navigator)
+*** TODO magit/with-editor/transient-base-map snafu :: delete
+used to go to ~packages.el~; currently seems to be working, but as of <2023-07-15 Sat>,
+there's a bit more testing required before I'm ready to delete this.
+#+begin_src elisp :tangle no
+(package! transient :pin "c2bdf7e12c530eb85476d3aef317eb2941ab9440")
+(package! with-editor :pin "391e76a256aeec6b9e4cbd733088f30c677d965b")
 #+end_src
 
+** info-mode, or: RTFM
 #+begin_src elisp
-(use-package! evil-tmux-navigator
-  :config (evil-tmux-navigator-bind-keys))
-#+end_src
+(add-to-list '+evil-collection-disabled-list 'info)
+(set-evil-initial-state! 'info-mode 'emacs)
 
-** replace with register
-#+begin_src elisp :tangle packages.el
-(package! evil-replace-with-register)
+(map! :map 'info-mode-map
+      "j" #'next-line
+      "k" #'previous-line)
 #+end_src
-
-#+begin_src elisp
-(use-package! evil-replace-with-register
-  :init (setq evil-replace-with-register-key (kbd "gr"))
-  :config (evil-replace-with-register-install))
-#+end_src
-** evil-exchange
-#+begin_src elisp :tangle packages.el
-(package! evil-exchange)
-#+end_src
-
-#+begin_src elisp
-(use-package! evil-exchange
-  :config (evil-exchange-install))
-#+end_src
-** matchit
-#+begin_src elisp :tangle packages.el
-(package! evil-matchit)
-#+end_src
-
-#+begin_src elisp
-(use-package! evil-matchit
-  :config (global-evil-matchit-mode 1))
-#+end_src
-** line text object
-#+begin_src elisp :tangle packages.el
-(package! evil-textobj-line
-  :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
-#+end_src
-
-#+begin_src elisp
-(use-package! evil-textobj-line
-  :after evil)
-#+end_src
-** changing up some default settings
-#+begin_src elisp
-(setq! evil-ex-search-persistent-highlight nil
-       +evil-want-o/O-to-continue-comments nil)
-#+end_src
-
-You can have my ~evil-substitute~ when you pry it from my cold, dead fingers.
-#+begin_src elisp :tangle packages.el
-(package! evil-snipe :disable t)
-#+end_src
-
-** imenu
-I much prefer evil's indentation command set, making the default ~M-i~ binding,
-~tab-to-tab-stop~, a rather poor use of prime real estate. I would be much better served
-using it as a mnemonic binding for ~imenu~:
-#+begin_src elisp
-(map! :after consult "M-i" #'consult-imenu)
-#+end_src
-
-** TODO jump into/around a visual selection
-=SPC v= is (or was, at time of writing) not a default binding in [[file:~/.emacs.d/modules/config/default/+evil-bindings.el][doom's default evil bindings]]; that seems like a potential oversight.
-
-- If region is not active, works like vim's =gv=
-- else, DWIM selection changes
-  + cycle through structural selectors?
-    - if tree mode is available?
-  + that "expand visual selection" package
-  + ?
-
-* org-mode config
+** org-mode config
 Notes must be at hand to be helpful, ideally on any of several computers:
 #+begin_src elisp
 (let ((dir "~/Dropbox/org/"))
@@ -1105,7 +1103,7 @@ With that out of the way, a grab-bag of tweaks and variables.
 (add-hook! (org-mode) (org-appear-mode 1))
 #+end_src
 
-** roam
+*** roam
 First, I need a roam directory to serve as the "slipbox":
 #+begin_src elisp
 (setq org-roam-directory "~/Dropbox/roam/")
@@ -1135,7 +1133,7 @@ Org-roam-ui tries to keep up with the latest features of org-roam, which conflic
 (package! org-roam-ui)
 #+end_src
 
-** every project has a =todo.org= and every =todo.org= can just be hardlinks of the same underlying file
+*** every project has a =todo.org= and every =todo.org= can just be hardlinks of the same underlying file
 This pair of variables is required to let you open the same hardlinked todo.org inode in multiple
 project-specific locations in the filesystem, and have each maintain its local context (e.g. when
 running projectile functions acting on what filesystem heuristics see as the surrounding VC
@@ -1152,7 +1150,7 @@ project). It's an idiosyncratic pattern, but it works brilliantly for me on work
     (find-file (concat (projectile-project-root) "todo.org"))))
 #+end_src
 
-** the yet-neglected agenda view
+*** the yet-neglected agenda view
 These values can be dynamically constructed by concatenating the values of
 ~org-roam-directory~ and ~org-roam-dailies-directory~; I did try to use those to make this
 more future-proof, but that just passed along the unresolved symbol names (I assume
@@ -1176,16 +1174,16 @@ because ~setq~ is a macro) and everything went to heck.
 
 #+end_src
 
-** keybinding fixes [0/1]
+*** keybinding fixes [0/1]
 #+begin_src elisp
 (map! :after org
  :map 'org-mode-map
       "<tab>" 'org-cycle)
 #+end_src
 
-*** TODO fix ~c-h~ in org mode and re-add the fucking motion bois
+**** TODO fix ~c-h~ in org mode and re-add the fucking motion bois
 
-** outlines ✨ everywhere ✨with outshine
+*** outlines ✨ everywhere ✨with outshine
 #+begin_src elisp :tangle packages.el
 (package! outshine
   :recipe (:host github :repo "alphapapa/outshine"))
@@ -1197,7 +1195,7 @@ because ~setq~ is a macro) and everything went to heck.
   :config
   (add-hook 'prog-mode-hook 'outshine-mode))
 #+end_src
-** graphviz 📉_(ツ)_📈
+*** graphviz 📉_(ツ)_📈
 #+begin_src elisp :tangle packages.el
 (package! graphviz-dot-mode)
 #+end_src
@@ -1206,7 +1204,7 @@ because ~setq~ is a macro) and everything went to heck.
 (use-package! graphviz-dot-mode
   :after org)
 #+end_src
-** export backends
+*** export backends
 #+begin_src elisp :tangle packages.el
 (package! ox-gfm)
 #+end_src
@@ -1218,6 +1216,32 @@ because ~setq~ is a macro) and everything went to heck.
 (use-package! ox-gfm
   :after org)
 
+#+end_src
+
+** "I hear lisp is good for AI"
+*** copilot
+#+begin_src elisp :tangle packages.el
+(package! copilot
+  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
+#+end_src
+
+#+begin_src elisp
+;; accept completion from copilot and fallback to company
+(use-package! copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . 'copilot-accept-completion-by-word)
+              ("TAB" . 'copilot-accept-completion-by-word)
+              ("C-TAB" . 'copilot-accept-completion)
+              ("C-<tab>" . 'copilot-accept-completion)))
+#+end_src
+*** chatGPT
+#+begin_src elisp :tangle packages.el
+(package! gptel)
+#+end_src
+
+#+begin_src elisp
+(use-package! gptel)
 #+end_src
 
 * The secrets I keep with myself, or: praise the Lord and pass the =.gitignore=
@@ -1235,15 +1259,6 @@ private) product projects.")
 (map! :leader
       :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
 #+end_src
-* random bugfixes and whatnot
-** magit/with-editor/transient-base-map snafu
-used to go to ~packages.el~; currently seems to be working, but as of <2023-07-15 Sat>,
-there's a bit more testing required before I'm ready to delete this.
-#+begin_src elisp :tangle no
-(package! transient :pin "c2bdf7e12c530eb85476d3aef317eb2941ab9440")
-(package! with-editor :pin "391e76a256aeec6b9e4cbd733088f30c677d965b")
-#+end_src
-
 * appendices
 ** top-of-file preambles
 *** packages.el
