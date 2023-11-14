@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# rebind_key () {
+#     local binding=$1
+#     local action=$2
+
+#     # optimistic syntax
+#     gnome-key-bindings --unset=$binding
+#     gnome-key-bindings --set=$action $binding
+# }
+
+gsettings set org.gnome.desktop.wm.keybindings toggle-maximized "['<Super>m']"
+gsettings set org.gnome.desktop.wm.keybindings close "['<super>q']"
+
+# https://www.ostechnix.com/how-to-automatically-disable-touchpad-when-typing-in-ubuntu/
+gsettings set org.gnome.desktop.peripherals.touchpad disable-while-typing true
+
+# currently does not play well with keyboard window navigation
+# gsettings set org.gnome.desktop.wm.preferences focus-mode mouse
+gsettings set org.gnome.desktop.wm.preferences focus-mode click
+
+gsettings set org.gnome.desktop.wm.keybindings switch-windows "['<Super>j']"
+gsettings set org.gnome.desktop.wm.keybindings switch-windows-backward "['<Super>k']"
+
+for i in {1..9}; do gsettings set org.gnome.shell.keybindings "switch-to-application-$i" "[]"; done
+gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-1 "['<Super>1']"
+gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-2 "['<Super>2']"
+gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-3 "['<Super>3']"
+gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-4 "['<Super>4']"
+gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-5 "['<Super>5']"
+gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-6 "['<Super>6']"
+gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-7 "['<Super>7']"
+gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-8 "['<Super>8']"
+gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-9 "['<Super>9']"
+
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-1 "['<Super><shift>1']"
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-2 "['<Super><shift>2']"
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-3 "['<Super><shift>3']"
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-4 "['<Super><shift>4']"
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-5 "['<Super><shift>5']"
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-6 "['<Super><shift>6']"
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-7 "['<Super><shift>7']"
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-8 "['<Super><shift>8']"
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-9 "['<Super><shift>9']"
