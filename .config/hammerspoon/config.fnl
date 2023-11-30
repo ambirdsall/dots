@@ -1,5 +1,6 @@
 ;; -*- mode: fennel; auto-save-default: nil -*-
 
+;; * imports
 (local {: notify
         : alert
         : dump
@@ -23,21 +24,19 @@
         : window/enlarge
         : window/shrink} (require :windows))
 
-;; * script loading setup
-;; ** load init-local.lua
+;; * load init-local.lua and CLI
 (let [localfile (.. hs.configdir "/init-local.lua")]
   (and (hs.fs.attributes localfile)
        (dofile localfile)))
 
-;; ** CLI
 (hs.ipc.cliInstall)
 
 ;; * bind those keys, make that user env
-;; ** rehammer the spoon
-;; TODO make some kind of fennel repl
+;; ** hammers of the spoonsmith
+(bearclaw :r hs.reload)
+
 (bearclaw :i hs.toggleConsole)
 (puppy-paw :x hs.toggleConsole)
-(bearclaw :r hs.reload)
 
 ;; ** open specific apps
 ;; TODO Make the apps shortcuts toggle instead of unconditionally focusing
@@ -89,6 +88,7 @@
 ;;        (let [modal (hs.hotkey.modal.new)]
 ;;          (modal:bind [] :h )))
 
+;; ** spacehammer
 (local dev-switcher (hs.window.switcher.new ["Emacs" "WezTerm"]))
 (local dev-windows (hs.window.filter.new ["Emacs" "WezTerm" "Google Chrome"]))
 (spacehammer :space #(hs.hints.windowHints (dev-windows:getWindows)))
