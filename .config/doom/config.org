@@ -356,6 +356,30 @@ name as well to trigger updates"
 (run-at-time nil nil (cmd! (tab-bar-mode +1)))
 #+end_src
 
+This one is no better, but it /is/ simpler. Perhaps it's a better starting point for making a clickable version?
+#+begin_src elisp :tangle no
+(after! persp-mode
+  ;; alternative, non-fancy version which only centers the output of +workspace--tabline
+  (defun workspaces-formatted ()
+    (+doom-dashboard--center (frame-width) (+workspace--tabline)))
+
+  (defun hy/invisible-current-workspace ()
+    "The tab bar doesn't update when only faces change (i.e. the
+current workspace), so we invisibly print the current workspace
+name as well to trigger updates"
+    (propertize (safe-persp-name (get-current-persp)) 'invisible t))
+
+  (customize-set-variable 'tab-bar-format '(workspaces-formatted tab-bar-format-align-right hy/invisible-current-workspace))
+
+  ;; don't show current workspaces when we switch, since we always see them
+  (advice-add #'+workspace/display :override #'ignore)
+  ;; same for renaming and deleting (and saving, but oh well)
+  (advice-add #'+workspace-message :override #'ignore))
+
+;; need to run this later for it to not break frame size for some reason
+(run-at-time nil nil (cmd! (tab-bar-mode +1)))
+#+end_src
+
 Having made this nice tab bar, we need a way to toggle it: some modes (notably PDFView)
 have rendering logic that doesn't play nicely with (or is not properly aware of) the tab
 bar.
@@ -611,7 +635,6 @@ I like freely opening client instances in the terminal and i3 alike.
  "Nw" #'widen
  :desc "jump to first non-blank" "of" #'evil-first-non-blank
  :desc "new frame" "oF" #'make-frame
- :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos
  "W" #'subword-mode)
 
 (map!
@@ -631,6 +654,28 @@ I like freely opening client instances in the terminal and i3 alike.
 #+begin_src elisp
 (setq! projectile-project-search-path '("~/c/"))
 #+end_src
+
+*** every project has a =todo.org= and every =todo.org= can just be hardlinks of the same underlying file
+This pair of variables is required to let you open the same hardlinked todo.org inode in multiple
+project-specific locations in the filesystem, and have each maintain its local context (e.g. when
+running projectile functions acting on what filesystem heuristics see as the surrounding VC
+project). It's an idiosyncratic pattern, but it works brilliantly for me on work computers.
+
+#+begin_src elisp
+(setq! find-file-existing-other-name nil
+       find-file-visit-truename nil)
+
+(after! projectile
+  (defun amb/goto-project-todos ()
+    (interactive)
+    ;; TODO dynamically create one if missing? This system can be improved further.
+    (find-file (concat (projectile-project-root) "todo.org")))
+
+  (map!
+   :leader
+   :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos))
+#+end_src
+
 ** code compass
 #+begin_src elisp :tangle packages.el
 (package! code-compass
@@ -1072,6 +1117,7 @@ there's a bit more testing required before I'm ready to delete this.
       "k" #'previous-line)
 #+end_src
 ** org-mode config
+*** drop it in a box
 Notes must be at hand to be helpful, ideally on any of several computers:
 #+begin_src elisp
 (let ((dir "~/Dropbox/org/"))
@@ -1079,13 +1125,16 @@ Notes must be at hand to be helpful, ideally on any of several computers:
        (setq org-directory dir)))
 #+end_src
 
-With that out of the way, a grab-bag of tweaks and variables.
+*** make org-mode act nicer
 #+begin_src elisp
 (setq! org-log-into-drawer t
        org-hierarchical-todo-statistics nil
        org-refile-use-outline-path 'full-file-path
        org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
+#+end_src
 
+*** make org-mode look nicer
+#+begin_src elisp
 (custom-set-faces!
   '(outline-1 :weight extra-bold :height 1.25)
   '(outline-2 :weight bold :height 1.15)
@@ -1131,23 +1180,6 @@ Org-roam-ui tries to keep up with the latest features of org-roam, which conflic
 #+begin_src elisp :tangle packages.el
 (unpin! org-roam)
 (package! org-roam-ui)
-#+end_src
-
-*** every project has a =todo.org= and every =todo.org= can just be hardlinks of the same underlying file
-This pair of variables is required to let you open the same hardlinked todo.org inode in multiple
-project-specific locations in the filesystem, and have each maintain its local context (e.g. when
-running projectile functions acting on what filesystem heuristics see as the surrounding VC
-project). It's an idiosyncratic pattern, but it works brilliantly for me on work computers.
-
-#+begin_src elisp
-(setq! find-file-existing-other-name nil
-       find-file-visit-truename nil)
-
-(after! projectile
-  (defun amb/goto-project-todos ()
-    (interactive)
-    ;; TODO dynamically create one if missing? This system can be improved further.
-    (find-file (concat (projectile-project-root) "todo.org"))))
 #+end_src
 
 *** the yet-neglected agenda view

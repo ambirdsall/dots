@@ -327,7 +327,6 @@ projectile would recognize your root directory as a project."
  "Nw" #'widen
  :desc "jump to first non-blank" "of" #'evil-first-non-blank
  :desc "new frame" "oF" #'make-frame
- :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos
  "W" #'subword-mode)
 
 (map!
@@ -339,6 +338,19 @@ projectile would recognize your root directory as a project."
 (setq standard-indent 2)
 
 (setq! projectile-project-search-path '("~/c/"))
+
+(setq! find-file-existing-other-name nil
+       find-file-visit-truename nil)
+
+(after! projectile
+  (defun amb/goto-project-todos ()
+    (interactive)
+    ;; TODO dynamically create one if missing? This system can be improved further.
+    (find-file (concat (projectile-project-root) "todo.org")))
+
+  (map!
+   :leader
+   :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos))
 
 (use-package! code-compass :defer t
               :commands (c/show-hotspots-sync
@@ -578,15 +590,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           org-roam-ui-follow t
           org-roam-ui-update-on-save t
           org-roam-ui-open-on-start t))
-
-(setq! find-file-existing-other-name nil
-       find-file-visit-truename nil)
-
-(after! projectile
-  (defun amb/goto-project-todos ()
-    (interactive)
-    ;; TODO dynamically create one if missing? This system can be improved further.
-    (find-file (concat (projectile-project-root) "todo.org"))))
 
 (setq! org-agenda-files '("~/Dropbox/org/"
                           "~/Dropbox/roam/daily/"))

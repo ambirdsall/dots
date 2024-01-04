@@ -106,7 +106,7 @@
        lookup              ; navigate your code and its documentation
        (lsp +peek)
        (magit
-        ;; +forge ; TODO temporarily disabled due to errors with sqlite wrapper
+        +forge ; TODO temporarily disabled due to errors with sqlite wrapper
         )    ; a git porcelain for Emacs
        make              ; run make tasks from Emacs
        ;;pass              ; password manager for nerds
@@ -176,10 +176,10 @@
        ;;php               ; perl's insecure younger brother
        ;;plantuml          ; diagrams for confusing people more
        ;;purescript        ; javascript, but functional
-       (python
+       (python             ; beautiful is better than ugly
         +lsp
-        +tree-sitter
-        +pyenv)            ; beautiful is better than ugly
+        +pyright
+        +tree-sitter)
        ;;qt                ; the 'cutest' gui framework ever
        ;;racket            ; a DSL for DSLs
        ;;raku              ; the artist formerly known as perl6
