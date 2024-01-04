@@ -14,10 +14,12 @@ end
 
 local watcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon", reloadConfig):start()
 
--- * load fennel language and config
+
+-- * setup fennel language support
 local fennel = require("fennel")
 table.insert(package.loaders or package.searchers, fennel.searcher)
 -- TODO test, enable if working correctly for this version of fennel
 -- debug.traceback = fennel.traceback
 
+-- * and we're off!
 require("config")

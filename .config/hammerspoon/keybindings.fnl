@@ -30,7 +30,7 @@
 
     modal))
 
-(local hammer (def-modal-with-timeout 4 [:cmd :alt :ctrl] :space))
+(local hammer (def-modal-with-timeout 2 [:cmd :alt :ctrl] :space))
 (hammer:bind [] :escape nil nil #(hammer:exit))
 
 (ModalMgr:new :spacehammer)
