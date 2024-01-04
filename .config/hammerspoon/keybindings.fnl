@@ -10,8 +10,12 @@
 ;; - shift, rightshift, cmd, rightcmd, alt, rightalt, ctrl, rightctrl,
 ;; - capslock, fn
 (fn puppy-paw [key func]
-  "bind a function func to run on bearclaw+key"
+  "bind a function func to run on cmd+alt+key"
   (hs.hotkey.bind [:cmd :alt] key func))
+
+(fn PUPPY-PAW [key func]
+  "bind a function func to run on cmd+alt+shift+key"
+  (hs.hotkey.bind [:shift :cmd :alt] key func))
 
 (fn bearclaw [key func]
   "bind a function func to run on bearclaw+key"
@@ -47,6 +51,7 @@
 (fn in-prefix [modal] (fn [key func] (modal:bind [] key nil func)))
 
 {: puppy-paw
+ : PUPPY-PAW
  : bearclaw
  : BEARCLAW
  : spacehammer

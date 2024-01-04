@@ -7,6 +7,7 @@
         : log} (require :notifications))
 
 (local {: puppy-paw
+        : PUPPY-PAW
         : bearclaw
         : BEARCLAW
         : spacehammer} (require :keybindings))
@@ -146,13 +147,17 @@
 (PaperWM:start)
 
 (puppy-paw :left PaperWM.actions.focus_left)
+(PUPPY-PAW :left PaperWM.actions.swap_left)
 (bearclaw :left PaperWM.actions.focus_left)
 (puppy-paw :right PaperWM.actions.focus_right)
+(PUPPY-PAW :right PaperWM.actions.swap_right)
 (bearclaw :right PaperWM.actions.focus_right)
 (bearclaw :up PaperWM.actions.focus_up)
 (puppy-paw :up PaperWM.actions.focus_up)
+(PUPPY-PAW :up PaperWM.actions.swap_up)
 (bearclaw :down PaperWM.actions.focus_down)
 (puppy-paw :down PaperWM.actions.focus_down)
+(PUPPY-PAW :down PaperWM.actions.swap_down)
 
 ;; * now, just to make it extra likely shit will break, spacehammer
 (local Spacehammer (hs.loadSpoon :Spacehammer))
