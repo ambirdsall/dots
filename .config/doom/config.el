@@ -317,6 +317,11 @@ projectile would recognize your root directory as a project."
 (setq! select-enable-clipboard nil)
 (map! "C-M-y" #'clipboard-yank)
 
+(defun copy-to-clipboard (string)
+  "Copies `STRING' to the system clipboard and the kill ring."
+  (let ((select-enable-clipboard t))
+    (kill-new string)))
+
 (map!
  :leader
  :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer
