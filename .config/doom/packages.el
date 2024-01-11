@@ -14,23 +14,23 @@
 
 (package! evil-matchit)
 
+(package! evil-snipe :disable t)
+
 (package! evil-textobj-line
   :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
 
-(package! evil-snipe :disable t)
-
 (package! code-compass
   :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
+
+(package! apheleia)
+
+(package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
 
 (package! fennel-mode)
 
 (package! graphql-mode)
 
 (package! yuck-mode)
-
-(package! apheleia)
-
-(package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
 
 (package! yaml-pro)
 

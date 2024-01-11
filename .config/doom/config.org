@@ -517,16 +517,6 @@ WHO CARES
 (use-package! evil-matchit
   :config (global-evil-matchit-mode 1))
 #+end_src
-*** line text object
-#+begin_src elisp :tangle packages.el
-(package! evil-textobj-line
-  :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
-#+end_src
-
-#+begin_src elisp
-(use-package! evil-textobj-line
-  :after evil)
-#+end_src
 *** changing up some default settings
 #+begin_src elisp
 (setq! evil-ex-search-persistent-highlight nil
@@ -556,6 +546,37 @@ using it as a mnemonic binding for ~imenu~:
   + that "expand visual selection" package
   + ?
 
+** text objects
+#+begin_src elisp
+;; this macro was copied from someone who copied it from here: https://stackoverflow.com/a/22418983/4921402
+(after! evil
+  (defmacro define-and-bind-quoted-text-object (name key start-regex end-regex)
+    (let ((inner-name (make-symbol (concat "evil-inner-" name)))
+          (outer-name (make-symbol (concat "evil-a-" name))))
+      `(progn
+         (evil-define-text-object ,inner-name (count &optional beg end type)
+           (evil-select-paren ,start-regex ,end-regex beg end type count nil))
+         (evil-define-text-object ,outer-name (count &optional beg end type)
+           (evil-select-paren ,start-regex ,end-regex beg end type count t))
+         (define-key evil-inner-text-objects-map ,key #',inner-name)
+         (define-key evil-outer-text-objects-map ,key #',outer-name))))
+  (define-and-bind-quoted-text-object "dollar" "$" "\\$" "\\$")
+  (define-and-bind-quoted-text-object "pipe" "|" "|" "|")
+  (define-and-bind-quoted-text-object "slash" "/" "/" "/")
+  (define-and-bind-quoted-text-object "space" " " " " " ")
+  (define-and-bind-quoted-text-object "tilda" "~" "~" "~")
+  (define-and-bind-quoted-text-object "asterisk" "*" "*" "*"))
+#+end_src
+*** line text object
+#+begin_src elisp :tangle packages.el
+(package! evil-textobj-line
+  :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
+#+end_src
+
+#+begin_src elisp
+(use-package! evil-textobj-line
+  :after evil)
+#+end_src
 * files, both local and remote
 ** oops, I need to ~sudo~ edit this file
 #+begin_src elisp
@@ -727,45 +748,15 @@ here's a snippet to install you some language libraries
 (mapc #'treesit-install-language-grammar
       (mapcar #'car treesit-language-source-alist))
 #+end_src
-
-** there are more languages under the sun than ~:lang~ can speak
-*** fennel
-#+begin_src elisp :tangle packages.el
-(package! fennel-mode)
-#+end_src
-
+** lsp
 #+begin_src elisp
-(use-package! fennel-mode
-  :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
+(map!
+ :after lsp-mode
+ :gnvie "C-M-l" #'lsp-execute-code-action)
 #+end_src
-*** graphql
-#+begin_src elisp :tangle packages.el
-(package! graphql-mode)
-#+end_src
-
-#+begin_src elisp
-(use-package! graphql-mode)
-#+end_src
-*** elixir
-#+begin_src elisp
-(after! alchemist-mode
-  (map! (:when (modulep! :lang elixir)    ; local conditional
-        (:map alchemist-mode-map
-         :n
-         "C-j" #'tmux-navigate-down
-         "C-k" #'tmux-navigate-up
-         :localleader
-         "tt" #'exunit-toggle-file-and-test
-         "tT" #'exunit-toggle-file-and-test-other-window))))
-
-#+end_src
-*** yuck
-#+begin_src elisp :tangle packages.el
-(package! yuck-mode)
-#+end_src
-*** the four most frustrating words in the english language: web development in emacs
+** the four most frustrating words in the english language: web development in emacs
 First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckruse/doom.d/src/commit/c6c7163e79a0fecdda6df9e81e60dc246170213a/config.el
-**** {t,j}s
+*** {t,j}s
 #+begin_src elisp :tangle (and "packages.el" "no")
 (package! tsi :recipe (:type git :host github :repo "orzechowskid/tsi.el"))
 (package! tsx-mode :recipe (:type git :host github :repo "orzechowskid/tsx-mode.el"))
@@ -800,7 +791,7 @@ First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckrus
     :words '("||" "&&")))
 #+end_src
 
-**** prettier et al with apheleia (until elken's module drops lol)
+*** prettier et al with apheleia (until elken's module drops lol)
 #+begin_src elisp :tangle packages.el
 (package! apheleia)
   #+end_src
@@ -821,20 +812,20 @@ First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckrus
   (push '(css-mode . prettier) apheleia-mode-alist))
   #+end_src
 
-**** web-mode
+*** web-mode
 #+begin_src elisp
 (setq! web-mode-markup-indent-offset 2
        web-mode-css-indent-offset 2
        web-mode-code-indent-offset 2)
 
 (setq! web-mode-engines-alist
-      '(("angular" . "\\.html")
+      '(;("angular" . "\\.html")
         ("vue" . "\\.vue")
         ("phoenix" . "\\.html\\.eex")
         ("erb" . "\\.html\\.erb")))
 #+end_src
 
-**** TODO vue
+*** TODO vue
 Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This must be improved.
 #+begin_quote
  '(auto-insert-alist
@@ -843,7 +834,7 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
       ["template.vue" web-mode autoinsert-yas-expand])))
 #+end_quote
 
-**** tailwindcss
+*** tailwindcss
 #+begin_src elisp :tangle packages.el
 (package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
 #+end_src
@@ -851,6 +842,41 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 #+begin_src elisp
 (use-package! lsp-tailwindcss
   :after lsp)
+#+end_src
+** there are more languages under the sun than ~:lang~ can speak
+*** fennel
+#+begin_src elisp :tangle packages.el
+(package! fennel-mode)
+#+end_src
+
+#+begin_src elisp
+(use-package! fennel-mode
+  :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
+#+end_src
+*** graphql
+#+begin_src elisp :tangle packages.el
+(package! graphql-mode)
+#+end_src
+
+#+begin_src elisp
+(use-package! graphql-mode)
+#+end_src
+*** elixir
+#+begin_src elisp
+(after! alchemist-mode
+  (map! (:when (modulep! :lang elixir)    ; local conditional
+        (:map alchemist-mode-map
+         :n
+         "C-j" #'tmux-navigate-down
+         "C-k" #'tmux-navigate-up
+         :localleader
+         "tt" #'exunit-toggle-file-and-test
+         "tT" #'exunit-toggle-file-and-test-other-window))))
+
+#+end_src
+*** yuck
+#+begin_src elisp :tangle packages.el
+(package! yuck-mode)
 #+end_src
 *** scheme, or: you've got gall, you've got guile
 Apologies to racket, which is a nicer language per se, but guile's already got its grubby

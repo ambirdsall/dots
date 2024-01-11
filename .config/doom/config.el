@@ -262,13 +262,32 @@ used interactively."
 (use-package! evil-matchit
   :config (global-evil-matchit-mode 1))
 
-(use-package! evil-textobj-line
-  :after evil)
-
 (setq! evil-ex-search-persistent-highlight nil
        +evil-want-o/O-to-continue-comments nil)
 
 (map! :after consult "M-i" #'consult-imenu)
+
+;; this macro was copied from someone who copied it from here: https://stackoverflow.com/a/22418983/4921402
+(after! evil
+  (defmacro define-and-bind-quoted-text-object (name key start-regex end-regex)
+    (let ((inner-name (make-symbol (concat "evil-inner-" name)))
+          (outer-name (make-symbol (concat "evil-a-" name))))
+      `(progn
+         (evil-define-text-object ,inner-name (count &optional beg end type)
+           (evil-select-paren ,start-regex ,end-regex beg end type count nil))
+         (evil-define-text-object ,outer-name (count &optional beg end type)
+           (evil-select-paren ,start-regex ,end-regex beg end type count t))
+         (define-key evil-inner-text-objects-map ,key #',inner-name)
+         (define-key evil-outer-text-objects-map ,key #',outer-name))))
+  (define-and-bind-quoted-text-object "dollar" "$" "\\$" "\\$")
+  (define-and-bind-quoted-text-object "pipe" "|" "|" "|")
+  (define-and-bind-quoted-text-object "slash" "/" "/" "/")
+  (define-and-bind-quoted-text-object "space" " " " " " ")
+  (define-and-bind-quoted-text-object "tilda" "~" "~" "~")
+  (define-and-bind-quoted-text-object "asterisk" "*" "*" "*"))
+
+(use-package! evil-textobj-line
+  :after evil)
 
 (defun sudo ()
   "Use TRAMP to `sudo' the current buffer."
@@ -388,20 +407,9 @@ projectile would recognize your root directory as a project."
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
 
-(use-package! fennel-mode
-  :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
-
-(use-package! graphql-mode)
-
-(after! alchemist-mode
-  (map! (:when (modulep! :lang elixir)    ; local conditional
-        (:map alchemist-mode-map
-         :n
-         "C-j" #'tmux-navigate-down
-         "C-k" #'tmux-navigate-up
-         :localleader
-         "tt" #'exunit-toggle-file-and-test
-         "tT" #'exunit-toggle-file-and-test-other-window))))
+(map!
+ :after lsp-mode
+ :gnvie "C-M-l" #'lsp-execute-code-action)
 
 (use-package! apheleia
   :hook ((tsx-mode . apheleia-mode)
@@ -422,13 +430,28 @@ projectile would recognize your root directory as a project."
        web-mode-code-indent-offset 2)
 
 (setq! web-mode-engines-alist
-      '(("angular" . "\\.html")
+      '(;("angular" . "\\.html")
         ("vue" . "\\.vue")
         ("phoenix" . "\\.html\\.eex")
         ("erb" . "\\.html\\.erb")))
 
 (use-package! lsp-tailwindcss
   :after lsp)
+
+(use-package! fennel-mode
+  :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
+
+(use-package! graphql-mode)
+
+(after! alchemist-mode
+  (map! (:when (modulep! :lang elixir)    ; local conditional
+        (:map alchemist-mode-map
+         :n
+         "C-j" #'tmux-navigate-down
+         "C-k" #'tmux-navigate-up
+         :localleader
+         "tt" #'exunit-toggle-file-and-test
+         "tT" #'exunit-toggle-file-and-test-other-window))))
 
 (setq! geiser-active-implementations '(guile))
 
