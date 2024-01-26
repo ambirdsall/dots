@@ -418,7 +418,8 @@ projectile would recognize your root directory as a project."
 
 (map!
  :after lsp-mode
- :gnvie "C-M-l" #'lsp-execute-code-action)
+ :gnvie "C-M-l" #'lsp-execute-code-action
+ :n "RET" #'lsp-execute-code-action)
 
 (use-package! apheleia
   :hook ((tsx-mode . apheleia-mode)

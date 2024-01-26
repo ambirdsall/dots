@@ -758,12 +758,30 @@ here's a snippet to install you some language libraries
 (mapc #'treesit-install-language-grammar
       (mapcar #'car treesit-language-source-alist))
 #+end_src
-** lsp
+** IDE shit
+The gold standard for LSP is VSCode; this goes triply for web development, which uh ✷checks notes✷ is my job.
+
+This is organized by features and is an exercise in aspiration-driven development.  Each
+key feature gets a subtree to hold code and/or working notes (an empty subtree for a
+desirable feature is better than nothing), and incrementally, over time, I'll muddle my
+way through the sea of TODOs and Wouldn't It Be Nices into a future of shininess and feature parity.
+Because if I can get /that/, along with all of emacs' land before time shit, I'll be cooking
+with fire.
+
+*** Auto-import variables and functions as they get used, with a pretty pop-up UI for alternatives
+Auto-imports are handled by code actions; there's a function for that. It uses a vertico
+buffer instead of a pop-up, presumably via ~completing-read~, but frankly that's better.
 #+begin_src elisp
 (map!
  :after lsp-mode
- :gnvie "C-M-l" #'lsp-execute-code-action)
+ :gnvie "C-M-l" #'lsp-execute-code-action
+ :n "RET" #'lsp-execute-code-action)
 #+end_src
+
+I'm not sure about the keybindings. Maybe an extra top-level normal mode command?
+
+**** TODO auto-inserted imports should be organized per project-local eslint rules
+
 ** the four most frustrating words in the english language: web development in emacs
 First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckruse/doom.d/src/commit/c6c7163e79a0fecdda6df9e81e60dc246170213a/config.el
 *** {t,j}s
