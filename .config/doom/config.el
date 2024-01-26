@@ -337,7 +337,11 @@ projectile would recognize your root directory as a project."
 (map! "C-M-y" #'clipboard-yank)
 
 (defun copy-to-clipboard (string)
-  "Copies `STRING' to the system clipboard and the kill ring."
+  "Copies `STRING' to the system clipboard and the kill ring. When called interactively,
+the active region will be used."
+  (interactive
+   (when (region-active-p)
+     (list (buffer-substring-no-properties (region-beginning) (region-end)))))
   (let ((select-enable-clipboard t))
     (kill-new string)))
 
