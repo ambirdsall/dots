@@ -341,6 +341,15 @@ projectile would recognize your root directory as a project."
   (let ((select-enable-clipboard t))
     (kill-new string)))
 
+(defun copy-unicode-char-to-clipboard ()
+  "Interactively select a unicode character and copy it to the system clipboard."
+  (interactive)
+  (with-temp-buffer
+    (call-interactively #'insert-char)
+    (let ((char (buffer-string)))
+      (copy-to-clipboard char)
+      (message "%s" (concat "Copied " char " to system clipboard")))))
+
 (map!
  :leader
  :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer

@@ -45,3 +45,8 @@ slay () {
 }
 
 alias tetris='emacs -q --no-splash -f tetris'
+
+unicode () {
+   emacsclient -nw --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
+   echo "Copied $(pbpaste) to the clipboard"
+}

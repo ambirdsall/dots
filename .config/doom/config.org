@@ -647,6 +647,16 @@ I like freely opening client instances in the terminal and i3 alike.
   "Copies `STRING' to the system clipboard and the kill ring."
   (let ((select-enable-clipboard t))
     (kill-new string)))
+
+(defun copy-unicode-char-to-clipboard ()
+  "Interactively select a unicode character and copy it to the system clipboard."
+  (interactive)
+  (with-temp-buffer
+    (call-interactively #'insert-char)
+    (let ((char (buffer-string)))
+      (copy-to-clipboard char)
+      (message "%s" (concat "Copied " char " to system clipboard")))))
+
 #+end_src
 
 * TODO uncategorized keybindings :: clean up
