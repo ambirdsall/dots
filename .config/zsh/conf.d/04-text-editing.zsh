@@ -6,7 +6,7 @@ if [ ! $IS_MAC ]; then
     _at_hand gsettings && gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
 fi
 
-# C-hjkl clobbers C-k, and kill-line is not negotiable if I'm using emacs bindings. So: vim.
+# use vim mode, but with the standard set of emacs-style keychords defined in insert mode
 bindkey -v
 EDITOR='qed'
 
