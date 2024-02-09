@@ -104,10 +104,25 @@
 ;; * PaperWM
 (local PaperWM (hs.loadSpoon :PaperWM))
 
+;; ** configure PaperWM variables
 (set PaperWM.window_gap 4)
 ;; ¼, golden/ratio, halfsies, ratio/golden, ¾, fill 'er up
 (set PaperWM.window_ratios [0.25 0.38195 0.5 0.61804 0.75 1])
 
+;; ** set up toggle function
+(var paperwm-on false)
+(fn start-paperwm []
+  (set paperwm-on true)
+  (PaperWM:start))
+(fn stop-paperwm []
+  (set paperwm-on false)
+  (PaperWM:stop))
+(fn toggle-paperwm []
+  (if paperwm-on
+      (stop-paperwm)
+      (start-paperwm)))
+
+;; ** keybindings
 (PaperWM:bindHotkeys {:focus_left     [[:ctrl :alt :cmd] :h]
                       :focus_down     [[:ctrl :alt :cmd] :j]
                       :focus_up       [[:ctrl :alt :cmd] :k]
@@ -144,7 +159,6 @@
 
                       :slurp_in       [[:ctrl :alt :cmd] :i]
                       :barf_out       [[:ctrl :alt :cmd] :o]})
-(PaperWM:start)
 
 (puppy-paw :left PaperWM.actions.focus_left)
 (PUPPY-PAW :left PaperWM.actions.swap_left)
@@ -158,6 +172,11 @@
 (bearclaw :down PaperWM.actions.focus_down)
 (puppy-paw :down PaperWM.actions.focus_down)
 (PUPPY-PAW :down PaperWM.actions.swap_down)
+
+(BEARCLAW :p toggle-paperwm)
+
+;; ** let 'er rip
+(start-paperwm)
 
 ;; * now, just to make it extra likely shit will break, spacehammer
 (local Spacehammer (hs.loadSpoon :Spacehammer))
