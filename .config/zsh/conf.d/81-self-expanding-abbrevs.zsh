@@ -2,20 +2,17 @@
 
 typeset -Ag abbreviations
 abbreviations=(
-"A"    "| awk"
-"pag"  "| agrep"
-"pb"   "| bc"
-"pgr"  "| groff -s -p -t -e -Tlatin1 -mandoc"
-"pf"   "| fzf"
-"pg"   "| rg -S"
-"G"    "| rg -S"
-"H"    "| head"
-"J"    "| jq"
-"pk"   "| keep"
-"L"    "| less" # yeah, this is misleading; but less > more and pl is taken
-"pt"   "| tail -f"
-"W"    "| wc"
-"X"    "| xargs"
+"A"     "| awk '{print $2 }'"
+"B"     "| bc"
+"GROFF" "| groff -s -p -t -e -Tlatin1 -mandoc"
+"F"     "| fzf"
+"G"     "| rg -S"
+"H"     "| head"
+"J"     "| jq"
+"L"     "| less"
+"T"     "| tail -f"
+"W"     "| wc -l"
+"X"     "| xargs"
 )
 
 magic-abbrev-expand () {
