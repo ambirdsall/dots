@@ -1,5 +1,12 @@
 #!/usr/bin/env zsh
 
+# make it work on macOS, too
+if [[ $(uname) == "Darwin" ]]; then
+    # never bunt
+    export XDG_RUNTIME_DIR=$HOME/.run
+    mkdir -p $XDG_RUNTIME_DIR
+fi
+
 # get ssh-agent running all the dang time
 if ! pgrep -u "$USER" ssh-agent > /dev/null; then
     ssh-agent > "$XDG_RUNTIME_DIR/ssh-agent.env"
