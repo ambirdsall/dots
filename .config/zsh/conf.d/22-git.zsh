@@ -135,10 +135,11 @@ alias gbl="git branch -l"
 l () {
   # no args
   if [[ $# -eq 0 ]]; then
-    git log --oneline -8
+    git log --oneline --date=format:'%Y-%m-%d' --format='%C(yellow)%h%Creset [%C(blue)%cd%Creset] %s' -8
   # one arg which is an integer
   elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
-    git log --oneline -$1
+    git log --oneline --date=format:'%Y-%m-%d' --format='%C(yellow)%h%Creset [%C(blue)%cd%Creset] %s' -$1
+  # wtf
   else
     echo "Usage: l [number of commits]" >&2
   fi
