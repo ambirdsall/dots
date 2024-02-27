@@ -4,10 +4,6 @@
 
 (package! emojify)
 
-(package! evil-tmux-navigator
-  :recipe (:host github :repo "ambirdsall/evil-tmux-navigator"))
-(unpin! evil-tmux-navigator)
-
 (package! evil-replace-with-register)
 
 (package! evil-exchange)

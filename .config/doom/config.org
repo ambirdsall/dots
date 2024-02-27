@@ -482,15 +482,21 @@ Might as well use the more powerful built-in expansion system:
 (map! [remap dabbrev-expand] #'hippie-expand)
 #+end_src
 ** an opinionated mix of the vim and emacs keybinding schemes
-*** wait, is this split two tmux panes or two emacs windows?
-WHO CARES
-#+begin_src elisp :tangle packages.el
+*** [DEPRECATED] wait, is this split two tmux panes or two emacs windows?
++WHO CARES+
+
+So this used to be my JAM (I mean, just note the account hosting that fork's repo), but
+increased usage of vanilla emacs bindings, both in emacs and zsh, eventually lead me to
+prefer having =C-k= as ~kill-line~ to having a universal, super-accessible binding for
+navigating up a split in all my various terminal contexts. Pour one out, we had a good run.
+
+#+begin_src elisp :tangle no
 (package! evil-tmux-navigator
   :recipe (:host github :repo "ambirdsall/evil-tmux-navigator"))
 (unpin! evil-tmux-navigator)
 #+end_src
 
-#+begin_src elisp
+#+begin_src elisp :tangle no
 (use-package! evil-tmux-navigator
   :config (evil-tmux-navigator-bind-keys))
 #+end_src
@@ -900,9 +906,6 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 (after! alchemist-mode
   (map! (:when (modulep! :lang elixir)    ; local conditional
         (:map alchemist-mode-map
-         :n
-         ;; "C-j" #'tmux-navigate-down
-         ;; "C-k" #'tmux-navigate-up
          :localleader
          "tt" #'exunit-toggle-file-and-test
          "tT" #'exunit-toggle-file-and-test-other-window))))
