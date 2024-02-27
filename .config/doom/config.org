@@ -823,10 +823,6 @@ First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckrus
                 'javascript-jshint
                 'tsx-tide
                 'jsx-tide)))
-
-  (set-electric! 'tsx-mode
-    :chars '(?\} ?\))
-    :words '("||" "&&")))
 #+end_src
 
 *** prettier et al with apheleia (until elken's module drops lol)
