@@ -151,7 +151,13 @@
        ;;hy                ; readability of scheme w/ speed of python
        ;;idris             ; a language you can depend on
        (json +lsp)              ; At least it ain't XML
-       (java +meghanada) ; the poster child for carpal tunnel syndrome
+       (:if IS-LINUX
+           (java
+            +meghanada
+            +tree-sitter)) ; the poster child for carpal tunnel syndrome
+       (:if IS-MAC
+           (java
+            +tree-sitter)) ; the poster child for carpal tunnel syndrome
        (javascript
         +lsp
         +tree-sitter)        ; all(hope(abandon(ye(who(enter(here))))))
