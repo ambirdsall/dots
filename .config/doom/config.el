@@ -461,8 +461,8 @@ the active region will be used."
   (map! (:when (modulep! :lang elixir)    ; local conditional
         (:map alchemist-mode-map
          :n
-         "C-j" #'tmux-navigate-down
-         "C-k" #'tmux-navigate-up
+         ;; "C-j" #'tmux-navigate-down
+         ;; "C-k" #'tmux-navigate-up
          :localleader
          "tt" #'exunit-toggle-file-and-test
          "tT" #'exunit-toggle-file-and-test-other-window))))
