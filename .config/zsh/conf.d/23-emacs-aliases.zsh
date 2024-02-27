@@ -1,8 +1,12 @@
 #!/usr/bin/env zsh
 
-alias e="qed"
+# alias e="qed"
+e () {
+  emacsclient -nw --socket-name=tty --alternate-editor="" "$@"
+}
+
 E () {
-  emacsclient -c --alternate-editor="" "$@" & disown
+  emacsclient -c --socket-name=interminable --alternate-editor="" "$@" & disown
 }
 
 # Don't want to mess with the existing session?
