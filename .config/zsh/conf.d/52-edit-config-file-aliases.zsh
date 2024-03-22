@@ -6,7 +6,10 @@ eaa () {
     [ -n "$alias_file" ] && emv $alias_file
 }
 alias el="emv ~/.local-aliases.zsh"
-alias sdf="source ~/aliases.zsh && echo sourced ~/aliases.zsh && [[ -f ~/.local-aliases.zsh ]] && source ~/.local-aliases.zsh && echo sourced ~/.local-aliases.zsh || true"
+sdf () {
+    source ~/aliases.zsh --verbose
+    true
+}
 alias zrc="emv ~/.zshrc"
 alias zrl="emv ~/.zshrc.local.zsh"
 alias rc="source ~/.zshrc"

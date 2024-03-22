@@ -1,11 +1,12 @@
 #!/usr/bin/env zsh
 
-# SIDE EFFECT
-if [[ -n $TMUX ]]; then
-    echo "Tmux sessions:"
-    tmux list-sessions
-    printf "\n"
-fi
+list_sessions_if_inside_tmux() {
+    if [[ -n $TMUX ]]; then
+        echo "Tmux sessions:"
+        tmux list-sessions
+        printf "\n"
+    fi
+}
 
 alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
 
