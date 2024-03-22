@@ -21,7 +21,7 @@ EE () {
 # a scenario where falling back to vim is preferable to a slow-booting editor.
 emv () {
   if command -v emacs > /dev/null; then
-    emacsclient -nw --alternate-editor="vim" $@
+    emacsclient -nw --socket-name=tty --alternate-editor="vim" $@
   else
     vim $@
   fi
@@ -51,6 +51,6 @@ slay () {
 alias tetris='emacs -q --no-splash -f tetris'
 
 unicode () {
-   emacsclient -nw --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
+   emacsclient -nw --socket-name=tty --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
    echo "Copied $(pbpaste) to the clipboard"
 }

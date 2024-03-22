@@ -139,9 +139,9 @@ l () {
   # one arg which is an integer
   elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
     git log --oneline --date=format:'%Y-%m-%d' --format='%C(yellow)%h%Creset [%C(blue)%cd%Creset] %s' -$1
-  # wtf
+  # hopefully anything else is a valid set of additional git log args
   else
-    echo "Usage: l [number of commits]" >&2
+    git log --oneline --date=format:'%Y-%m-%d' --format='%C(yellow)%h%Creset [%C(blue)%cd%Creset] %s' "$@"
   fi
 }
 
@@ -187,7 +187,7 @@ print width')
   elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
     git log --pretty="format:%C(auto)%h %C(auto)%<(12,trunc)[%an] %<($summary_width,trunc)%s %C(auto)%as" -$1
   else
-    echo "Usage: l [number of commits]" >&2
+    git log --pretty="format:%C(auto)%h %C(auto)%<(12,trunc)[%an] %<($summary_width,trunc)%s %C(auto)%as" "$@"
   fi
 }
 
