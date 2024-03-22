@@ -106,8 +106,8 @@
 
 ;; ** configure PaperWM variables
 (set PaperWM.window_gap 4)
-;; ¼, golden/ratio, halfsies, ratio/golden, ¾, fill 'er up
-(set PaperWM.window_ratios [0.25 0.38195 0.5 0.61804 0.75 1])
+;; ¼, golden/ratio, halfsies, ratio/golden, ¾, 95%, fill 'er up
+(set PaperWM.window_ratios [0.25 0.38195 0.5 0.61804 0.75 0.95 1])
 
 ;; ** set up toggle function
 (var paperwm-on false)
@@ -134,7 +134,6 @@
                       :swap_right     [[:ctrl :alt :cmd :shift] :l]
 
                       :full_width     [[:ctrl :alt :cmd] :f]
-                      :cycle_width    [[:ctrl :alt :cmd] :r]
                       :center_window  [[:ctrl :alt :cmd] :c]
 
                       :switch_space_1 [[:ctrl :alt :cmd] :1]
@@ -172,6 +171,8 @@
 (bearclaw :down PaperWM.actions.focus_down)
 (puppy-paw :down PaperWM.actions.focus_down)
 (PUPPY-PAW :down PaperWM.actions.swap_down)
+(bearclaw :r PaperWM.actions.cycle_width)
+(puppy-paw :r PaperWM.actions.reverse_cycle_width)
 
 (BEARCLAW :p toggle-paperwm)
 
