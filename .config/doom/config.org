@@ -1030,62 +1030,15 @@ tree-sitter version requires a semi-manual setup step to install all the languag
 With apologies to vc-mode, magit is the gold standard. So:
 #+begin_src elisp :noweb yes
 (after! magit
-  <<magit-window-management>>
-
   <<magit-auto-dash>>
 
-  <<magit-sections>>)
-#+end_src
+  <<magit-sections>>
 
-*** nice git conflic resolution hydra
-Gold standard, yes, but not be all and end all. This defines a nice hydra for working with
-files containing git conflicts.
-
-#+begin_src elisp
-;; all thanks and apologies to https://github.com/alphapapa/unpackaged.el
-(use-package! smerge-mode
-  :after (hydra magit)
-  :config
-  (defhydra unpackaged/smerge-hydra
-    (:color pink :hint nil :post (smerge-auto-leave))
-    "
-^Move^       ^Keep^               ^Diff^                 ^Other^
-^^-----------^^-------------------^^---------------------^^-------
-_n_ext       _b_ase               _<_: upper/base        _C_ombine
-_p_rev       _u_pper              _=_: upper/lower       _r_esolve
-^^           _l_ower              _>_: base/lower        _k_ill current
-^^           _a_ll                _R_efine
-^^           _RET_: current       _E_diff
-"
-    ("n" smerge-next)
-    ("p" smerge-prev)
-    ("b" smerge-keep-base)
-    ("u" smerge-keep-upper)
-    ("l" smerge-keep-lower)
-    ("a" smerge-keep-all)
-    ("RET" smerge-keep-current)
-    ("\C-m" smerge-keep-current)
-    ("<" smerge-diff-base-upper)
-    ("=" smerge-diff-upper-lower)
-    (">" smerge-diff-base-lower)
-    ("R" smerge-refine)
-    ("E" smerge-ediff)
-    ("C" smerge-combine-with-next)
-    ("r" smerge-resolve)
-    ("k" smerge-kill-current)
-    ("ZZ" (lambda ()
-            (interactive)
-            (save-buffer)
-            (bury-buffer))
-     "Save and bury buffer" :color blue)
-    ("q" nil "cancel" :color blue))
-  :hook (magit-diff-visit-file . (lambda ()
-                                   (when smerge-mode
-                                     (unpackaged/smerge-hydra/body)))))
+  <<magit-custom-actions>>)
 #+end_src
 
 *** magit status, like the cat in the hat, should clean up after itself
-#+name: magit-window-management
+These are fine to set before magit is initialized, so they are directly tangled instead of injected into the ~after!~  block with noweb shenanigans.
 #+begin_src elisp
   ;; strictly speaking unnecessary (it's the default)
   ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
@@ -1097,7 +1050,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 In scenarios like branch names, whitespace is disallowed. But using the spacebar as a word
 separator is deep, deep muscle memory. Why fight it?
 #+name: magit-auto-dash
-#+begin_src elisp
+#+begin_src elisp :tangle no
   (defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
     (interactive)
     (self-insert-command 1 ?-))
@@ -1107,9 +1060,27 @@ separator is deep, deep muscle memory. Why fight it?
 
 *** magit-status sections
 #+name: magit-sections
-#+begin_src elisp
+#+begin_src elisp :tangle no
 (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
 #+end_src
+
+*** custom actions in magit transients
+#+name: magit-custom-actions
+#+begin_src elisp :tangle no
+(defun amb/magit-checkout-default-branch ()
+  "Check out the default branch of the current repository."
+  (interactive)
+  (let ((default-branch (magit-git-string "rev-parse" "--abbrev-ref" "origin/HEAD")))
+    (when default-branch
+      ;; Strip the 'origin/' part from the branch name
+      (let ((branch (replace-regexp-in-string "^origin/" "" default-branch)))
+        ;; Checkout the branch using Magit
+        (magit--checkout branch)))))
+
+(transient-append-suffix 'magit-branch "b"
+  '("M" "default branch" amb/magit-checkout-default-branch))
+#+end_src
+
 *** dotfiles
 I manage my dotfiles with a bare git repository; this takes a little extra effort to set
 up properly. With a hat tip to [[https://github.com/hylophile/.files/blob/d2d41871bd6a74e4b55fadf44d46613d0bcacb53/.config/doom/config.org#dotfiles][hylo]], from whom much of this is adapted.
@@ -1176,12 +1147,51 @@ projectile-project-root-files-bottom-up)))
 
 (map! :leader "SPC" #'amb/projectile-find-file)
 #+end_src
-*** TODO magit/with-editor/transient-base-map snafu :: delete
-used to go to ~packages.el~; currently seems to be working, but as of <2023-07-15 Sat>,
-there's a bit more testing required before I'm ready to delete this.
-#+begin_src elisp :tangle no
-(package! transient :pin "c2bdf7e12c530eb85476d3aef317eb2941ab9440")
-(package! with-editor :pin "391e76a256aeec6b9e4cbd733088f30c677d965b")
+*** nice git conflic resolution hydra
+Gold standard, yes, but not be all and end all. This defines a nice hydra for working with
+files containing git conflicts.
+
+#+begin_src elisp
+;; all thanks and apologies to https://github.com/alphapapa/unpackaged.el
+(use-package! smerge-mode
+  :after (hydra magit)
+  :config
+  (defhydra unpackaged/smerge-hydra
+    (:color pink :hint nil :post (smerge-auto-leave))
+    "
+^Move^       ^Keep^               ^Diff^                 ^Other^
+^^-----------^^-------------------^^---------------------^^-------
+_n_ext       _b_ase               _<_: upper/base        _C_ombine
+_p_rev       _u_pper              _=_: upper/lower       _r_esolve
+^^           _l_ower              _>_: base/lower        _k_ill current
+^^           _a_ll                _R_efine
+^^           _RET_: current       _E_diff
+"
+    ("n" smerge-next)
+    ("p" smerge-prev)
+    ("b" smerge-keep-base)
+    ("u" smerge-keep-upper)
+    ("l" smerge-keep-lower)
+    ("a" smerge-keep-all)
+    ("RET" smerge-keep-current)
+    ("\C-m" smerge-keep-current)
+    ("<" smerge-diff-base-upper)
+    ("=" smerge-diff-upper-lower)
+    (">" smerge-diff-base-lower)
+    ("R" smerge-refine)
+    ("E" smerge-ediff)
+    ("C" smerge-combine-with-next)
+    ("r" smerge-resolve)
+    ("k" smerge-kill-current)
+    ("ZZ" (lambda ()
+            (interactive)
+            (save-buffer)
+            (bury-buffer))
+     "Save and bury buffer" :color blue)
+    ("q" nil "cancel" :color blue))
+  :hook (magit-diff-visit-file . (lambda ()
+                                   (when smerge-mode
+                                     (unpackaged/smerge-hydra/body)))))
 #+end_src
 
 ** info-mode, or: RTFM

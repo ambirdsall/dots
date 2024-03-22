@@ -479,18 +479,65 @@ the active region will be used."
   )
 
 (after! magit
-  ;; strictly speaking unnecessary (it's the default)
-  ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
-  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-  (setq magit-bury-buffer-function #'magit-restore-window-configuration)
-
   (defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
     (interactive)
     (self-insert-command 1 ?-))
   
   (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
 
-  (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show))))
+  (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
+
+  (defun amb/magit-checkout-default-branch ()
+    "Check out the default branch of the current repository."
+    (interactive)
+    (let ((default-branch (magit-git-string "rev-parse" "--abbrev-ref" "origin/HEAD")))
+      (when default-branch
+        ;; Strip the 'origin/' part from the branch name
+        (let ((branch (replace-regexp-in-string "^origin/" "" default-branch)))
+          ;; Checkout the branch using Magit
+          (magit--checkout branch)))))
+  
+  (transient-append-suffix 'magit-branch "b"
+    '("M" "default branch" amb/magit-checkout-default-branch)))
+
+;; strictly speaking unnecessary (it's the default)
+;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
+(setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+(setq magit-bury-buffer-function #'magit-restore-window-configuration)
+
+(defun amb/magit-status-with-dotfiles-fallback ()
+  (interactive)
+  (if (magit-gitdir)
+      (magit-status)
+    (magit-status "~/")))
+
+(map! :after magit :leader "g g" #'amb/magit-status-with-dotfiles-fallback)
+
+;; from https://github.com/magit/magit/issues/460
+
+(defun amb/magit-process-environment (env)
+  "Add GIT_DIR and GIT_WORK_TREE to ENV when in a special directory."
+  (let ((here (file-name-as-directory (expand-file-name default-directory)))
+        (home (expand-file-name "~/")))
+    (when (string= here home)
+      (let ((gitdir (expand-file-name "~/.dots/")))
+        (push (format "GIT_WORK_TREE=%s" home) env)
+        (push (format "GIT_DIR=%s" gitdir) env))))
+  env)
+
+(advice-add 'magit-process-environment
+            :filter-return #'amb/magit-process-environment)
+
+(defun amb/magit-stage-file ()
+  (interactive)
+  (if (magit-gitdir)
+      (call-interactively #'magit-stage-file)
+      (shell-command (concat
+                      "git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME add "
+                      (buffer-file-name))
+                     t)))
+
+(map! :after magit :leader "g S" #'amb/magit-stage-file)
 
 ;; all thanks and apologies to https://github.com/alphapapa/unpackaged.el
 (use-package! smerge-mode
@@ -532,53 +579,6 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :hook (magit-diff-visit-file . (lambda ()
                                    (when smerge-mode
                                      (unpackaged/smerge-hydra/body)))))
-
-;; strictly speaking unnecessary (it's the default)
-;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
-(setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-(setq magit-bury-buffer-function #'magit-restore-window-configuration)
-
-(defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
-  (interactive)
-  (self-insert-command 1 ?-))
-
-(advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
-
-(setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
-
-(defun amb/magit-status-with-dotfiles-fallback ()
-  (interactive)
-  (if (magit-gitdir)
-      (magit-status)
-    (magit-status "~/")))
-
-(map! :after magit :leader "g g" #'amb/magit-status-with-dotfiles-fallback)
-
-;; from https://github.com/magit/magit/issues/460
-
-(defun amb/magit-process-environment (env)
-  "Add GIT_DIR and GIT_WORK_TREE to ENV when in a special directory."
-  (let ((here (file-name-as-directory (expand-file-name default-directory)))
-        (home (expand-file-name "~/")))
-    (when (string= here home)
-      (let ((gitdir (expand-file-name "~/.dots/")))
-        (push (format "GIT_WORK_TREE=%s" home) env)
-        (push (format "GIT_DIR=%s" gitdir) env))))
-  env)
-
-(advice-add 'magit-process-environment
-            :filter-return #'amb/magit-process-environment)
-
-(defun amb/magit-stage-file ()
-  (interactive)
-  (if (magit-gitdir)
-      (call-interactively #'magit-stage-file)
-      (shell-command (concat
-                      "git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME add "
-                      (buffer-file-name))
-                     t)))
-
-(map! :after magit :leader "g S" #'amb/magit-stage-file)
 
 (add-to-list '+evil-collection-disabled-list 'info)
 (set-evil-initial-state! 'info-mode 'emacs)
