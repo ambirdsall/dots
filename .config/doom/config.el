@@ -474,7 +474,9 @@ the active region will be used."
 ")))
 
 (use-package! yaml-pro
-  :config (add-to-list 'auto-mode-alist '("\\.ya?ml'" . yaml-pro-ts-mode)))
+  :hook (yaml-mode . yaml-pro-mode)
+  :hook (yaml-mode . yaml-pro-ts-mode)
+  )
 
 (after! magit
   ;; strictly speaking unnecessary (it's the default)

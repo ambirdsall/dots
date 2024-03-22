@@ -1013,9 +1013,18 @@ hideously copy-pasted near-duplicate will have to do.
 
 #+begin_src elisp
 (use-package! yaml-pro
-  :config (add-to-list 'auto-mode-alist '("\\.ya?ml'" . yaml-pro-ts-mode)))
+  :hook (yaml-mode . yaml-pro-mode)
+  :hook (yaml-mode . yaml-pro-ts-mode)
+  )
 #+end_src
 
+This was my OG config; it is not as nice as using a hook, and doesn't use the
+tree-sitter-enabled version of ~yaml-pro-mode~. Here for reference, and because the
+tree-sitter version requires a semi-manual setup step to install all the language servers.
+#+begin_src elisp :tangle no
+(use-package! yaml-pro
+  :config (add-to-list 'auto-mode-alist '("\\.ya?ml'" . yaml-pro-mode)))
+#+end_src
 * configuring packages that feel like emacs apps
 ** {ma,}git
 With apologies to vc-mode, magit is the gold standard. So:
