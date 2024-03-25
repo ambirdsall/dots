@@ -1,13 +1,5 @@
 #+title: How to setup a computer on different operating systems
 
-* MacOS
-** Install homebrew
-** TODO create =~/lib/brew-deps= and =~/sbin/macos-install=
-** Install Karabiner Elements
-*** TODO export karabiner settings to JSON, track with dotfiles, and document import
-
-** Install hammerspoon
-
 * linux
 ** distro-specific setup
 *** arch
@@ -39,7 +31,37 @@ sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-releas
 #+end_src
 
 **** run =~/sbin/fedora-install=
-If you are on x86, rather than ARM, add the ~--with-copr~ flag to the script invocation.
+If you are on x86, rather than ARM, add the ~--with-copr~ flag to the script invocation;
+otherwise, you'll have to manually enable COPR repos (there's a list in =~lib/copr-repos=,
+but you won't be able to use packages from all of them, as some are x86-specific).
+
+**** install docker
+Use the documentation [[https://developer.fedoraproject.org/tools/docker/docker-installation.html][here]], or if you trust this document to be up-to-date follow along:
+
+Add the docker-ce repository:
+#+begin_src shell
+# install the necessary packages
+sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+sudo dnf install docker-ce docker-ce-cli containerd.io
+
+# use docker without sudo
+sudo groupadd docker && sudo gpasswd -a ${USER} docker
+newgrp docker
+
+# autostart docker daemon
+sudo systemctl enable docker
+
+# verify:
+docker run hello-world
+#+end_src
+
+* MacOS
+** Install homebrew
+** TODO create =~/lib/brew-deps= and =~/sbin/macos-install=
+** Install Karabiner Elements
+*** TODO export karabiner settings to JSON, track with dotfiles, and document import
+
+** Install hammerspoon
 
 * Securely migrating the contents of a home directory
 To create an encrypted tarball of the directory, run:
