@@ -20,3 +20,4 @@ key_up=Control_L-p,Up
 # key_down=Down
 key_down=Control_L-n,Down
 key_exit=Control_L-g,Escape
+key_expand=Control_L-Space
