@@ -1,0 +1,28 @@
+#+title: Syncing keybindings for GNOME and PaperWM
+
+It is a little silly to have to go through such a song and dance to programmatically sync
+some keybinding settings, but this is what happens when settings aren't managed in plain
+text files. Ah, me.
+
+* The contents of this directory were programmatically generated
+Odds are good that if you're reading this
+1) you're me; or at least
+2) you have installed the dotfiles repo these are tracked in,
+but nevertheless I slapped a ~mkdir -p~ in front of the following command just in case you,
+dear reader, want to copy-paste this from a different computer. To (re)create keybinding
+dumps like those in this directory, run the following:
+#+begin_src shell
+mkdir -p ~/lib/gnome-keybindings
+for kbs in $(gsettings list-schemas | rg -S keybindings); do
+  dconf dump $(echo "/$kbs/" | sed "s_\._/_g") > ~/lib/gnome-keybindings/$kbs
+done
+#+end_src
+
+* To install these keybindings in another computer
+Each filename here maps to its corresponding schema/namespace in gsettings and dconf
+because life is too short to do manual computer work when you don't have to:
+#+begin_src shell :results none
+for kbs in $(ls | grep -v readme); do
+  cat $kbs | dconf load $(echo "/$kbs/" | sed "s_\._/_g")
+done
+#+end_src
