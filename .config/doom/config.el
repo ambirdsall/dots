@@ -533,7 +533,7 @@ the active region will be used."
   (if (magit-gitdir)
       (call-interactively #'magit-stage-file)
       (shell-command (concat
-                      "git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME add "
+                      "git --git-dir=$HOME/.dots/ --work-tree=$HOME add "
                       (buffer-file-name))
                      t)))
 
