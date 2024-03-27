@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Hello! Let's get your vim setup properly as a decent minimal fallback for
+# doom emacs.
+
+# This script handes installing packages via the native package management
+# feature of vim 8+; if that's not installed, then there's no point in
+# continuing further.
+
+if ! vim --version | grep '+packages' > /dev/null; then
+  echo "You must have a version of vim that supports the +packages feature to use this script" >&2
+  exit 1
+fi
+
+# Hokay! First we define a helper function to install a package iff it isn't
+# already there (idempotence is a good thing, kids!).
+pkg_install () {
+  local pkg_base_dir="$1"
+  local pkg_git_url="$2"
+
+  local repo_name
+  repo_name=$(basename -s .git "$pkg_git_url")
+
+  local target_dir="$pkg_base_dir/$repo_name"
+
+  if [ ! -d "$target_dir" ]; then
+    git clone "$pkg_git_url" "$target_dir"
+  else
+    echo "$repo_name: ✅"
+  fi
+}
+
+
+# Now we get down to side effects^H^H^H^H^H^H^H^H^H^H^H^H^H brass tacks: we
+# ensure the right directory exists and then define a list of git urls for
+# packages to install. Everything here on out goes in a function so we can use
+# locally-scoped variables to our hearts' content (that's right, kids, don't
+# pollute):
+
+main () {
+  local packages=(
+    git@github.com:tpope/vim-sensible.git
+    git@github.com:tpope/vim-surround.git
+    git@github.com:tommcdo/vim-exchange.git
+    git@github.com:inkarkat/vim-ReplaceWithRegister.git
+    git@github.com:vim-airline/vim-airline.git
+    git@github.com:liuchengxu/vim-which-key.git
+    git@github.com:tpope/vim-repeat.git
+    git@github.com:tpope/vim-commentary.git
+    git@github.com:airblade/vim-gitgutter.git
+    git@github.com:easymotion/vim-easymotion.git
+  )
+  local vim_pkg_dir=~/.vim/pack/doomesque/start
+  mkdir -p $vim_pkg_dir
+
+  for pkg in "${packages[@]}"; do
+    pkg_install "$vim_pkg_dir" "$pkg"
+  done
+}
+
+main
