@@ -1,10 +1,10 @@
-#+title: keyd setup
+#+title: My keyd setup
 
-* Prerequisites
+* Installation
 
-** linux
+First off, ~keyd~ is strictly a linux program, so if you're on macOS, too bad.
 
-** keyd installed
+** 1 :: install keyd
 Very easy to do from source; cf. https://github.com/rvaiya/keyd.
 #+begin_src shell
 cd ~/c
@@ -12,12 +12,12 @@ git clone https://github.com/rvaiya/keyd
 cd keyd
 make && sudo make install
 #+end_src
-** config installed
+** 2 :: install config
 The config:
 #+begin_src shell
 sudo cp default.conf /etc/keyd/default.conf
 #+end_src
-** keyd running
+** 3 :: put the keyd in the ignitiond
 #+begin_src shell
 sudo systemctl enable keyd && sudo systemctl start keyd
 #+end_src

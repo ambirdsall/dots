@@ -3,10 +3,12 @@ Description=Kmonad keyboard remapper
 Documentation=https://github.com/kmonad/kmonad
 
 [Service]
+Restart=always
+RestartSec=3
+ExecStart=/usr/bin/kmonad %E/kmonad/kmonad.kbd
 Environment=PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/bin
 Environment=DISPLAY=:0
-Type=simple
-ExecStart=/usr/bin/kmonad %E/kmonad/kmonad.kbd
+Nice=-20
 
 [Install]
 WantedBy=default.target
