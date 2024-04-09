@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+if ! command -v brew > /dev/null; then
+  echo "Command 'brew' not found!"
+  echo "Please install homebrew and try again"
+  open https://brew.sh
+  exit 1
+fi
+
+taps=(d12frosted/emacs-plus homebrew/cask-fonts homebrew/services)
+
+for tap in "${taps[@]}"; do
+  brew tap $tap
+done
+
+# formulae that need custom flags just get explicitly installed like the special snowflakes they are
+brew install emacs-plus --with-native-comp --with-poll --with-xwidgets --with-no-frame-refocus --with-mailutils --with-modern-doom3-icon
+
+# let 'er rip
+for pkg in $(cat ~/lib/brew-cask); do
+  brew install --cask "$pkg"
+done
+
+for pkg in $(cat ~/lib/brew-formulae); do
+  brew install "$pkg"
+done

@@ -1,0 +1,83 @@
+#!/usr/bin/env zsh
+
+# Function to confirm and set defaults write command
+confirm_to_set() {
+  local description="$1"
+  shift
+  local cmd="defaults write $@"
+  
+  echo "Would you like to $description? The command is:"
+  echo -e "\t$cmd\n"
+  echo -n "[y/N] "
+  read answer
+  if [[ $answer =~ ^[Yy]$ ]]; then
+    echo "running '$cmd'..."
+    eval "$cmd"
+  fi
+  echo "\n"
+}
+
+# Function to confirm and run a command
+confirm_to_run_cmd() {
+  local description="$1"
+  shift
+  local cmd="$@"
+  
+  echo "Would you like to $description? The command is:"
+  echo -e "\t$cmd\n"
+  echo -n "[y/N] "
+  read answer
+  if [[ $answer =~ ^[Yy]$ ]]; then
+    echo "running '$cmd'..."
+    eval "$cmd"
+  fi
+  echo "\n"
+}
+
+# Ask for the administrator password upfront
+echo "Some commands require admin privileges; please enter your 'sudo' password to enable me to set them."
+sudo -v
+
+# Keep-alive: update existing `sudo` time stamp until `.osx` has finished
+while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+
+###############################################################################
+# General UI/UX                                                               #
+###############################################################################
+confirm_to_set "disable the sound effects on boot" nvram SystemAudioVolume=" "
+confirm_to_set "disable smart quotes as they’re annoying when typing code" NSGlobalDomain NSAutomaticQuoteSubstitutionEnabled -bool false
+confirm_to_set "disable smart dashes as they’re annoying when typing code" NSGlobalDomain NSAutomaticDashSubstitutionEnabled -bool false
+confirm_to_set "disable “natural” (Lion-style) scrolling" NSGlobalDomain com.apple.swipescrolldirection -bool false
+confirm_to_set "enable full keyboard access for all controls" NSGlobalDomain AppleKeyboardUIMode -int 3
+confirm_to_set "use scroll gesture with the Ctrl (^) modifier key to zoom" com.apple.universalaccess closeViewScrollWheelToggle -bool true
+confirm_to_set "follow the keyboard focus while zoomed in" com.apple.universalaccess closeViewZoomFollowsFocus -bool true
+confirm_to_set "set a blazingly fast keyboard repeat rate" NSGlobalDomain KeyRepeat -int 1
+confirm_to_set "disable auto-correct" NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+confirm_to_set "save screenshots in PNG format" com.apple.screencapture type -string "png"
+confirm_to_set "go fuck yourself, iTunes" com.apple.iTunes StoreActivationMode -integer 1
+
+###############################################################################
+# Finder                                                                      #
+###############################################################################
+confirm_to_set "make Finder quittable" com.apple.finder QuitMenuItem -bool true
+confirm_to_run_cmd "show the ~/Library folder" chflags nohidden ~/Library
+confirm_to_run_cmd "show the /Volumes folder" sudo chflags nohidden /Volumes
+confirm_to_set "display full POSIX path as Finder window title" com.apple.finder _FXShowPosixPathInTitle -bool true
+
+###############################################################################
+# Dock, Dashboard, and hot corners                                            #
+###############################################################################
+confirm_to_set "make Dock icons of hidden applications translucent" com.apple.dock showhidden -bool true
+
+###############################################################################
+# Photos                                                                      #
+###############################################################################
+confirm_to_set "prevent Photos from opening automatically when devices are plugged in" com.apple.ImageCapture disableHotPlug -bool true
+
+###############################################################################
+# Messages                                                                    #
+###############################################################################
+confirm_to_set "disable automatic emoji substitution" com.apple.messageshelper.MessageController SOInputLineSettings -dict-add "automaticEmojiSubstitutionEnablediMessage" -bool false
+confirm_to_set "disable smart quotes as it’s annoying for messages that contain code" com.apple.messageshelper.MessageController SOInputLineSettings -dict-add "automaticQuoteSubstitutionEnabled" -bool false
+confirm_to_set "disable continuous spell checking" com.apple.messageshelper.MessageController SOInputLineSettings -dict-add "continuousSpellCheckingEnabled" -bool false
+confirm_to_set "prevent a sneaky bug with escape key with emacs" org.gnu.Emacs NSAppSleepDisabled -bool YES
