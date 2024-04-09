@@ -115,9 +115,28 @@ I was raised by and around a bunch of earnest, wordy people; deal with it.
        ns-function-modifier 'super)
 #+end_src
 
+** trouble? shoot it.
 Sometimes on macOS, emacs will throw a constant stream of errors that end with "Too many open files" all over itself. The solution, per [[https://www.blogbyben.com/2022/05/gotcha-emacs-on-mac-os-too-many-files.html][this blog post]]?
 #+begin_src elisp :tangle no
 (file-notify-rm-all-watches)
+#+end_src
+
+Also, I have had certain macOS computers on which emacs consistently has a misdefined
+~woman-manpath~, which is weird! Particularly since ~(describe-variable 'woman-manpath)~
+will report a functioning, correct-looking original value. If this hits you, you'll need
+to reset the value in =~/.config/doom/local.el= so it's manually set correctly. Or rerun
+~doom env~ on the command line in a context where ~MANPATH~ is correct. Here is a minimal
+(i.e. with all nonstandard and/or versioned paths from language-specific package manager
+installation locations removed) reference version:
+#+begin_src elisp :tangle no
+(setq! woman-manpath
+       '("/opt/homebrew/share/man/"
+         "/usr/share/man/"
+         "/usr/local/share/man/"
+         "/usr/share/man"
+         "/usr/local/share/man"
+         "/usr/X11/man"
+         "/Library/Apple/usr/share/man"))
 #+end_src
 
 * appearance
