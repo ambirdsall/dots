@@ -90,17 +90,6 @@
 ;; (bearclaw :up window/top-half)
 ;; (bearclaw :right window/right-half)
 
-;; ;; (local windows-prefix
-;; ;;        (let [modal (hs.hotkey.modal.new)]
-;; ;;          (modal:bind [] :h )))
-
-;; ** spacehammer
-;; (local dev-switcher (hs.window.switcher.new ["Emacs" "WezTerm"]))
-;; (local dev-windows (hs.window.filter.new ["Emacs" "WezTerm" "Google Chrome"]))
-;; (spacehammer :space #(hs.hints.windowHints (dev-windows:getWindows)))
-;; (spacehammer :d #(dev-switcher:next))
-;; (hs.console.darkMode false)
-
 ;; * PaperWM
 (local PaperWM (hs.loadSpoon :PaperWM))
 

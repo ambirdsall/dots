@@ -9,8 +9,6 @@ fi
 
 mkdir -p $hammer/Spoons
 
-git clone  $hammer/Spoons/ModalMgr.spoon
-
 git clone git@github.com:ambirdsall/PaperWM.spoon.git $hammer/Spoons/PaperWM.spoon
 git remote add origin git@github.com:ambirdsall/PaperWM.spoon.git
 git remote add origin git@github.com:ambirdsall/PaperWM.spoon.git
