@@ -3,9 +3,15 @@
 (setq user-full-name "Alex Birdsall"
       user-mail-address "ambirdsall@gmail.com")
 
+(defvar amb/computer-specific-config (expand-file-name "local.el" doom-private-dir)
+  "A file for computer-specific config, hidden from git; for
+example, configuration for a work computer and its (possibly
+private) product projects.")
+
 (map! :leader
       :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
-      :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir))))
+      :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
+      :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
 
 (defvar +literate-tangle--proc nil)
 (defvar +literate-tangle--proc-start-time nil)
@@ -674,15 +680,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (use-package! gptel)
 
-(defvar amb/computer-specific-config (expand-file-name "local.el" doom-private-dir)
-  "A file for computer-specific config, hidden from git; for
-example, configuration for a work computer and its (possibly
-private) product projects.")
-
 (let ((amb/computer-specific-config (concat doom-private-dir "local.el")))
   (and (file-exists-p amb/computer-specific-config) (load amb/computer-specific-config)))
-
-(map! :leader
-      :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
 
 (setq confirm-kill-emacs nil)

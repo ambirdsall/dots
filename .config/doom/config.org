@@ -30,9 +30,15 @@ Some functionality uses this to identify you, e.g. GPG configuration, email clie
 
 ** shortcuts to open doom config file(s)
 #+begin_src elisp
+(defvar amb/computer-specific-config (expand-file-name "local.el" doom-private-dir)
+  "A file for computer-specific config, hidden from git; for
+example, configuration for a work computer and its (possibly
+private) product projects.")
+
 (map! :leader
       :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
-      :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir))))
+      :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
+      :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
 #+end_src
 
 ** TODO what kind of spaceship doesn't come with a spedometer? :: disable tangling, leave as breakcrumb
@@ -1386,16 +1392,8 @@ because ~setq~ is a macro) and everything went to heck.
 This snippet loads a computer-specific config file if it's present. It goes
 last, giving me a convenient place for ad hoc overrides of any setting in here.
 #+begin_src elisp
-(defvar amb/computer-specific-config (expand-file-name "local.el" doom-private-dir)
-  "A file for computer-specific config, hidden from git; for
-example, configuration for a work computer and its (possibly
-private) product projects.")
-
 (let ((amb/computer-specific-config (concat doom-private-dir "local.el")))
   (and (file-exists-p amb/computer-specific-config) (load amb/computer-specific-config)))
-
-(map! :leader
-      :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
 #+end_src
 * appendices
 ** top-of-file preambles
