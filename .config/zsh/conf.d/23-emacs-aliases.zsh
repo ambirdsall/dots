@@ -15,6 +15,11 @@ EE () {
   emacs "$@" & disown
 }
 
+# No idea why the fuck the current session isn't starting properly?
+EEE () {
+  emacsclient -c --socket-name=interminable --alternate-editor="emacs --daemon=interminable --debug-init" "$@" & disown
+}
+
 # sometimes in life, you don't have emacs installed on a new computer yet.
 # These also tend to be times when you open config files a lot! And even when
 # you do have emacs installed, cracking open a config/alias/whatever file is
