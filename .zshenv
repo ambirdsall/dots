@@ -50,6 +50,10 @@ if _at_hand emacs; then
     }
 fi
 
+if [[ $XDG_SESSION_TYPE -eq wayland ]]; then
+    export MOZ_ENABLE_WAYLAND=1
+fi
+
 if [ -s "$HOME/.guix-profile" ]; then
     GUIX_PROFILE="$HOME/.guix-profile"
     GUIX_LOCPATH="$GUIX_PROFILE/lib/locale"
