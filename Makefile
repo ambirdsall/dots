@@ -7,7 +7,7 @@
 
 .POSIX:
 .SUFFIXES:
-.PHONY: x11 wayland
+.PHONY: brew-deps defaults-write
 
 install: .emacs.d tpm
 
@@ -18,16 +18,18 @@ install: .emacs.d tpm
 tpm:
 	git clone git@github.com:tmux-plugins/tpm ~/.tmux/plugins/tpm
 
-x11:
-	systemctl --user enable xmodmap xcape
-	systemctl --user start xmodmap xcape
+linux: c/keyd
 
-wayland: /usr/bin/kmonad .config/kmonad/kmonad.kbd
-	systemctl --user enable kmonad
-	systemctl --user start kmonad
+c/keyd:
+	~/.config/keyd/init.sh
 
-/usr/bin/kmonad:
-	bash ~/.config/kmonad/linux-build-from-docker.sh
+macos: brew-deps defaults-write .hammerspoon
 
-.config/kmonad/kmonad.kbd:
-	emacs -nw ~/.config/kmonad/config.org
+brew-deps:
+	~/sbin/macos-install
+
+defaults-write:
+	~/sbin/macos-write-defaults
+
+.hammerspoon:
+	~/.config/hammerspoon/init_spoons.sh

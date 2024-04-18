@@ -57,11 +57,9 @@ docker run hello-world
 
 * MacOS
 ** Install homebrew
-** TODO create =~/lib/brew-deps= and =~/sbin/macos-install=
-** Install Karabiner Elements
-*** TODO export karabiner settings to JSON, track with dotfiles, and document import
-
-** Install hammerspoon
+** run =~/sbin/macos-install= and =~/sbin/macos-write-defaults=
+Don't forget to run ~killall Dock~ after =~/sbin/macos-write-defaults=
+** run ~make macos~
 
 * Securely migrating the contents of a home directory
 To create an encrypted tarball of the directory, run:

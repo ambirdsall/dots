@@ -28,6 +28,12 @@ If you've already installed emacs, you can now run
   make install
 #+END_SRC
 
+followed by whichever of the following is appropriate
+#+begin_src shell
+  make linux
+  make macos
+#+end_src
+
 * managing this git directory
 The =~/bin/dots= file provides a =dots= command to handle all interaction with the git repo. It wraps
 ~git~, passing the correct directories to ~--git-dir~ and ~--work-tree~ and paving a few common paths: it
