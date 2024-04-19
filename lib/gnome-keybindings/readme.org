@@ -11,10 +11,18 @@ Odds are good that if you're reading this
 but nevertheless I slapped a ~mkdir -p~ in front of the following command just in case you,
 dear reader, want to copy-paste this from a different computer. To (re)create keybinding
 dumps like those in this directory, run the following:
-#+begin_src shell
+#+begin_src shell :results none
 mkdir -p ~/lib/gnome-keybindings
 for kbs in $(gsettings list-schemas | rg -S keybindings); do
   dconf dump $(echo "/$kbs/" | sed "s_\._/_g") > ~/lib/gnome-keybindings/$kbs
+done
+
+for ext in $(dconf list /org/gnome/shell/extensions/); do
+  ext_name=$(echo $ext | tr -d /)
+  ext_kbs="$(dconf dump /org/gnome/shell/extensions/$ext_name/keybindings/)"
+  if [ $(echo $ext_kbs | wc -l) -gt 1 ]; then
+    echo $ext_kbs > ~/lib/gnome-keybindings/org.gnome.shell.extensions.$ext_name.keybindings
+  fi
 done
 #+end_src
 
