@@ -1,0 +1,28 @@
+#!/usr/bin/env zsh
+
+# The "t" in "t.up" stands for "tmux"; the filename was originally "tmux-up", but this one
+# autocompletes much better.
+
+create_session () {
+    local dir="$1"
+    local session_name=${2:-$(basename "$dir")}
+
+    cd "$dir"
+    tmux new-session -d -s "$session_name"
+}
+
+main () {
+    create_session "$HOME/.config" dots
+    create_session "$HOME" home
+
+    # by all means, set up computer-specific sessions to always start; `create_session`
+    # will be in scope
+    [ -f ~/bin/_tmux-up-local ] && source ~/bin/_tmux-up-local
+
+    # skip attaching if called with `-d` arg, following tmux convention
+    if [[ "$1" != "-d" ]]; then
+        tmux attach-session -t "${DEFAULT_TMUX_SESSION:-home}"
+    fi
+}
+
+main "$@"
