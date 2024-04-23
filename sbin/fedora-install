@@ -1,7 +1,36 @@
 #!/bin/bash
 
-case $1 in
-  --with-copr) for repo in $(cat ~/lib/copr-repos); do sudo dnf copr enable $repo; done ;;
-esac
+enable_copr_repos () {
+  for repo in $(cat ~/lib/copr-repos); do sudo dnf copr enable $repo; done
+}
 
-sudo dnf install $(cat ~/lib/fedora-deps)
+enable_third_party_rpm_repos () {
+  local state_file
+  state_file="$1"
+  sh ~/lib/rpm-repos.sh
+  date > $state_file
+}
+
+main () {
+  local rpm_repos_sync_state_file="$HOME/.local/state/dots-rpm-repos.last-synced"
+  local args=("$@")
+
+  for ((i=0; i<"${#args[@]}"; i++)); do
+    local arg="${args[i]}"
+
+    case $1 in
+      --with-copr) enable_copr_repos ;;
+      --with-rpm-repos) enable_third_party_rpm_repos $rpm_repos_sync_state_file ;;
+    esac
+  done
+
+  if [ ! -f $rpm_repos_sync_state_file ]; then
+    enable_third_party_rpm_repos $rpm_repos_sync_state_file
+  elif [ `date -r ~/lib/rpm-repos.sh +%s` -gt `date -f $rpm_repos_sync_state_file +%s` ]; then
+    enable_third_party_rpm_repos $rpm_repos_sync_state_file
+  fi
+
+  sudo dnf install $(cat ~/lib/fedora-deps)
+}
+
+main "$@"
