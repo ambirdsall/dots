@@ -2,7 +2,7 @@
 
 # alias e="qed"
 e () {
-  emacsclient -nw --socket-name=tty --alternate-editor="" "$@"
+  emacsclient -nw --socket-name=ttylated --alternate-editor="" "$@"
 }
 
 E () {
