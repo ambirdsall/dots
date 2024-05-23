@@ -1,6 +1,6 @@
 #!/usr/bin/env zsh
 
-if _at_hand bat; then
+if dots/at_hand bat; then
   showme () {
     bat $(which $1)
   }

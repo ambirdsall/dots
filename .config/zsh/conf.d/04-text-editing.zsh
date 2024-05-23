@@ -3,7 +3,7 @@
 export PATH=$PATH:$HOME/.emacs.d/bin/
 # how on earth am I supposed to use a url bar I can't jump around with emacs shortcuts
 if [ ! $IS_MAC ]; then
-    _at_hand gsettings && gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
+    dots/at_hand gsettings && gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
 fi
 
 # use vim mode, but with the standard set of emacs-style keychords defined in insert mode

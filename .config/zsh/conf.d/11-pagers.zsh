@@ -1,11 +1,11 @@
 #!/usr/bin/env zsh
 
-if _at_hand bat; then
+if dots/at_hand bat; then
     export PAGER='bat --plain'
     export MANPAGER="bat -l man -p"
 fi
 
-if _at_hand doom; then
+if dots/at_hand doom; then
     emacsman () {
         emacsclient -nw -e "
         (let ((Man-notify-method 'bully))
