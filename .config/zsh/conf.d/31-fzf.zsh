@@ -8,4 +8,8 @@ if dots/at_hand fzf; then
   cdf() {
     pushd $(dirname $(find . -type f | grep -vE '.tmp-*|.git|node_modules|bower_components|DS_Store' | fzf --preview 'bat --color=always {}'))
   }
+
+  if dots/at_hand fzf-tmux; then
+    alias fzf=fzf-tmux
+  fi
 fi
