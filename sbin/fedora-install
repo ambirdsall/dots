@@ -21,6 +21,7 @@ main () {
     case $1 in
       --with-copr) enable_copr_repos ;;
       --with-rpm-repos) enable_third_party_rpm_repos $rpm_repos_sync_state_file ;;
+      --all) enable_copr_repos; enable_third_party_rpm_repos $rpm_repos_sync_state_file ;;
     esac
   done
 
