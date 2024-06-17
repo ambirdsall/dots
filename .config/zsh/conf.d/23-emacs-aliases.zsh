@@ -56,6 +56,6 @@ slay () {
 alias tetris='emacs -q --no-splash -f tetris'
 
 unicode () {
-   emacsclient -nw --socket-name=tty --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
+   emacsclient -nw --socket-name=ttylated --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
    echo "Copied $(pbpaste) to the clipboard"
 }
