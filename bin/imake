@@ -1,0 +1,28 @@
+#!/bin/sh
+
+# imake: interactive make
+# use this when you can't remember the exact name of the make task you want to run
+
+# Default Makefile name
+makefile="${1:-Makefile}"
+
+# Check if the Makefile exists
+if [ ! -f "$makefile" ]; then
+    echo "Error: $makefile not found"
+    exit 1
+fi
+
+# Extract tasks from Makefile and filter with gum
+selected_task=$(grep -oE '^[a-zA-Z0-9_-]+:' "$makefile" | sed 's/://' | gum filter)
+
+# Check if a task was selected
+if [ -n "$selected_task" ]; then
+    # real Gs move in silence like lasagna, but real polite scripts need to tell you what
+    # the hell they're doing from time to time
+    echo running:
+    echo "	make -f \"$makefile\" \"$selected_task\""
+    # Run the selected task with make
+    make -f "$makefile" "$selected_task"
+else
+    echo "No task selected"
+fi
