@@ -672,6 +672,15 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package! ox-gfm
   :after org)
 
+;; accept completion from copilot and fallback to company
+(use-package! copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . 'copilot-accept-completion-by-word)
+              ("TAB" . 'copilot-accept-completion-by-word)
+              ("C-TAB" . 'copilot-accept-completion)
+              ("C-<tab>" . 'copilot-accept-completion)))
+
 (use-package! gptel)
 
 (let ((amb/computer-specific-config (concat doom-private-dir "local.el")))

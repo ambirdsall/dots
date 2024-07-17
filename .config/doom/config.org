@@ -1383,12 +1383,12 @@ because ~setq~ is a macro) and everything went to heck.
 
 ** "I hear lisp is good for AI"
 *** copilot
-#+begin_src elisp :tangle (or "no" "packages.el")
+#+begin_src elisp :tangle "packages.el"
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
 #+end_src
 
-#+begin_src elisp :tangle no
+#+begin_src elisp
 ;; accept completion from copilot and fallback to company
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
