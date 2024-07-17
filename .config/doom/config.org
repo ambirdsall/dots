@@ -535,7 +535,6 @@ navigating up a split in all my various terminal contexts. Pour one out, we had 
 (use-package! evil-tmux-navigator
   :config (evil-tmux-navigator-bind-keys))
 #+end_src
-
 *** replace with register
 #+begin_src elisp :tangle packages.el
 (package! evil-replace-with-register)
@@ -680,16 +679,26 @@ If they're in org, that's good for notes and I can still write/exec code
 #+end_src
 
 ** don't automatically open a new workspace for each new emacsclient frame
-I like freely opening client instances in the terminal and i3 alike.
+I like freely opening client instances in the terminal and desktop environment alike; when
+doing so, a 1:1 mapping with workspaces quickly creates a terrible clutter.
 #+begin_src elisp
 (after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
 #+end_src
+
+** TODO ace-window
 * work nicely with the surrounding computer
 ** clipboard
+By default, editing stuff in emacs shouldn't pollute the system clipboard:
 #+begin_src elisp
 (setq! select-enable-clipboard nil)
+
+#+end_src
+
+Pasting from the system clipboard should be easy:
+#+begin_src elisp
 (map! "C-M-y" #'clipboard-yank)
 
+#+end_src
 (defun copy-to-clipboard (string)
   "Copies `STRING' to the system clipboard and the kill ring. When called interactively,
 the active region will be used."
@@ -809,7 +818,7 @@ here's a snippet to install you some language libraries
 (mapc #'treesit-install-language-grammar
       (mapcar #'car treesit-language-source-alist))
 #+end_src
-** IDE shit
+** non-language-specific IDE shit
 The gold standard for LSP is VSCode; this goes triply for web development, which uh ✷checks notes✷ is my job.
 
 This is organized by features and is an exercise in aspiration-driven development.  Each
