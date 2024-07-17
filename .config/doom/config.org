@@ -502,10 +502,19 @@ a command on region both.
       :desc "increment at point" "nk" #'increment-number-at-point)
 #+end_src
 ** completion
+*** built-in completions
 Might as well use the more powerful built-in expansion system:
 #+begin_src elisp
 (map! [remap dabbrev-expand] #'hippie-expand)
 #+end_src
+
+*** company-mode
+Turns out, I get extremely annoyed when emacs lags because ispell is second-guessing my
+writing the english language!
+#+begin_src elisp
+(setq company-global-modes '(not text-mode org-mode))
+#+end_src
+
 ** an opinionated mix of the vim and emacs keybinding schemes
 *** [DEPRECATED] wait, is this split two tmux panes or two emacs windows?
 +WHO CARES+

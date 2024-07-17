@@ -255,6 +255,8 @@ used interactively."
 
 (map! [remap dabbrev-expand] #'hippie-expand)
 
+(setq company-global-modes '(not text-mode org-mode))
+
 (use-package! evil-replace-with-register
   :init (setq evil-replace-with-register-key (kbd "gr"))
   :config (evil-replace-with-register-install))
