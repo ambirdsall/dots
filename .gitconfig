@@ -2,16 +2,19 @@
 	name = Alex Birdsall
 	email = ambirdsall@gmail.com
 [alias]
+	# Accepts an unquoted commit message if provided, otherwise opens editor
 	c = "!_f(){ [ $# -gt 0 ] && git commit -m \"$*\" || git commit -v; };_f"
+	# extend the prior commit with currently-staged changes
+	ce = commit --amend --reuse-message=HEAD
 	co = checkout
 	d = diff
 	dc = diff --cached
 	p = add -p
 	l = log --oneline
+	# your most recently checked out refs, deduped
 	latest = "!git reflog | grep checkout: | awk '{print $6}' | awk '!H[$0]++'"
+	# a safer force push
 	shove = push --force-with-lease
-	l = log --oneline
-	extend = commit --amend --reuse-message=HEAD
 [rerere]
 	enabled = true
 [github]
