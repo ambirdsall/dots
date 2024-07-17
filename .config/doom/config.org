@@ -928,6 +928,11 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
   :after lsp)
 #+end_src
 ** there are more languages under the sun than ~:lang~ can speak
+*** python
+#+begin_src elisp
+(after! dap-mode
+  (setq dap-python-debugger 'debugpy))
+#+end_src
 *** fennel
 #+begin_src elisp :tangle packages.el
 (package! fennel-mode)

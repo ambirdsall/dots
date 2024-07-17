@@ -458,6 +458,9 @@ the active region will be used."
 (use-package! lsp-tailwindcss
   :after lsp)
 
+(after! dap-mode
+  (setq dap-python-debugger 'debugpy))
+
 (use-package! fennel-mode
   :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
 
