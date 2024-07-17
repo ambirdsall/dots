@@ -828,19 +828,66 @@ way through the sea of TODOs and Wouldn't It Be Nices into a future of shininess
 Because if I can get /that/, along with all of emacs' land before time shit, I'll be cooking
 with fire.
 
-*** Auto-import variables and functions as they get used, with a pretty pop-up UI for alternatives
+*** LSP actions: code actions, restarting a freaking out server, etc
 Auto-imports are handled by code actions; there's a function for that. It uses a vertico
 buffer instead of a pop-up, presumably via ~completing-read~, but frankly that's better.
 #+begin_src elisp
+(after! lsp
+  (defun amb/lsp-restart ()
+    "The current lsp server? Turn it off and on again."
+    (interactive)
+    (lsp-disconnect)
+    (lsp!))
+
+  (defun amb/lsp-execute-code-action-if-you-are-into-that ()
+    "Like lsp-execute-code-action, but in cases where there is only a single available
+  action it asks for confirmation rather than unconditionally springing into action."
+    ;; TODO implement the logic as described lol
+    (call-interactively #'lsp-execute-code-action))
+
+  (defun amb/lsp-dwim ()
+    "If there are code actions at point, trigger that. If not, jump to definition."
+    (interactive)
+    (if (lsp-code-actions-at-point)
+        (amb/lsp-execute-code-action-if-you-are-into-that)
+      (call-interactively #'+lookup/definition)))
+
+  (map!
+   :gnvie "C-M-l" #'lsp-execute-code-action
+   :n "RET" #'amb/lsp-dwim)
+
+  (map! :leader :desc "restart server" "clR" #'amb/lsp-restart)
+
 (map!
- :after lsp-mode
- :gnvie "C-M-l" #'lsp-execute-code-action
- :n "RET" #'lsp-execute-code-action)
+ :after lsp-ui
+ :leader :desc "show references" "cR" #'lsp-ui-peek-find-references))
 #+end_src
 
 I'm not sure about the keybindings. Maybe an extra top-level normal mode command?
 
 **** TODO auto-inserted imports should be organized per project-local eslint rules
+
+*** TODO Actions at point hydra with =<leader>c.=
+
+#+begin_src elisp :tangle no
+(defun ide-shit-at-point ()
+  (interactive)
+  (message "idk, read up on hydras?"))
+
+(map!
+ :leader "c." #'ide-shit-at-point)
+#+end_src
+
+**** TODO what are the lsp things I want?
+| I want to...                       | command                    | key |
+|------------------------------------+----------------------------+-----|
+| display type                       | ~+lookup/type-definition~    | t   |
+| insert inferred type               | [none, it's a code action] | T   |
+| rename symbol                      | ~lsp-rename~                 | r   |
+| display references                 | ~+lookup/references~         | u   |
+| jump to definition                 | ~+lookup/definition~         | d   |
+| ⋆waves hands vaguely⋆ code actions | ~lsp-execute-code-action~    | a   |
+**** TODO how do I make a hydra again
 
 ** the four most frustrating words in the english language: web development in emacs
 First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckruse/doom.d/src/commit/c6c7163e79a0fecdda6df9e81e60dc246170213a/config.el

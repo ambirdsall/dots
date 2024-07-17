@@ -426,10 +426,35 @@ the active region will be used."
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
 
+(after! lsp
+  (defun amb/lsp-restart ()
+    "The current lsp server? Turn it off and on again."
+    (interactive)
+    (lsp-disconnect)
+    (lsp!))
+
+  (defun amb/lsp-execute-code-action-if-you-are-into-that ()
+    "Like lsp-execute-code-action, but in cases where there is only a single available
+  action it asks for confirmation rather than unconditionally springing into action."
+    ;; TODO implement the logic as described lol
+    (call-interactively #'lsp-execute-code-action))
+
+  (defun amb/lsp-dwim ()
+    "If there are code actions at point, trigger that. If not, jump to definition."
+    (interactive)
+    (if (lsp-code-actions-at-point)
+        (amb/lsp-execute-code-action-if-you-are-into-that)
+      (call-interactively #'+lookup/definition)))
+
+  (map!
+   :gnvie "C-M-l" #'lsp-execute-code-action
+   :n "RET" #'amb/lsp-dwim)
+
+  (map! :leader :desc "restart server" "clR" #'amb/lsp-restart)
+
 (map!
- :after lsp-mode
- :gnvie "C-M-l" #'lsp-execute-code-action
- :n "RET" #'lsp-execute-code-action)
+ :after lsp-ui
+ :leader :desc "show references" "cR" #'lsp-ui-peek-find-references))
 
 (use-package! apheleia
   :hook ((tsx-mode . apheleia-mode)
