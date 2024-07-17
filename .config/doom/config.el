@@ -507,7 +507,8 @@ the active region will be used."
         ;; Strip the 'origin/' part from the branch name
         (let ((branch (replace-regexp-in-string "^origin/" "" default-branch)))
           ;; Checkout the branch using Magit
-          (magit--checkout branch)))))
+          (magit--checkout branch)
+          (magit-refresh)))))
   
   (transient-append-suffix 'magit-branch "b"
     '("M" "default branch" amb/magit-checkout-default-branch)))
