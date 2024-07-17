@@ -10,7 +10,16 @@ list_sessions_if_inside_tmux() {
 
 alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
 
-alias t=tmux
+t () {
+    if ! $(ps -e | grep -q tmux); then
+        t.up
+    elif [[ $# -eq 0 ]]; then
+        local session=$(tmux list-sessions | sed 's/\([a-z]*\).*/\1/' | fzf)
+        [[ -n $session ]] && tmux attach -t $session
+    else
+        tmux "$@"
+    fi
+}
 alias ta="tmux attach -t"
 alias tt="tmux attach -t"
 alias tk="tmux kill-session -t"
