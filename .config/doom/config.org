@@ -517,6 +517,42 @@ writing the english language!
 #+end_src
 
 ** an opinionated mix of the vim and emacs keybinding schemes
+*** TODO make the long-threatened PR adding a ~+hybrid~ flag to the evil module
+This was my first draft, which I think... mostly worked?
+#+begin_src diff :tangle no
+diff --git a/modules/editor/evil/config.el b/modules/editor/evil/config.el
+index db274fab2..344ccf8c0 100644
+--- a/modules/editor/evil/config.el
++++ b/modules/editor/evil/config.el
+@@ -420,6 +420,9 @@ directives. By default, this only recognizes C directives.")
+     "#" #'evil-visualstar/begin-search-backward))
+
+
++(when (modulep! +hybrid)
++  (setq! evil-disable-insert-state-bindings t))
++
+ ;;
+ ;;; Text object plugins
+
+diff --git a/modules/lang/markdown/config.el b/modules/lang/markdown/config.el
+index 6602d1339..4bec4c332 100644
+--- a/modules/lang/markdown/config.el
++++ b/modules/lang/markdown/config.el
+@@ -137,7 +137,8 @@ capture, the end position, and the output buffer.")
+         :n "TAB" #'markdown-cycle
+         :n [backtab] #'markdown-shifttab
+         :i "M-*" #'markdown-insert-list-item
+-        :i "M-b" #'markdown-insert-bold
++        (:when (not (modulep! :editor evil +hybrid)) :i "M-b" #'markdown-insert-bold)
++        (:when (modulep! :editor evil +hybrid) :i "M-B" #'markdown-insert-bold)
+         :i "M-i" #'markdown-insert-italic
+         :i "M-`" #'+markdown/insert-del
+         :i "M--" #'markdown-insert-hr
+#+end_src
+
+**** TODO are there (still?) load-order problems when running ~(setq! evil-disable-insert-state-bindings t)~ at a normal time (i.e. not hella early)?
+I recall (now too vaguely smh) that it only has worked for me when I put that (in a vanilla ~setq~ form) in ~init.el~, but not in ~config.el~. Why?
+
 *** [DEPRECATED] wait, is this split two tmux panes or two emacs windows?
 +WHO CARES+
 
