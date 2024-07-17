@@ -340,7 +340,33 @@ projectile would recognize your root directory as a project."
 (after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
 
 (setq! select-enable-clipboard nil)
+
 (map! "C-M-y" #'clipboard-yank)
+
+(evil-define-operator evil-yank-to-clipboard (beg end type register yank-handler)
+  "Save the characters in motion into the kill-ring."
+  :move-point nil
+  :repeat nil
+  (interactive "<R><x><y>")
+  (let ((evil-was-yanked-without-register
+         (and evil-was-yanked-without-register (not register)))
+        (select-enable-clipboard t)
+        (select-enable-primary t))
+    (cond
+     ((and (fboundp 'cua--global-mark-active)
+           (fboundp 'cua-copy-region-to-global-mark)
+           (cua--global-mark-active))
+      (cua-copy-region-to-global-mark beg end))
+     ((eq type 'block)
+      (evil-yank-rectangle beg end register yank-handler))
+     ((memq type '(line screen-line))
+      (evil-yank-lines beg end register yank-handler))
+     (t
+      (evil-yank-characters beg end register yank-handler)
+      (goto-char beg)))))
+
+(map! :map evil-normal-state-map "Y" #'evil-yank-to-clipboard)
+(map! :map evil-motion-state-map "Y" #'evil-yank-to-clipboard)
 
 (defun copy-to-clipboard (string)
   "Copies `STRING' to the system clipboard and the kill ring. When called interactively,
@@ -348,7 +374,8 @@ the active region will be used."
   (interactive
    (when (region-active-p)
      (list (buffer-substring-no-properties (region-beginning) (region-end)))))
-  (let ((select-enable-clipboard t))
+  (let ((select-enable-clipboard t)
+        (select-enable-primary t))
     (kill-new string)))
 
 (defun copy-unicode-char-to-clipboard ()

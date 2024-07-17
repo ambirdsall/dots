@@ -699,15 +699,55 @@ Pasting from the system clipboard should be easy:
 (map! "C-M-y" #'clipboard-yank)
 
 #+end_src
+
+And capturing text to it should be, too. To write this, I just copy-pasted the actual source of ~evil-yank~
+and added ~select-enable-clipboard~ and ~select-enable-primary~ to the ~let~ form around the
+logic:
+#+begin_src elisp
+(evil-define-operator evil-yank-to-clipboard (beg end type register yank-handler)
+  "Save the characters in motion into the kill-ring."
+  :move-point nil
+  :repeat nil
+  (interactive "<R><x><y>")
+  (let ((evil-was-yanked-without-register
+         (and evil-was-yanked-without-register (not register)))
+        (select-enable-clipboard t)
+        (select-enable-primary t))
+    (cond
+     ((and (fboundp 'cua--global-mark-active)
+           (fboundp 'cua-copy-region-to-global-mark)
+           (cua--global-mark-active))
+      (cua-copy-region-to-global-mark beg end))
+     ((eq type 'block)
+      (evil-yank-rectangle beg end register yank-handler))
+     ((memq type '(line screen-line))
+      (evil-yank-lines beg end register yank-handler))
+     (t
+      (evil-yank-characters beg end register yank-handler)
+      (goto-char beg)))))
+
+(map! :map evil-normal-state-map "Y" #'evil-yank-to-clipboard)
+(map! :map evil-motion-state-map "Y" #'evil-yank-to-clipboard)
+
+#+end_src
+
+Those are great for interactive use; now let's make programmatically adding text to the
+system clipboard nice and easy, too:
+#+begin_src elisp
 (defun copy-to-clipboard (string)
   "Copies `STRING' to the system clipboard and the kill ring. When called interactively,
 the active region will be used."
   (interactive
    (when (region-active-p)
      (list (buffer-substring-no-properties (region-beginning) (region-end)))))
-  (let ((select-enable-clipboard t))
+  (let ((select-enable-clipboard t)
+        (select-enable-primary t))
     (kill-new string)))
 
+#+end_src
+
+This one is just for funsies:
+#+begin_src elisp
 (defun copy-unicode-char-to-clipboard ()
   "Interactively select a unicode character and copy it to the system clipboard."
   (interactive)
