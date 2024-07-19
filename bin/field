@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# Extract the nth field from each line of a shell stream
+# like awk or cut, but streamlined for the most common use case
+
+main() {
+  # exit if no arguments
+  if [ $# -eq 0 ]; then
+      echo "Usage: $0 <n>"
+      return 1
+  fi
+
+  # exit if the first argument is not a number
+  if ! [[ $1 =~ ^[0-9]+$ ]]; then
+      echo "Error: $1 is not a number"
+      echo "Usage: $0 <n>"
+      return 1
+  fi
+
+  local n=$1
+  while read -r line; do
+    echo "$line" | cut -d' ' -f$n
+  done
+}
+
+main "$@"
