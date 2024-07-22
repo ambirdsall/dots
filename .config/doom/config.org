@@ -932,11 +932,11 @@ buffer instead of a pop-up, presumably via ~completing-read~, but frankly that's
    :gnvie "C-M-l" #'lsp-execute-code-action
    :n "RET" #'amb/lsp-dwim)
 
-  (map! :leader :desc "restart server" "clR" #'amb/lsp-restart)
+  (map! :leader :desc "restart server" "clR" #'amb/lsp-restart))
 
-(map!
- :after lsp-ui
- :leader :desc "show references" "cR" #'lsp-ui-peek-find-references))
+(after! lsp-ui
+  (map!
+   :leader :desc "show references" "cR" #'lsp-ui-peek-find-references))
 #+end_src
 
 I'm not sure about the keybindings. Maybe an extra top-level normal mode command?

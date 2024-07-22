@@ -477,11 +477,11 @@ the active region will be used."
    :gnvie "C-M-l" #'lsp-execute-code-action
    :n "RET" #'amb/lsp-dwim)
 
-  (map! :leader :desc "restart server" "clR" #'amb/lsp-restart)
+  (map! :leader :desc "restart server" "clR" #'amb/lsp-restart))
 
-(map!
- :after lsp-ui
- :leader :desc "show references" "cR" #'lsp-ui-peek-find-references))
+(after! lsp-ui
+  (map!
+   :leader :desc "show references" "cR" #'lsp-ui-peek-find-references))
 
 (use-package! apheleia
   :hook ((tsx-mode . apheleia-mode)
