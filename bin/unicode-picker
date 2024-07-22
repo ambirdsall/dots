@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+# from argparse import ArgumentParser
+import subprocess
+import sys
+import unicodedata as u
+from html import escape, unescape
+
+START, END = ord(' '), sys.maxunicode + 1
+
+def display_character(code) -> str | None:
+    """Display a single character with its name and codepoint"""
+    char = chr(code)
+    name = u.name(char, None)
+    category = u.category(char)
+    if name and category not in ("Cc", "Cs", "Co", "Cn"):
+        return f'{char}\t{name}\tU+{code:04X}'
+    else:
+        return None
+
+def all_characters():
+    """A newline-separated string of all unicode characters, where each line contains the
+    character, its canonical name, and its numerical codepoint(s)"""
+    return "\n".join(
+        character
+        for code in range(START, END)
+        if (character := display_character(code)) is not None
+    )
+
+# Executes wofi with the given input string
+def select_with_wofi(selectables: str) -> str:
+    command = " ".join([
+        "wofi",
+        "--prompt=\"Copy character (Unicode name or hex): \"",
+        "--dmenu",
+        "--insensitive",
+        "--hide-scroll",
+        "--matching=fuzzy",
+        "--location=0", # center
+    ])
+    # open wofi in a subprocess so we can pipe data in and out, sending stderr to /dev/null
+    process = subprocess.Popen(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
+
+    # ensure selectables is an html-escaped bytes object
+    input = escape(selectables).encode("utf-8")
+
+    ret = process.communicate(input=input)
+    selection, _ = ret
+    return unescape(selection.decode())
+
+def copy_to_clipboard(text):
+    command = "clipboard-copy"
+    process = subprocess.Popen(command,shell=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+
+    # ensure text is a bytes object
+    if not isinstance(text, bytes):
+        text = text.encode("utf-8")
+
+    process.communicate(input=text)
+
+if __name__ == "__main__":
+    # print(all_characters())
+
+    # TODO it would be nice to use this as a self-contained launcher script, but YOLO
+
+    # cf. https://github.com/tobiaspc/wofi-scripts/blob/6340f1889a847cdd8f7d0e3ec77cf55481fba815/ssh.py
+    # selection = select_with_wofi(all_characters().encode("utf-8"))
+    selection = select_with_wofi(all_characters())
+
+    match selection.split("\t"):
+        case [char, name, codepoint]:
+            copy_to_clipboard(char)
