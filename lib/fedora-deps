@@ -1,11 +1,13 @@
 bat
 emacs
-fira-code-fonts
 git
+fira-code-fonts
 iosevka-slab-fonts
+nerd-fonts
+overpass-fonts
+google-noto-sans-fonts
 kitty
 neovim
-overpass-fonts
 wofi
 zsh
 diff-so-fancy
