@@ -98,7 +98,6 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
 (add-hook 'doom-init-ui-hook #'init-mixed-pitch-h)
 
 (whitespace-mode 1)
-(highlight-indent-guides-mode -1)
 
 (unless noninteractive
   (setq

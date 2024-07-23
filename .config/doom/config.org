@@ -240,7 +240,6 @@ I mean, it's nice.
 *** whitespace
 #+begin_src elisp
 (whitespace-mode 1)
-(highlight-indent-guides-mode -1)
 #+end_src
 ** theme this bad boy
 *** TODO wrap all theme config in a single ~(unless noninteractive <theme config>)~ form and =noweb= in the different logical sections
