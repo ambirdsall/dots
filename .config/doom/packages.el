@@ -1,7 +1,5 @@
 ;; -*- no-byte-compile: t; -*-
 
-(package! benchmark-init)
-
 (package! emojify)
 
 (package! evil-replace-with-register)

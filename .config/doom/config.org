@@ -41,8 +41,8 @@ private) product projects.")
       :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
 #+end_src
 
-** TODO what kind of spaceship doesn't come with a spedometer? :: disable tangling, leave as breakcrumb
-#+begin_src elisp :tangle packages.el
+** what kind of spaceship doesn't come with a spedometer?
+#+begin_src elisp :tangle no
 (package! benchmark-init)
 #+end_src
 
