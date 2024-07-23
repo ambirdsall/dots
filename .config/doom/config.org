@@ -146,7 +146,7 @@ installation locations removed) reference version:
 #+end_src
 
 * appearance
-** splash screen
+** splash screen [0/1]
 For additional reference, see [[https://discourse.doomemacs.org/t/how-to-change-your-splash-screen/57][this doom discourse post]].
 
 *** make it look nice
@@ -193,7 +193,7 @@ they are, in practice, only being added to the emacs-state map.*
 (add-hook! 'doom-init-ui-hook :append (+doom-dashboard-setup-modified-keymap))
 #+end_src
 
-** typography
+** typography [0/1]
 *** fonts
 On arch linux, here are the packages you'll want to download:
 - =ttf-fira-code=
@@ -241,7 +241,7 @@ I mean, it's nice.
 #+begin_src elisp
 (whitespace-mode 1)
 #+end_src
-** theme this bad boy
+** theme this bad boy [0/2]
 *** TODO wrap all theme config in a single ~(unless noninteractive <theme config>)~ form and =noweb= in the different logical sections
 *** that said...
 **** Define a theme switcher utility
@@ -338,7 +338,7 @@ I’d like to have just the buffer name, then if applicable the project folder
 
 
 For example when I open my config file it the window will be titled config.org ● doom then as soon as I make a change it will become config.org ◉ doom.
-** tab bar :: display workspaces
+** tab bar :: display workspaces [0/2]
 Taken from [[https://discourse.doomemacs.org/t/permanently-display-workspaces-in-the-tab-bar/4088][hylo's discourse post]], thanks hylo.
 
 Notably, clicking on the tabs accomplishes nothing helpful with this setup.
@@ -427,7 +427,7 @@ A normal click on a tab navigates to it (optionally, if not the current one). Ri
 The end result is having to scroll a small amount whenever I (\*Bob Seger voice*) turn the
 page, which is frankly a bit annoying. A shitty workaround is to manually toggle, I guess.
 * text editing per se
-** text manipulation utilities
+** text manipulation utilities [0/1]
 *** TODO helper macros (which should be tidied off to an appendix with noweb)
 Working with text combines a huge variety of content-specific considerations with a very
 narrow, consistent API; there are a lot of repetitive definitions. Let's improve that:
@@ -515,7 +515,7 @@ writing the english language!
 (setq company-global-modes '(not text-mode org-mode))
 #+end_src
 
-** an opinionated mix of the vim and emacs keybinding schemes
+** an opinionated mix of the vim and emacs keybinding schemes [0/3]
 *** TODO make the long-threatened PR adding a ~+hybrid~ flag to the evil module
 This was my first draft, which I think... mostly worked?
 #+begin_src diff :tangle no
@@ -706,7 +706,7 @@ projectile would recognize your root directory as a project."
         :desc "Browse ~/.config/" :ne "c" (file-jumper-for-project "~/.config/")
         :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin/")))
 #+end_src
-* buffers, windows, frames, workspaces... you know, emacs shit
+* buffers, windows, frames, workspaces... you know, emacs shit [0/1]
 ** scratch buffer
 If they're in org, that's good for notes and I can still write/exec code
 #+begin_src elisp
@@ -893,7 +893,7 @@ here's a snippet to install you some language libraries
 (mapc #'treesit-install-language-grammar
       (mapcar #'car treesit-language-source-alist))
 #+end_src
-** non-language-specific IDE shit
+** non-language-specific IDE shit [0/4]
 The gold standard for LSP is VSCode; this goes triply for web development, which uh ✷checks notes✷ is my job.
 
 This is organized by features and is an exercise in aspiration-driven development.  Each
@@ -964,7 +964,7 @@ I'm not sure about the keybindings. Maybe an extra top-level normal mode command
 | ⋆waves hands vaguely⋆ code actions | ~lsp-execute-code-action~    | a   |
 **** TODO how do I make a hydra again
 
-** the four most frustrating words in the english language: web development in emacs
+** the four most frustrating words in the english language: web development in emacs [0/1]
 First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckruse/doom.d/src/commit/c6c7163e79a0fecdda6df9e81e60dc246170213a/config.el
 *** {t,j}s
 #+begin_src elisp :tangle (and "packages.el" "no")
@@ -1049,13 +1049,13 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 (use-package! lsp-tailwindcss
   :after lsp)
 #+end_src
-** there are more languages under the sun than ~:lang~ can speak
+** there are more languages under the sun than ~:lang~ can speak [0/1]
 *** python
 #+begin_src elisp
 (after! dap-mode
   (setq dap-python-debugger 'debugpy))
 #+end_src
-*** fennel
+*** TODO is this fennel config needed now that ~(doom! :lang (lua +fennel))~ exists?
 #+begin_src elisp :tangle packages.el
 (package! fennel-mode)
 #+end_src
@@ -1375,7 +1375,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       "j" #'next-line
       "k" #'previous-line)
 #+end_src
-** org-mode config
+** org-mode config [0/1]
 *** drop it in a box
 Notes must be at hand to be helpful, ideally on any of several computers:
 #+begin_src elisp
