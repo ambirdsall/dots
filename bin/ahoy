@@ -1,0 +1,17 @@
+#!/bin/bash
+
+RESET='\033[39m'
+RED='\033[31m'
+WHITE='\033[37m'
+DIM='\033[2m'
+YELLOW='\033[33m'
+BLUE='\033[34m'
+NORMAL='\033[22m'
+
+echo -e "
+        ${WHITE}_${RESET}${RED}~${RESET}
+    ${WHITE}_${RESET}${RED}~${RESET}${WHITE} )_)_${RESET}${RED}~${RESET}
+    ${WHITE})_))_))_)${RESET}
+    ${DIM}${YELLOW}_!__!__!_${RESET}${NORMAL}
+    ${DIM}${YELLOW}\______t/${RESET}${NORMAL}
+  ${BLUE}~~~~~~~~~~~~~${RESET}"
