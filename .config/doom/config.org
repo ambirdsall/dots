@@ -1510,6 +1510,15 @@ because ~setq~ is a macro) and everything went to heck.
 
 #+end_src
 
+*** no noweb? no: noweb.
+This snippet is taken directly from the org-mode info manual.
+#+begin_src elisp
+(setq org-babel-default-header-args
+      (cons '(:noweb . "yes")
+            (assq-delete-all :noweb org-babel-default-header-args)))
+
+#+end_src
+
 ** "I hear lisp is good for AI"
 *** copilot
 #+begin_src elisp :tangle "packages.el"

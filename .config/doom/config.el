@@ -728,6 +728,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (use-package! ox-gfm
   :after org)
 
+(setq org-babel-default-header-args
+      (cons '(:noweb . "yes")
+            (assq-delete-all :noweb org-babel-default-header-args)))
+
 ;; accept completion from copilot and fallback to company
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
