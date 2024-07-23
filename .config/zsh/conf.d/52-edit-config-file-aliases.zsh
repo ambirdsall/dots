@@ -10,6 +10,7 @@ sdf () {
     source ~/aliases.zsh --verbose
     true
 }
+alias SDF="tmux-send-all sdf"
 alias zrc="emv ~/.zshrc"
 alias zrl="emv ~/.zshrc.local.zsh"
 alias rc="source ~/.zshrc"

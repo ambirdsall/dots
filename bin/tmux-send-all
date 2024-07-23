@@ -1,0 +1,23 @@
+#!/bin/bash
+
+COMMAND="$@"
+
+if [ -z "$COMMAND" ]; then
+  echo "Usage: $0 <command>"
+  exit 1
+fi
+
+tmux list-panes -a -F "#{pane_id} #{pane_current_command}" | while read -r pane_id pane_cmd; do
+  if [[ "$pane_cmd" == "zsh" ]]; then
+    tmux send-keys -t "$pane_id" "$COMMAND" C-m
+  elif [[ "$pane_cmd" == "emacsclient" || "$pane_cmd" == "vim" ]]; then
+    tmux send-keys -t "$pane_id" C-z
+    # if we don't pause long enough for the editor to suspend, the literal text of the
+    # given command and the following "fg" is sent to the buffer, which can cause all
+    # sorts of nonsense.
+    sleep 0.3
+    tmux send-keys -t "$pane_id" "$COMMAND" C-m
+
+    tmux send-keys -t "$pane_id" "fg" C-m
+  fi
+done
