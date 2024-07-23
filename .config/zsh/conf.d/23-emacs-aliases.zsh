@@ -26,7 +26,7 @@ EEE () {
 # a scenario where falling back to vim is preferable to a slow-booting editor.
 emv () {
   if command -v emacs > /dev/null; then
-    emacsclient -nw --socket-name=tty --alternate-editor="vim" $@
+    emacsclient -nw --socket-name=ttylated --alternate-editor="vim" $@
   else
     vim $@
   fi
