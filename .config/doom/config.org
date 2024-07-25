@@ -308,10 +308,22 @@ current) lines.
 #+end_src
 
 ** line numbers
-This determines the style of line numbers in effect. If set to ~nil~, line numbers are disabled. For
-relative line numbers, set this to ~relative~.
+This determines the style of line numbers in effect. The options:
+- ~t~ :: lines are numbered by which line they are in the file
+- ~relative~ :: lines numbered by distance from current line in the file
+- ~visual~ :: lines numbered by distance from current line on screen
+- ~nil~ :: lines aren't numbered
+
+I like absolute line numbers occasionally, and always when pairing/screen sharing. I like relative line numbers whenever I'm doing vim-style navigation. Turns out there's a way to get some of each:
 #+begin_src elisp
-(setq display-line-numbers-type 'relative)
+(setq display-line-numbers-type 't)
+
+(after! evil
+  (add-hook! '(evil-operator-state-entry-hook evil-visual-state-entry-hook)
+    (setq display-line-numbers 'relative))
+
+  (add-hook! '(evil-operator-state-exit-hook evil-visual-state-exit-hook)
+    (setq display-line-numbers 't)))
 #+end_src
 ** long lines: don't do 'em
 #+begin_src elisp

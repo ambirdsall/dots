@@ -129,7 +129,14 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
         modus-themes-operandi-color-overrides
         '((bg-hl-line . "#eeeeee"))))
 
-(setq display-line-numbers-type 'relative)
+(setq display-line-numbers-type 't)
+
+(after! evil
+  (add-hook! '(evil-operator-state-entry-hook evil-visual-state-entry-hook)
+    (setq display-line-numbers 'relative))
+
+  (add-hook! '(evil-operator-state-exit-hook evil-visual-state-exit-hook)
+    (setq display-line-numbers 't)))
 
 (setq! fill-column 90)
 (global-visual-line-mode -1)
