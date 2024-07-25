@@ -14,7 +14,7 @@ t () {
     if ! $(ps -e | grep -q tmux); then
         t.up
     elif [[ $# -eq 0 ]]; then
-        local session=$(tmux list-sessions | sed 's/\([a-z]*\).*/\1/' | fzf)
+        local session=$(tmux list-sessions | cut -d : -f 1 | fzf)
         [[ -n $session ]] && tmux attach -t $session
     else
         tmux "$@"
