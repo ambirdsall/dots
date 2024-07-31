@@ -11,7 +11,7 @@ list_sessions_if_inside_tmux() {
 alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
 
 t () {
-    if ! $(ps -e | grep -q tmux); then
+    if ! test -n "$(ps -e | grep -q tmux)"; then
         t.up
     elif [[ $# -eq 0 ]]; then
         local session=$(tmux list-sessions | cut -d : -f 1 | fzf)
