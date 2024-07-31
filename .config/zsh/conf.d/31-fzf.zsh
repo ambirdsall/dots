@@ -12,4 +12,6 @@ if dots/at_hand fzf; then
   if dots/at_hand fzf-tmux; then
     alias fzf=fzf-tmux
   fi
+
+  source <(fzf --zsh)
 fi
