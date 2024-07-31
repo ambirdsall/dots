@@ -34,8 +34,11 @@ elif [ -f "$HOME/.nvm/nvm.sh" ]; then
 		source "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 	fi
 	add-zsh-hook precmd check_node_version
+elif [ -s "/opt/homebrew/opt/nvm/nvm.sh" ]; then
+	export NVM_DIR="$HOME/.nvm"
+	source "/opt/homebrew/opt/nvm/nvm.sh"
+	source "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 fi
-
 alias scripts='jq .scripts < package.json'
 alias s=scripts
 run-npm-script () {
