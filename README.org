@@ -1,5 +1,5 @@
 #+TITLE: dotfiles
-These are my linux configuration files. They're tracked in a git repository separate from the
+These are my linux/macOS configuration files. They're tracked in a git repository separate from the
 working tree, which is just my home directory; this replaces an ongoing symlink song and dance for a
 little upfront setup effort. Given that the upfront work can be copy-pasted, it's a pretty great
 tradeoff.
