@@ -749,7 +749,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (use-package! gptel)
 
+(setq confirm-kill-emacs nil)
+
 (let ((amb/computer-specific-config (concat doom-private-dir "local.el")))
   (and (file-exists-p amb/computer-specific-config) (load amb/computer-specific-config)))
-
-(setq confirm-kill-emacs nil)

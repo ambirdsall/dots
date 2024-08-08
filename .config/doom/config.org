@@ -906,7 +906,7 @@ here's a snippet to install you some language libraries
 (mapc #'treesit-install-language-grammar
       (mapcar #'car treesit-language-source-alist))
 #+end_src
-** non-language-specific IDE shit [0/4]
+** non-language-specific IDE shit [0/5]
 The gold standard for LSP is VSCode; this goes triply for web development, which uh ✷checks notes✷ is my job.
 
 This is organized by features and is an exercise in aspiration-driven development.  Each
@@ -916,7 +916,7 @@ way through the sea of TODOs and Wouldn't It Be Nices into a future of shininess
 Because if I can get /that/, along with all of emacs' land before time shit, I'll be cooking
 with fire.
 
-*** LSP actions: code actions, restarting a freaking out server, etc
+*** TODO LSP actions: code actions, restarting a freaking out server, etc (WHY NOT RUNNING THO)
 Auto-imports are handled by code actions; there's a function for that. It uses a vertico
 buffer instead of a pop-up, presumably via ~completing-read~, but frankly that's better.
 #+begin_src elisp
@@ -1062,12 +1062,14 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 (use-package! lsp-tailwindcss
   :after lsp)
 #+end_src
-** there are more languages under the sun than ~:lang~ can speak [0/1]
+** there are more languages under the sun than ~:lang~ can speak [0/2]
 *** python
+**** debugger support, at least in theory
 #+begin_src elisp
 (after! dap-mode
   (setq dap-python-debugger 'debugpy))
 #+end_src
+**** TODO use ~python-ts-mode~ by default
 *** TODO is this fennel config needed now that ~(doom! :lang (lua +fennel))~ exists?
 #+begin_src elisp :tangle packages.el
 (package! fennel-mode)
@@ -1557,25 +1559,16 @@ This snippet is taken directly from the org-mode info manual.
 (use-package! gptel)
 #+end_src
 
-* The secrets I keep with myself, or: praise the Lord and pass the =.gitignore=
-This snippet loads a computer-specific config file if it's present. It goes
-last, giving me a convenient place for ad hoc overrides of any setting in here.
-#+begin_src elisp
-(let ((amb/computer-specific-config (concat doom-private-dir "local.el")))
-  (and (file-exists-p amb/computer-specific-config) (load amb/computer-specific-config)))
-#+end_src
 * appendices
 ** top-of-file preambles
 *** packages.el
-#+name: packages-preamble
-#+begin_src elisp :tangle no
+#+begin_src elisp :tangle no :noweb-ref packages-preamble
 ;; -*- no-byte-compile: t; -*-
 
 #+end_src
 
 *** config.el
-#+name: config-preamble
-#+begin_src elisp :tangle no
+#+begin_src elisp :tangle no :noweb-ref config-preamble
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
 #+end_src
@@ -1583,4 +1576,11 @@ last, giving me a convenient place for ad hoc overrides of any setting in here.
 I said what I said.
 #+begin_src elisp
 (setq confirm-kill-emacs nil)
+#+end_src
+** The secrets I keep with myself, or: praise the Lord and pass the =.gitignore=
+This snippet loads a computer-specific config file if it's present. It goes
+last, giving me a convenient place for ad hoc overrides of any setting in here.
+#+begin_src elisp
+(let ((amb/computer-specific-config (concat doom-private-dir "local.el")))
+  (and (file-exists-p amb/computer-specific-config) (load amb/computer-specific-config)))
 #+end_src
