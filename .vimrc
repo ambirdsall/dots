@@ -1,6 +1,7 @@
 " Defaults not covered by sensible.vim (cf ~/.vim/bin/init)
 set nohlsearch
 set noswapfile
+set mouse=a
 
 " Set leader key to space
 let mapleader = "\<Space>"
