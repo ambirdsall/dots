@@ -38,7 +38,7 @@ confirm_to_run_cmd() {
 echo "Some commands require admin privileges; please enter your 'sudo' password to enable me to set them."
 sudo -v
 
-# Keep-alive: update existing `sudo` time stamp until `.osx` has finished
+# Keep-alive: update existing `sudo` time stamp until the script has finished
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 ###############################################################################
@@ -54,7 +54,7 @@ confirm_to_set "follow the keyboard focus while zoomed in" com.apple.universalac
 confirm_to_set "set a blazingly fast keyboard repeat rate" NSGlobalDomain KeyRepeat -int 1
 confirm_to_set "disable auto-correct" NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 confirm_to_set "save screenshots in PNG format" com.apple.screencapture type -string "png"
-confirm_to_set "go fuck yourself, iTunes" com.apple.iTunes StoreActivationMode -integer 1
+confirm_to_set "tell iTunes to go fuck itself" com.apple.iTunes StoreActivationMode -integer 1
 
 ###############################################################################
 # Finder                                                                      #
