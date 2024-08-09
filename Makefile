@@ -17,6 +17,7 @@ install: .emacs.d tpm
 
 tpm:
 	git clone git@github.com:tmux-plugins/tpm ~/.tmux/plugins/tpm
+	~/.tmux/plugins/tpm/bin/install_plugins
 
 linux: c/keyd
 
