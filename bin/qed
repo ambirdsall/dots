@@ -10,4 +10,4 @@
 
 # emacsclient --socket-name="$(server_name)" -nw "$@"
 
-emacsclient -nw --alternate-editor="" "$@"
+emacsclient -nw --alternate-editor="" --socket-name="ttylated" "$@"
