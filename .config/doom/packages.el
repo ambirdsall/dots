@@ -1,6 +1,5 @@
 ;; -*- no-byte-compile: t; -*-
 
-(package! emojify)
 
 (package! evil-replace-with-register)
 
@@ -12,6 +11,8 @@
 
 (package! evil-textobj-line
   :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
+
+(package! emojify)
 
 (package! code-compass
   :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
@@ -28,6 +29,11 @@
 
 (package! yaml-pro)
 
+(package! copilot
+  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
+
+(package! gptel)
+
 (unpin! org-roam)
 (package! org-roam-ui)
 
@@ -37,8 +43,3 @@
 (package! graphviz-dot-mode)
 
 (package! ox-gfm)
-
-(package! copilot
-  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
-
-(package! gptel)

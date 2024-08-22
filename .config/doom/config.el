@@ -1,204 +1,57 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-(setq user-full-name "Alex Birdsall"
-      user-mail-address "ambirdsall@gmail.com")
+(setq! select-enable-clipboard nil)
 
-(defvar amb/computer-specific-config (expand-file-name "local.el" doom-private-dir)
-  "A file for computer-specific config, hidden from git; for
-example, configuration for a work computer and its (possibly
-private) product projects.")
+(map! "C-M-y" #'clipboard-yank)
 
-(map! :leader
-      :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
-      :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
-      :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
+(evil-define-operator evil-yank-to-clipboard (beg end type register yank-handler)
+  "Save the characters in motion into the kill-ring."
+  :move-point nil
+  :repeat nil
+  (interactive "<R><x><y>")
+  (let ((evil-was-yanked-without-register
+         (and evil-was-yanked-without-register (not register)))
+        (select-enable-clipboard t)
+        (select-enable-primary t))
+    (cond
+     ((and (fboundp 'cua--global-mark-active)
+           (fboundp 'cua-copy-region-to-global-mark)
+           (cua--global-mark-active))
+      (cua-copy-region-to-global-mark beg end))
+     ((eq type 'block)
+      (evil-yank-rectangle beg end register yank-handler))
+     ((memq type '(line screen-line))
+      (evil-yank-lines beg end register yank-handler))
+     (t
+      (evil-yank-characters beg end register yank-handler)
+      (goto-char beg)))))
 
-(defvar +literate-tangle--proc nil)
-(defvar +literate-tangle--proc-start-time nil)
+(map! :map evil-normal-state-map "Y" #'evil-yank-to-clipboard)
+(map! :map evil-motion-state-map "Y" #'evil-yank-to-clipboard)
 
-(defadvice! +literate-tangle-async-h ()
-  "A very simplified version of `+literate-tangle-h', but async."
-  :override #'+literate-tangle-h
-  (unless (getenv "__NOTANGLE")
-    (let ((default-directory doom-private-dir))
-      (when +literate-tangle--proc
-        (message "Killing outdated tangle process...")
-        (set-process-sentinel +literate-tangle--proc #'ignore)
-        (kill-process +literate-tangle--proc)
-        (sit-for 0.3)) ; ensure the message is seen for a bit
-      (setq +literate-tangle--proc-start-time (float-time)
-            +literate-tangle--proc
-            (start-process "tangle-config"
-                           (get-buffer-create " *tangle config*")
-                           "emacs" "--batch" "--eval"
-                           (format "(progn \
-(require 'ox) \
-(require 'ob-tangle) \
-(setq org-confirm-babel-evaluate nil \
-      org-inhibit-startup t \
-      org-mode-hook nil \
-      write-file-functions nil \
-      before-save-hook nil \
-      after-save-hook nil \
-      vc-handled-backends nil \
-      org-startup-folded nil \
-      org-startup-indented nil) \
-(org-babel-tangle-file \"%s\" \"%s\"))"
-                                   +literate-config-file
-                                   (expand-file-name doom-module-config-file))))
-      (set-process-sentinel +literate-tangle--proc #'+literate-tangle--sentinel)
-      (run-at-time nil nil (lambda () (message "Tangling config.org"))) ; ensure shown after a save message
-      "Tangling config.org...")))
+(defun copy-to-clipboard (string)
+  "Copies `STRING' to the system clipboard and the kill ring. When called interactively,
+the active region will be used."
+  (interactive
+   (when (region-active-p)
+     (list (buffer-substring-no-properties (region-beginning) (region-end)))))
+  (let ((select-enable-clipboard t)
+        (select-enable-primary t))
+    (kill-new string)))
 
-(defun +literate-tangle--sentinel (process signal)
-  (cond
-   ((and (eq 'exit (process-status process))
-         (= 0 (process-exit-status process)))
-    (message "Tangled config.org sucessfully (took %.1fs)"
-             (- (float-time) +literate-tangle--proc-start-time))
-    (setq +literate-tangle--proc nil))
-   ((memq (process-status process) (list 'exit 'signal))
-    (pop-to-buffer (get-buffer " *tangle config*"))
-    (message "Failed to tangle config.org (after %.1fs)"
-             (- (float-time) +literate-tangle--proc-start-time))
-    (setq +literate-tangle--proc nil))))
-
-(defun +literate-tangle-check-finished ()
-  (when (and (process-live-p +literate-tangle--proc)
-             (yes-or-no-p "Config is currently retangling, would you please wait a few seconds?"))
-    (switch-to-buffer " *tangle config*")
-    (signal 'quit nil)))
-(add-hook! 'kill-emacs-hook #'+literate-tangle-check-finished)
+(defun copy-unicode-char-to-clipboard ()
+  "Interactively select a unicode character and copy it to the system clipboard."
+  (interactive)
+  (with-temp-buffer
+    (call-interactively #'insert-char)
+    (let ((char (buffer-string)))
+      (copy-to-clipboard char)
+      (message "%s" (concat "Copied " char " to system clipboard")))))
 
 (setq! mac-command-modifier 'meta
        mac-option-modifier 'meta
        ns-function-modifier 'super)
 
-(setq fancy-splash-image (concat doom-private-dir "emacs.png"))
-(remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-shortmenu)
-(remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-footer)
-
-(setq doom-font-increment 1
-      doom-font (font-spec :family "Fira Code" :size (if IS-MAC 13 16) :style "Retina" :weight 'semi-bold)
-      ;; doom-font (font-spec :family "Iosevka Fixed Slab" :size 16 :weight 'medium)
-      doom-big-font (font-spec :family "Fira Code" :size (if IS-MAC 20 26))
-      doom-variable-pitch-font (font-spec :family "Overpass" :size (if IS-MAC 15 20))
-      doom-serif-font (font-spec :family "Iosevka Slab" :size (if IS-MAC 13 16))
-      doom-unicode-font (font-spec :family "Iosevka" :size (if IS-MAC 13 16)))
-
-(defvar mixed-pitch-modes '(org-mode markdown-mode gfm-mode Info-mode text-mode)
-  "Modes that `mixed-pitch-mode' should be enabled in, but only after UI initialisation.")
-(defun init-mixed-pitch-h ()
-  "Hook `mixed-pitch-mode' into each mode in `mixed-pitch-modes'.
-Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
-  (when (memq major-mode mixed-pitch-modes)
-    (mixed-pitch-mode 1))
-  (dolist (hook mixed-pitch-modes)
-    (add-hook (intern (concat (symbol-name hook) "-hook")) #'mixed-pitch-mode)))
-(add-hook 'doom-init-ui-hook #'init-mixed-pitch-h)
-
-(whitespace-mode 1)
-
-(unless noninteractive
-  (setq
-   ;; amb/doom-dark-theme 'modus-vivendi
-   amb/doom-dark-theme 'doom-badger
-   amb/doom-light-theme 'modus-operandi)
-
-  (defun amb/toggle-themes ()
-    "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
-    (interactive)
-    (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
-          (t (load-theme amb/doom-dark-theme))))
-
-  (map! :leader
-        "tt" #'amb/toggle-themes)
-
-  (load-theme amb/doom-dark-theme t))
-
-(unless noninteractive
-  (require-theme 'modus-themes)
-
-  (setq modus-themes-bold-constructs t
-        modus-themes-italic-constructs t
-        modus-themes-syntax (list 'alt-syntax 'yellow-comments)
-        modus-themes-vivendi-color-overrides
-        '((bg-main . "#0d0b11")
-          (fg-main . "#ffeeee")
-          (bg-hl-line . "#29272f"))
-        modus-themes-operandi-color-overrides
-        '((bg-hl-line . "#eeeeee"))))
-
-(setq display-line-numbers-type 't)
-
-(after! evil
-  (add-hook! '(evil-operator-state-entry-hook evil-visual-state-entry-hook)
-    (setq display-line-numbers 'relative))
-
-  (add-hook! '(evil-operator-state-exit-hook evil-visual-state-exit-hook)
-    (setq display-line-numbers 't)))
-
-(setq! fill-column 90)
-(global-visual-line-mode -1)
-
-(setq frame-title-format
-      '(""
-        (:eval
-         (if (s-contains-p org-roam-directory (or buffer-file-name ""))
-             (replace-regexp-in-string
-              ".*/[0-9]*-?" "☰ "
-              (subst-char-in-string ?_ ?  buffer-file-name))
-           "%b"))
-        (:eval
-         (let ((project-name (projectile-project-name)))
-           (unless (string= "-" project-name)
-             (format (if (buffer-modified-p)  " ◉ %s" "  ●  %s") project-name))))))
-
-(custom-set-faces!
-  '(+workspace-tab-face :inherit default :family "Overpass" :height 135)
-  '(+workspace-tab-selected-face :inherit (highlight +workspace-tab-face)))
-
-(tab-bar-history-mode)
-
-(after! persp-mode
-  (defun workspaces-formatted ()
-    ;; fancy version as in screenshot
-    (+doom-dashboard--center (frame-width)
-                             (let ((names (or persp-names-cache nil))
-                                   (current-name (safe-persp-name (get-current-persp))))
-                               (mapconcat
-                                #'identity
-                                (cl-loop for name in names
-                                         for i to (length names)
-                                         collect
-                                         (concat (propertize (format " %d" (1+ i)) 'face
-                                                             `(:inherit ,(if (equal current-name name)
-                                                                             '+workspace-tab-selected-face
-                                                                           '+workspace-tab-face)
-                                                               :weight bold))
-                                                 (propertize (format " %s " name) 'face
-                                                             (if (equal current-name name)
-                                                                 '+workspace-tab-selected-face
-                                                               '+workspace-tab-face))))
-                                " "))))
-  (defun amb/invisible-current-workspace ()
-    "The tab bar doesn't update when only faces change (i.e. the
-current workspace), so we invisibly print the current workspace
-name as well to trigger updates"
-    (propertize (safe-persp-name (get-current-persp)) 'invisible t))
-
-  (customize-set-variable 'tab-bar-format '(workspaces-formatted tab-bar-format-align-right amb/invisible-current-workspace))
-
-  ;; don't show current workspaces when we switch, since we always see them
-  (advice-add #'+workspace/display :override #'ignore)
-  ;; same for renaming and deleting (and saving, but oh well)
-  (advice-add #'+workspace-message :override #'ignore))
-
-;; need to run this later for it to not break frame size for some reason
-(run-at-time nil nil (cmd! (tab-bar-mode +1)))
-
-(map! :leader
-      :desc "toggle tab bar" "tT" #'tab-bar-mode)
 
 (defmacro cmds--on-string-or-region (fn)
   "Given a string-manipulation function FN, defines an interactive command which will apply that
@@ -345,71 +198,133 @@ projectile would recognize your root directory as a project."
 
 (after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
 
-(setq! select-enable-clipboard nil)
+(setq confirm-kill-emacs nil)
 
-(map! "C-M-y" #'clipboard-yank)
+(setq fancy-splash-image (concat doom-private-dir "emacs.png"))
+(remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-shortmenu)
+(remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-footer)
 
-(evil-define-operator evil-yank-to-clipboard (beg end type register yank-handler)
-  "Save the characters in motion into the kill-ring."
-  :move-point nil
-  :repeat nil
-  (interactive "<R><x><y>")
-  (let ((evil-was-yanked-without-register
-         (and evil-was-yanked-without-register (not register)))
-        (select-enable-clipboard t)
-        (select-enable-primary t))
-    (cond
-     ((and (fboundp 'cua--global-mark-active)
-           (fboundp 'cua-copy-region-to-global-mark)
-           (cua--global-mark-active))
-      (cua-copy-region-to-global-mark beg end))
-     ((eq type 'block)
-      (evil-yank-rectangle beg end register yank-handler))
-     ((memq type '(line screen-line))
-      (evil-yank-lines beg end register yank-handler))
-     (t
-      (evil-yank-characters beg end register yank-handler)
-      (goto-char beg)))))
+(setq doom-font-increment 1
+      doom-font (font-spec :family "Fira Code" :size (if IS-MAC 13 16) :style "Retina" :weight 'semi-bold)
+      ;; doom-font (font-spec :family "Iosevka Fixed Slab" :size 16 :weight 'medium)
+      doom-big-font (font-spec :family "Fira Code" :size (if IS-MAC 20 26))
+      doom-variable-pitch-font (font-spec :family "Overpass" :size (if IS-MAC 15 20))
+      doom-serif-font (font-spec :family "Iosevka Slab" :size (if IS-MAC 13 16))
+      doom-unicode-font (font-spec :family "Iosevka" :size (if IS-MAC 13 16)))
 
-(map! :map evil-normal-state-map "Y" #'evil-yank-to-clipboard)
-(map! :map evil-motion-state-map "Y" #'evil-yank-to-clipboard)
+(defvar mixed-pitch-modes '(org-mode markdown-mode gfm-mode Info-mode text-mode)
+  "Modes that `mixed-pitch-mode' should be enabled in, but only after UI initialisation.")
+(defun init-mixed-pitch-h ()
+  "Hook `mixed-pitch-mode' into each mode in `mixed-pitch-modes'.
+Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
+  (when (memq major-mode mixed-pitch-modes)
+    (mixed-pitch-mode 1))
+  (dolist (hook mixed-pitch-modes)
+    (add-hook (intern (concat (symbol-name hook) "-hook")) #'mixed-pitch-mode)))
+(add-hook 'doom-init-ui-hook #'init-mixed-pitch-h)
 
-(defun copy-to-clipboard (string)
-  "Copies `STRING' to the system clipboard and the kill ring. When called interactively,
-the active region will be used."
-  (interactive
-   (when (region-active-p)
-     (list (buffer-substring-no-properties (region-beginning) (region-end)))))
-  (let ((select-enable-clipboard t)
-        (select-enable-primary t))
-    (kill-new string)))
+(whitespace-mode 1)
 
-(defun copy-unicode-char-to-clipboard ()
-  "Interactively select a unicode character and copy it to the system clipboard."
-  (interactive)
-  (with-temp-buffer
-    (call-interactively #'insert-char)
-    (let ((char (buffer-string)))
-      (copy-to-clipboard char)
-      (message "%s" (concat "Copied " char " to system clipboard")))))
+(unless noninteractive
+  (setq
+   ;; amb/doom-dark-theme 'modus-vivendi
+   amb/doom-dark-theme 'doom-badger
+   amb/doom-light-theme 'modus-operandi)
 
-(map!
- :leader
- :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer
- "Nr" #'narrow-to-region
- "Nf" #'narrow-to-defun
- "Np" #'narrow-to-page
- "Ns" #'org-toggle-narrow-to-subtree
- "Nw" #'widen
- :desc "jump to first non-blank" "of" #'evil-first-non-blank
- :desc "new frame" "oF" #'make-frame
- "W" #'subword-mode)
+  (defun amb/toggle-themes ()
+    "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
+    (interactive)
+    (cond ((eq doom-theme amb/doom-dark-theme) (load-theme amb/doom-light-theme))
+          (t (load-theme amb/doom-dark-theme))))
 
-(map!
- "C-;" #'evil-avy-goto-char-timer
- :ni "C-)" #'sp-forward-slurp-sexp
- :ni "C-(" #'sp-backward-slurp-sexp
- (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
+  (map! :leader
+        "tt" #'amb/toggle-themes)
+
+  (load-theme amb/doom-dark-theme t))
+
+(unless noninteractive
+  (require-theme 'modus-themes)
+
+  (setq modus-themes-bold-constructs t
+        modus-themes-italic-constructs t
+        modus-themes-syntax (list 'alt-syntax 'yellow-comments)
+        modus-themes-vivendi-color-overrides
+        '((bg-main . "#0d0b11")
+          (fg-main . "#ffeeee")
+          (bg-hl-line . "#29272f"))
+        modus-themes-operandi-color-overrides
+        '((bg-hl-line . "#eeeeee"))))
+
+(setq display-line-numbers-type 't)
+
+(after! evil
+  (add-hook! '(evil-operator-state-entry-hook evil-visual-state-entry-hook)
+    (setq display-line-numbers 'relative))
+
+  (add-hook! '(evil-operator-state-exit-hook evil-visual-state-exit-hook)
+    (setq display-line-numbers 't)))
+
+(setq! fill-column 90)
+(global-visual-line-mode -1)
+
+(setq frame-title-format
+      '(""
+        (:eval
+         (if (s-contains-p org-roam-directory (or buffer-file-name ""))
+             (replace-regexp-in-string
+              ".*/[0-9]*-?" "☰ "
+              (subst-char-in-string ?_ ?  buffer-file-name))
+           "%b"))
+        (:eval
+         (let ((project-name (projectile-project-name)))
+           (unless (string= "-" project-name)
+             (format (if (buffer-modified-p)  " ◉ %s" "  ●  %s") project-name))))))
+
+(custom-set-faces!
+  '(+workspace-tab-face :inherit default :family "Overpass" :height 135)
+  '(+workspace-tab-selected-face :inherit (highlight +workspace-tab-face)))
+
+(tab-bar-history-mode)
+
+(after! persp-mode
+  (defun workspaces-formatted ()
+    ;; fancy version as in screenshot
+    (+doom-dashboard--center (frame-width)
+                             (let ((names (or persp-names-cache nil))
+                                   (current-name (safe-persp-name (get-current-persp))))
+                               (mapconcat
+                                #'identity
+                                (cl-loop for name in names
+                                         for i to (length names)
+                                         collect
+                                         (concat (propertize (format " %d" (1+ i)) 'face
+                                                             `(:inherit ,(if (equal current-name name)
+                                                                             '+workspace-tab-selected-face
+                                                                           '+workspace-tab-face)
+                                                               :weight bold))
+                                                 (propertize (format " %s " name) 'face
+                                                             (if (equal current-name name)
+                                                                 '+workspace-tab-selected-face
+                                                               '+workspace-tab-face))))
+                                " "))))
+  (defun amb/invisible-current-workspace ()
+    "The tab bar doesn't update when only faces change (i.e. the
+current workspace), so we invisibly print the current workspace
+name as well to trigger updates"
+    (propertize (safe-persp-name (get-current-persp)) 'invisible t))
+
+  (customize-set-variable 'tab-bar-format '(workspaces-formatted tab-bar-format-align-right amb/invisible-current-workspace))
+
+  ;; don't show current workspaces when we switch, since we always see them
+  (advice-add #'+workspace/display :override #'ignore)
+  ;; same for renaming and deleting (and saving, but oh well)
+  (advice-add #'+workspace-message :override #'ignore))
+
+;; need to run this later for it to not break frame size for some reason
+(run-at-time nil nil (cmd! (tab-bar-mode +1)))
+
+(map! :leader
+      :desc "toggle tab bar" "tT" #'tab-bar-mode)
 
 (setq standard-indent 2)
 
@@ -547,6 +462,17 @@ the active region will be used."
   :hook (yaml-mode . yaml-pro-mode)
   :hook (yaml-mode . yaml-pro-ts-mode)
   )
+
+;; accept completion from copilot and fallback to company
+(use-package! copilot
+  :hook (prog-mode . copilot-mode)
+  :bind (:map copilot-completion-map
+              ("<tab>" . 'copilot-accept-completion-by-word)
+              ("TAB" . 'copilot-accept-completion-by-word)
+              ("C-TAB" . 'copilot-accept-completion)
+              ("C-<tab>" . 'copilot-accept-completion)))
+
+(use-package! gptel)
 
 (after! magit
   (defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
@@ -738,18 +664,93 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       (cons '(:noweb . "yes")
             (assq-delete-all :noweb org-babel-default-header-args)))
 
-;; accept completion from copilot and fallback to company
-(use-package! copilot
-  :hook (prog-mode . copilot-mode)
-  :bind (:map copilot-completion-map
-              ("<tab>" . 'copilot-accept-completion-by-word)
-              ("TAB" . 'copilot-accept-completion-by-word)
-              ("C-TAB" . 'copilot-accept-completion)
-              ("C-<tab>" . 'copilot-accept-completion)))
+(map!
+ :leader
+ :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer
+ "Nr" #'narrow-to-region
+ "Nf" #'narrow-to-defun
+ "Np" #'narrow-to-page
+ "Ns" #'org-toggle-narrow-to-subtree
+ "Nw" #'widen
+ :desc "jump to first non-blank" "of" #'evil-first-non-blank
+ :desc "new frame" "oF" #'make-frame
+ "W" #'subword-mode)
 
-(use-package! gptel)
+(map!
+ "C-;" #'evil-avy-goto-char-timer
+ :ni "C-)" #'sp-forward-slurp-sexp
+ :ni "C-(" #'sp-backward-slurp-sexp
+ (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
 
-(setq confirm-kill-emacs nil)
+(setq user-full-name "Alex Birdsall"
+      user-mail-address "ambirdsall@gmail.com")
+
+(defvar amb/computer-specific-config (expand-file-name "local.el" doom-private-dir)
+  "A file for computer-specific config, hidden from git; for
+example, configuration for a work computer and its (possibly
+private) product projects.")
+
+(map! :leader
+      :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
+      :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
+      :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
+
+(defvar +literate-tangle--proc nil)
+(defvar +literate-tangle--proc-start-time nil)
+
+(defadvice! +literate-tangle-async-h ()
+  "A very simplified version of `+literate-tangle-h', but async."
+  :override #'+literate-tangle-h
+  (unless (getenv "__NOTANGLE")
+    (let ((default-directory doom-private-dir))
+      (when +literate-tangle--proc
+        (message "Killing outdated tangle process...")
+        (set-process-sentinel +literate-tangle--proc #'ignore)
+        (kill-process +literate-tangle--proc)
+        (sit-for 0.3)) ; ensure the message is seen for a bit
+      (setq +literate-tangle--proc-start-time (float-time)
+            +literate-tangle--proc
+            (start-process "tangle-config"
+                           (get-buffer-create " *tangle config*")
+                           "emacs" "--batch" "--eval"
+                           (format "(progn \
+(require 'ox) \
+(require 'ob-tangle) \
+(setq org-confirm-babel-evaluate nil \
+      org-inhibit-startup t \
+      org-mode-hook nil \
+      write-file-functions nil \
+      before-save-hook nil \
+      after-save-hook nil \
+      vc-handled-backends nil \
+      org-startup-folded nil \
+      org-startup-indented nil) \
+(org-babel-tangle-file \"%s\" \"%s\"))"
+                                   +literate-config-file
+                                   (expand-file-name doom-module-config-file))))
+      (set-process-sentinel +literate-tangle--proc #'+literate-tangle--sentinel)
+      (run-at-time nil nil (lambda () (message "Tangling config.org"))) ; ensure shown after a save message
+      "Tangling config.org...")))
+
+(defun +literate-tangle--sentinel (process signal)
+  (cond
+   ((and (eq 'exit (process-status process))
+         (= 0 (process-exit-status process)))
+    (message "Tangled config.org sucessfully (took %.1fs)"
+             (- (float-time) +literate-tangle--proc-start-time))
+    (setq +literate-tangle--proc nil))
+   ((memq (process-status process) (list 'exit 'signal))
+    (pop-to-buffer (get-buffer " *tangle config*"))
+    (message "Failed to tangle config.org (after %.1fs)"
+             (- (float-time) +literate-tangle--proc-start-time))
+    (setq +literate-tangle--proc nil))))
+
+(defun +literate-tangle-check-finished ()
+  (when (and (process-live-p +literate-tangle--proc)
+             (yes-or-no-p "Config is currently retangling, would you please wait a few seconds?"))
+    (switch-to-buffer " *tangle config*")
+    (signal 'quit nil)))
+(add-hook! 'kill-emacs-hook #'+literate-tangle-check-finished)
 
 (let ((amb/computer-specific-config (concat doom-private-dir "local.el")))
   (and (file-exists-p amb/computer-specific-config) (load amb/computer-specific-config)))
