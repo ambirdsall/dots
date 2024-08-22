@@ -2,7 +2,7 @@
 
 alias eaa="emv ~/aliases.zsh"
 ea () {
-    local alias_file=$(find ~/.config/zsh/conf.d/ -name '*-aliases.zsh' | fzf)
+    local alias_file=$(find ~/.config/zsh/conf.d/ -name '*.zsh' | fzf)
     [ -n "$alias_file" ] && emv $alias_file
 }
 alias el="emv ~/.local-aliases.zsh"
