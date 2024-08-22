@@ -32,8 +32,8 @@ magit () {
 #   ship in :: pull --rebase
 #   ship up :: rebase current branch on the repo's default branch at origin
 #   ship out :: set upstream
-alias shipit='ahoy && git push origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
-alias SHIPIT='ahoy && git push --force-with-lease origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
+alias shipit='ahoy && git push -u origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
+alias SHIPIT='ahoy && git push --force-with-lease -u origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
 # who doesn't love a good typo
 alias SHIIT='ahoy && echo "      FUUCK"'
 
