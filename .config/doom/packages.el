@@ -1,5 +1,6 @@
 ;; -*- no-byte-compile: t; -*-
 
+(package! kkp)
 
 (package! evil-replace-with-register)
 

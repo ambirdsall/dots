@@ -120,8 +120,14 @@ installation locations removed) reference version:
          "/Library/Apple/usr/share/man"))
 #+end_src
 
+** better terminal keycode handling
+#+begin_src elisp :tangle packages.el
+(package! kkp)
+#+end_src
 
 #+begin_src elisp
+(use-package! kkp
+  :config (global-kkp-mode +1))
 #+end_src
 * text editing per se
 ** text manipulation utilities [0/1]
