@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+usage() {
+  echo "Usage: line [-h|--help] [-0] N"
+  echo "Print the Nth line of standard input."
+  echo
+  echo "Options:"
+  echo "  -h, --help   Show this help message and exit"
+  echo "  -0           Consider the first line as line 0"
+}
+
+# Default settings
+nth_line=1
+zero_indexed=false
+
+# Handle flags
+while [[ "$1" == -* ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -0)
+      zero_indexed=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1"
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+# Get the Nth line argument
+if [[ -n "$1" ]]; then
+  nth_line=$1
+else
+  echo "Error: N is required."
+  usage
+  exit 1
+fi
+
+# Adjust if zero-indexed
+if [[ "$zero_indexed" == true ]]; then
+  ((nth_line++))
+fi
+
+# Print the nth line
+awk "NR==$nth_line" <&0
