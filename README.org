@@ -12,36 +12,41 @@ To get up and running:
 The last step is so neither I nor you ever accidentally push our whole home directory to
 github, lol. So:
 #+BEGIN_SRC sh
-  git clone --separate-git-dir=$HOME/.dots git@github.com:ambirdsall/dots.git tmpdotfiles
-  rsync --recursive \
-        --verbose \
-        --exclude '.git' \
-        --backup --suffix=.dots.orig \
-        tmpdotfiles/ $HOME/
-  rm -r tmpdotfiles
+git clone --separate-git-dir=$HOME/.dots git@github.com:ambirdsall/dots.git tmpdotfiles
+rsync --recursive \
+      --verbose \
+      --exclude '.git' \
+      --backup --suffix=.dots.orig \
+      tmpdotfiles/ $HOME/
+rm -r tmpdotfiles
 
-  git --git-dir=$HOME/.dots/ --work-tree=$HOME config --local status.showUntrackedFiles no
+git --git-dir=$HOME/.dots/ --work-tree=$HOME config --local status.showUntrackedFiles no
 #+END_SRC
 
 If you've already installed emacs, you can now run
 #+BEGIN_SRC sh
-  make install
+make install
 #+END_SRC
 
 followed by whichever of the following is appropriate
 #+begin_src shell
-  make linux
-  make macos
+make linux
+make macos
 #+end_src
 
 * managing this git directory
 The =~/bin/dots= file provides a =dots= command to handle all interaction with the git repo. It wraps
-~git~, passing the correct directories to ~--git-dir~ and ~--work-tree~ and paving a few common paths: it
-defaults to ~git status -s~ when called with no arguments, and ~dots c some commit message~ expands to
-~dots commit -m "some commit message"~.
+~git~, passing the correct directories to ~--git-dir~ and ~--work-tree~ and paving a few common paths:
+- ~dots~ :: defaults to ~git status -s~ when called with no arguments
+- ~dots c some commit message~ :: expands to ~dots commit -m "some commit message"~
 
 * todo list
-- [ ] find way to invoke magit-status with a separate git dir and work tree
-  I think there's an emacs package that sets up a ~yadm~ / ~magit~ integration (via TRAMP, I
-  think?); since, IIUC, ~yadm~ is more or less a thin wrapper over a bare git repo, this same
-  approach ought to be usable here.
+** TODO install roboto mono in all OSes (for experimenting with NANO emacs)
+** TODO organize a system for task to find and build all literate configs [0/4]
+*** TODO consistent filename convention lmao
+*** TODO ~dots build~ or ~dots build all~ :: tangle all literate configs
+Does this need to be a specific command? If ~dots ls-files | grep ${filename}.org |
+$tangle_cmd~  is snappy enough to run for everything, and at least for now, I'm fine with
+untracked files needing to be more manually tangled.
+*** TODO ~dots build <directory-or-file>~ :: tangle a specific config
+*** TODO ~dots build --watch~ / ~-w~ :: tangle a specific config every time the file changes
