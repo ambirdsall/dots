@@ -1,3 +1,5 @@
+" TODO reload config, either on save or via keybinding
+
 " Defaults not covered by sensible.vim (cf ~/.vim/bin/init)
 set nohlsearch
 set noswapfile
@@ -14,6 +16,8 @@ nnoremap <leader>wh <C-w>h
 nnoremap <leader>wj <C-w>j
 nnoremap <leader>wk <C-w>k
 nnoremap <leader>wl <C-w>l
+nnoremap <leader>ws :split<CR>
+nnoremap <leader>wv :vsplit<CR>
 
 " Edit parent directory of current buffer
 nnoremap <leader>. :e %:h<CR>
