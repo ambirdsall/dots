@@ -1,14 +1,19 @@
 #!/usr/bin/env zsh
 
 list_sessions_if_inside_tmux() {
-    if [[ -n $TMUX ]]; then
+    # wezterm has a nicer version of a subset of tmux's features, so I don't use the two
+    # together; this makes the extra noise when running `clear` in wezterm kind of
+    # annoying
+    if [[ -n $TMUX && $TERM_PROGRAM != "WezTerm" ]]; then
         echo "Tmux sessions:"
         tmux list-sessions
         printf "\n"
     fi
 }
 
-alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
+if [[ $TERM_PROGRAM != "WezTerm" ]]; then
+    alias clear='clear; [[ -z "$TMUX" ]] && tls 2>/dev/null || true'
+fi
 
 t () {
     if ! test -n "$(ps -e | grep -q tmux)"; then
