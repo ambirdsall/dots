@@ -14,15 +14,7 @@ g () {
 # Complete g like git
 compdef g=git
 
-# ** oh, oh, it's ~magit~
-# TODO expand into a proper elisp script
-magit () {
-    emacsclient --socket=magit -nw -e "
-(progn
-  (or (advice-member-p 'save-buffers-kill-terminal '+magit/quit)
-      (advice-add '+magit/quit :before 'save-buffers-kill-terminal))
-  (magit-status))" || emacs --daemon=magit
-}
+# cf ./23-emacs-aliases.zsh for `magit` alias
 
 # * git operations
 # * ship shape
