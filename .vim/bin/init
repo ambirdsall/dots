@@ -49,6 +49,7 @@ main () {
     git@github.com:tpope/vim-commentary.git
     git@github.com:airblade/vim-gitgutter.git
     git@github.com:easymotion/vim-easymotion.git
+    git@github.com:jceb/vim-orgmode.git
   )
   local vim_pkg_dir=~/.vim/pack/doomesque/start
   mkdir -p $vim_pkg_dir
