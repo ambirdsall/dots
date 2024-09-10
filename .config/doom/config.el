@@ -52,8 +52,10 @@ the active region will be used."
        mac-option-modifier 'meta
        ns-function-modifier 'super)
 
-(use-package! kkp
-  :config (global-kkp-mode +1))
+(add-hook! 'tty-setup-hook :depth -90
+  (defun +tty-init-kkp-h ()
+    (global-kkp-mode +1)
+    (kkp-enable-in-terminal)))
 
 (defmacro cmds--on-string-or-region (fn)
   "Given a string-manipulation function FN, defines an interactive command which will apply that

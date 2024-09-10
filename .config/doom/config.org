@@ -121,17 +121,31 @@ installation locations removed) reference version:
 #+end_src
 
 ** better terminal keycode handling
+Leaving the untangled manual config in place for a bit so things work with my computers
+which aren't running a super up-to-date version of doom.
+
+Relatedly, leaving this in ~packages.el~ so I can just dump the activation code in ~local.el~ if needed.
 #+begin_src elisp :tangle packages.el
 (package! kkp)
 #+end_src
 
-#+begin_src elisp
+The naive config (for why it's disabled see immediately below):
+#+begin_src elisp :tangle no
 (use-package! kkp
   :config (global-kkp-mode +1))
 #+end_src
+
+The following snipped was added as a test at Henrik's request; it does what I want, and
+presumably somehow is better optimized for doom's loading than the above.
+#+begin_src elisp tangle no
+(add-hook! 'tty-setup-hook :depth -90
+  (defun +tty-init-kkp-h ()
+    (global-kkp-mode +1)
+    (kkp-enable-in-terminal)))
+#+end_src
 * text editing per se
 ** text manipulation utilities [0/1]
-See
+See the =text manipulation utility macros= appendix for deets.
 #+begin_src elisp
 <<text-manipulation-metafns>>
 #+end_src
