@@ -524,9 +524,8 @@ it to myself, so I can flit over to a different light and/or dark theme at my pl
 #+begin_src elisp
 (unless noninteractive
   (setq
-   ;; amb/doom-dark-theme 'modus-vivendi
-   amb/doom-dark-theme 'doom-badger
-   amb/doom-light-theme 'modus-operandi)
+   amb/doom-dark-theme 'doom-one
+   amb/doom-light-theme 'doom-one-light)
 
   (defun amb/toggle-themes ()
     "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
@@ -540,18 +539,26 @@ it to myself, so I can flit over to a different light and/or dark theme at my pl
   (load-theme amb/doom-dark-theme t))
 #+end_src
 
+
 ****** TODO use a ring instead of imperatively toggling btw hardcoded vars
 - [ ] look up rings in elisp manual lol
 - [ ] create a container var that is, you guessed it,,,
 - [ ] iterate through that in ~amb/toggle-themes~
 
-***** tweak modus themes
+***** [legacy] modus themes config
 The modus themes (included with emacs since version twenty-eight point something) are a
 thoughtfully-designed, goal-oriented set of color themes, designed for accessibility and
 readability (high-contrast, anti-deuteranopic variants) and sporting delightfully-paired
 names:
 - /modus operandi/ :: Mode, or manner, of that which is to be worked. The light color theme, for one's toil under the sun.
 - /modus vivendi/ :: Mode, or manner, of living. The dark color theme, for one's toil under monitor glare.
+
+I don't use either one anymore—I appreciate their philosophical bent, but the extra
+marginal config required to get them as cute as a nice choice out of ~doom-themes~ is hard
+to justify. The real turning point, though, was discovering that when using tty emacs,
+~modus-operandi~'s usage of colors from the terminal color theme meant that switching both
+emacs and the surrounding terminal emulator to a light theme (as when working outside on a
+sunny day) made the primary text face a unreadable.[fn:1]
 
 Speaking of toggling switches, the modus themes expose quite a few semantically-named
 variables for users to tweak; let's do so.
@@ -563,7 +570,7 @@ background a subtle "night sky" vibe; a touch of red makes the foreground text w
 We'll also want a corresponding adjustment to the background color of highlighted (i.e.
 current) lines.
 
-#+begin_src elisp
+#+begin_src elisp :tangle no
 (unless noninteractive
   (require-theme 'modus-themes)
 
@@ -1631,3 +1638,7 @@ argument programmatically or by operating on selected text when
 used interactively."
   `(fset ,name (cmds--on-string-or-region ,fn)))
 #+end_src
+
+* Footnotes
+
+[fn:1] This is the white-on-white crime our politicians /should/ be talking about, if you ask me.

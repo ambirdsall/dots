@@ -233,9 +233,8 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
 
 (unless noninteractive
   (setq
-   ;; amb/doom-dark-theme 'modus-vivendi
-   amb/doom-dark-theme 'doom-badger
-   amb/doom-light-theme 'modus-operandi)
+   amb/doom-dark-theme 'doom-one
+   amb/doom-light-theme 'doom-one-light)
 
   (defun amb/toggle-themes ()
     "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
@@ -247,19 +246,6 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
         "tt" #'amb/toggle-themes)
 
   (load-theme amb/doom-dark-theme t))
-
-(unless noninteractive
-  (require-theme 'modus-themes)
-
-  (setq modus-themes-bold-constructs t
-        modus-themes-italic-constructs t
-        modus-themes-syntax (list 'alt-syntax 'yellow-comments)
-        modus-themes-vivendi-color-overrides
-        '((bg-main . "#0d0b11")
-          (fg-main . "#ffeeee")
-          (bg-hl-line . "#29272f"))
-        modus-themes-operandi-color-overrides
-        '((bg-hl-line . "#eeeeee"))))
 
 (setq display-line-numbers-type 't)
 
