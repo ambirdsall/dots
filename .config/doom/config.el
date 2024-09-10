@@ -1,5 +1,7 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
+;; commentary: what the fuck
+
 (setq! select-enable-clipboard nil)
 
 (map! "C-M-y" #'clipboard-yank)

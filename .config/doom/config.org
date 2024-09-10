@@ -1586,6 +1586,8 @@ it or you should be.
 #+begin_src elisp :tangle no :noweb-ref config-preamble
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
+;; commentary: what the fuck
+
 #+end_src
 ** The secrets I keep with myself, or: praise the Lord and pass the =.gitignore=
 This snippet loads a computer-specific config file if it's present. It goes
