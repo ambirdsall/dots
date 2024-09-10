@@ -15,10 +15,10 @@
 
 (package! emojify)
 
+(package! golden-ratio)
+
 (package! code-compass
   :recipe (:host github :repo "ag91/code-compass" :files (:defaults "pages" "scripts")))
-
-(package! apheleia)
 
 (package! lsp-tailwindcss :recipe (:host github :repo "merrickluo/lsp-tailwindcss"))
 

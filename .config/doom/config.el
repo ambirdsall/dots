@@ -277,7 +277,8 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
   '(+workspace-tab-face :inherit default :family "Overpass" :height 135)
   '(+workspace-tab-selected-face :inherit (highlight +workspace-tab-face)))
 
-(tab-bar-history-mode)
+(defvar amb/enable-workspace-tabs nil
+  "Do I really want to show tabs of the workspace names? Tell me via this variable.")
 
 (after! persp-mode
   (defun workspaces-formatted ()
@@ -311,13 +312,75 @@ name as well to trigger updates"
   ;; don't show current workspaces when we switch, since we always see them
   (advice-add #'+workspace/display :override #'ignore)
   ;; same for renaming and deleting (and saving, but oh well)
-  (advice-add #'+workspace-message :override #'ignore))
+  (advice-add #'+workspace-message :override #'ignore)
 
-;; need to run this later for it to not break frame size for some reason
-(run-at-time nil nil (cmd! (tab-bar-mode +1)))
+  ;; need to run this later for it to not break frame size for some reason
+  (run-at-time
+   nil
+   nil
+   (cmd!
+    (when amb/enable-workspace-tabs
+      (tab-bar-history-mode)
+      (tab-bar-mode +1)))))
 
 (map! :leader
       :desc "toggle tab bar" "tT" #'tab-bar-mode)
+
+(use-package! golden-ratio
+  :config
+  (map! :leader "wG" #'golden-ratio))
+
+(defvar amb--more-current-window-original-sizes (make-hash-table :test 'eq)
+  "A hash table storing the original sizes of windows so they can be restored by `amb/more-current-window'.")
+
+(defun amb--more-current-window-save-original-size (win)
+  "Ensure the window configuration relative to a window object `WIN' is stored.
+Window sizes are stored in `amb--more-current-window-original-sizes'."
+  (unless (gethash win amb--more-current-window-original-sizes)
+    (puthash win (current-window-configuration) amb--more-current-window-original-sizes)))
+
+(defun amb/more-current-window ()
+  "Make the current window larger based on predefined breakpoints.
+If the window occupies the entire frame, restore its original size."
+  (interactive)
+  (let* ((win (selected-window))
+         (frame-width (frame-width))
+         (window-width (window-total-width win)))
+    (cond
+     ;; If the window is maximized, restore its original size.
+     ((and (window-full-width-p win) (window-full-height-p win))
+      (message "there and, uh,")
+      (when-let ((orig-size (gethash win amb--more-current-window-original-sizes)))
+        (message "and back again")
+        (set-window-configuration orig-size)
+        (remhash win amb--more-current-window-original-sizes)))
+     ;; If the width is less than 50% of the frame, increase it to 50%.
+     ;; Yes, I compare against 48%, not 50%; I don't want to be stuck at 50% when I want *more*
+     ((< (/ (float window-width) frame-width) 0.48)
+      (message "fiddy")
+      (amb--more-current-window-save-original-size win)
+      (let ((target-width (floor (* 0.50 frame-width))))
+        (adjust-window-trailing-edge win (- target-width window-width) t)))
+     ;; If the width is less than 61% of the frame, use golden-ratio.
+     ((< (/ (float window-width) frame-width) 0.61)
+      (message "goldy")
+      (amb--more-current-window-save-original-size win)
+      (call-interactively #'golden-ratio))
+     ;; If the width is less than 70%, enlarge the window.
+     ((< (/ (float window-width) frame-width) 0.70)
+      (message "biggie")
+      (amb--more-current-window-save-original-size win)
+      (doom/window-enlargen))
+     ;; Otherwise, maximize the window.
+     (t
+      (message "all that and then some")
+      (amb--more-current-window-save-original-size win)
+      (doom/window-maximize-buffer)))))
+
+;; Bind the command to the leader key.
+(map! :leader
+      :desc "more of current window"
+      "w." #'amb/more-current-window)
 
 (setq standard-indent 2)
 
@@ -628,9 +691,29 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (setq org-agenda-auto-exclude-function 'org-my-auto-exclude-fn)
 
-(map! :after org
- :map 'org-mode-map
-      "<tab>" 'org-cycle)
+(after! org
+  (map! :after org
+        :map 'org-mode-map
+        "<tab>" 'org-cycle)
+
+  (defun my-org-mode-backtick-replacement ()
+    "Replace a single backtick with = and triple backticks with a code block template."
+    (interactive)
+    (let ((context (buffer-substring-no-properties (max (point-min) (- (point) 2)) (point))))
+      (if (string= context "==")
+          (progn
+            (delete-char -2)
+            (insert "#+begin_src \n#+end_src\n")
+            (forward-line -1)
+            (move-beginning-of-line nil)
+            (backward-char))
+        (insert "="))))
+
+  (defun my-org-mode-key-remap ()
+    "Remap ` to custom function in org-mode."
+    (local-set-key (kbd "`") 'my-org-mode-backtick-replacement))
+
+  (add-hook 'org-mode-hook 'my-org-mode-key-remap))
 
 (use-package! outshine
   :after org

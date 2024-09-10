@@ -639,7 +639,8 @@ Notably, clicking on the tabs accomplishes nothing helpful with this setup.
   '(+workspace-tab-face :inherit default :family "Overpass" :height 135)
   '(+workspace-tab-selected-face :inherit (highlight +workspace-tab-face)))
 
-(tab-bar-history-mode)
+(defvar amb/enable-workspace-tabs nil
+  "Do I really want to show tabs of the workspace names? Tell me via this variable.")
 
 (after! persp-mode
   (defun workspaces-formatted ()
@@ -725,6 +726,74 @@ A normal click on a tab navigates to it (optionally, if not the current one). Ri
 **** TODO PDFView mode does not take tab bar height into account when rendering a page
 The end result is having to scroll a small amount whenever I (\*Bob Seger voice*) turn the
 page, which is frankly a bit annoying. A shitty workaround is to manually toggle, I guess.
+*** window sizing
+This is a nice little thing:
+#+begin_src elisp :tangle packages.el
+(package! golden-ratio)
+#+end_src
+
+It's automatic resizing behavior is overkill, but it's nice to be able to easily opt-in:
+#+begin_src elisp
+(use-package! golden-ratio
+  :config
+  (map! :leader "wG" #'golden-ratio))
+#+end_src
+
+So. Sometimes the current window just needs to be a little more. Let's make that situation nice and easy to handle:
+#+begin_src elisp
+(defvar amb--more-current-window-original-sizes (make-hash-table :test 'eq)
+  "A hash table storing the original sizes of windows so they can be restored by `amb/more-current-window'.")
+
+(defun amb--more-current-window-save-original-size (win)
+  "Ensure the window configuration relative to a window object `WIN' is stored.
+Window sizes are stored in `amb--more-current-window-original-sizes'."
+  (unless (gethash win amb--more-current-window-original-sizes)
+    (puthash win (current-window-configuration) amb--more-current-window-original-sizes)))
+
+(defun amb/more-current-window ()
+  "Make the current window larger based on predefined breakpoints.
+If the window occupies the entire frame, restore its original size."
+  (interactive)
+  (let* ((win (selected-window))
+         (frame-width (frame-width))
+         (window-width (window-total-width win)))
+    (cond
+     ;; If the window is maximized, restore its original size.
+     ((and (window-full-width-p win) (window-full-height-p win))
+      (message "there and, uh,")
+      (when-let ((orig-size (gethash win amb--more-current-window-original-sizes)))
+        (message "and back again")
+        (set-window-configuration orig-size)
+        (remhash win amb--more-current-window-original-sizes)))
+     ;; If the width is less than 50% of the frame, increase it to 50%.
+     ;; Yes, I compare against 48%, not 50%; I don't want to be stuck at 50% when I want *more*
+     ((< (/ (float window-width) frame-width) 0.48)
+      (message "fiddy")
+      (amb--more-current-window-save-original-size win)
+      (let ((target-width (floor (* 0.50 frame-width))))
+        (adjust-window-trailing-edge win (- target-width window-width) t)))
+     ;; If the width is less than 61% of the frame, use golden-ratio.
+     ((< (/ (float window-width) frame-width) 0.61)
+      (message "goldy")
+      (amb--more-current-window-save-original-size win)
+      (call-interactively #'golden-ratio))
+     ;; If the width is less than 70%, enlarge the window.
+     ((< (/ (float window-width) frame-width) 0.70)
+      (message "biggie")
+      (amb--more-current-window-save-original-size win)
+      (doom/window-enlargen))
+     ;; Otherwise, maximize the window.
+     (t
+      (message "all that and then some")
+      (amb--more-current-window-save-original-size win)
+      (doom/window-maximize-buffer)))))
+
+;; Bind the command to the leader key.
+(map! :leader
+      :desc "more of current window"
+      "w." #'amb/more-current-window)
+#+end_src
+
 * programming
 ** Indent however you wish, as long as you do it right
 #+begin_src elisp
