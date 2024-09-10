@@ -5,6 +5,10 @@ e () {
   emacsclient -nw --socket-name=ttylated --alternate-editor="" "$@"
 }
 
+edo () {
+  emacsclient -nw --socket-name=ttylated --eval "$@"
+}
+
 E () {
   emacsclient -c --socket-name=interminable --alternate-editor="" "$@" & disown
 }
