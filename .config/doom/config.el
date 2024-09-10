@@ -124,7 +124,8 @@ used interactively."
 (setq company-global-modes '(not text-mode org-mode))
 
 (use-package! evil-replace-with-register
-  :init (setq evil-replace-with-register-key (kbd "gr"))
+  :init
+  (setq evil-replace-with-register-key (kbd "gr"))
   :config (evil-replace-with-register-install))
 
 (use-package! evil-exchange
@@ -174,9 +175,9 @@ used interactively."
     (interactive)
     (if-let (filename (or buffer-file-name (bound-and-true-p list-buffers-directory)))
         (message (kill-new (f-relative filename (projectile-acquire-root))))
-      (error "Couldn't find filename in current buffer"))))
+      (error "Couldn't find filename in current buffer")))
 
-(map! :leader "fY" #'yank-buffer-filename-relative-to-project)
+  (map! :leader "fY" #'yank-buffer-filename-relative-to-project))
 
 (after! projectile
   (defmacro file-jumper-for-project (project-root)
@@ -333,7 +334,10 @@ name as well to trigger updates"
 
   (map!
    :leader
-   :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos))
+   :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos)
+
+  (add-to-list 'projectile-globally-ignored-files "!todo.org")
+  (add-to-list 'projectile-globally-ignored-files "!test.http"))
 
 (use-package! code-compass :defer t
               :commands (c/show-hotspots-sync
@@ -366,7 +370,7 @@ name as well to trigger updates"
      (typescript "https://github.com/tree-sitter/tree-sitter-typescript" "master" "typescript/src")
      (yaml "https://github.com/ikatyang/tree-sitter-yaml")))
 
-(after! lsp
+(after! lsp-mode
   (defun amb/lsp-restart ()
     "The current lsp server? Turn it off and on again."
     (interactive)
@@ -388,27 +392,16 @@ name as well to trigger updates"
 
   (map!
    :gnvie "C-M-l" #'lsp-execute-code-action
-   :n "RET" #'amb/lsp-dwim)
+   (:map lsp-mode-map :n "RET" #'amb/lsp-dwim)
 
-  (map! :leader :desc "restart server" "clR" #'amb/lsp-restart))
+  ;; but, like, it *is* a prefix key???
+  ;; manually running this map! form after init works great; I suppose lsp module does some rebinding or some shit
+  ;; (map! :leader :desc "restart server" "clR" #'amb/lsp-restart)
+  ))
 
 (after! lsp-ui
   (map!
    :leader :desc "show references" "cR" #'lsp-ui-peek-find-references))
-
-(use-package! apheleia
-  :hook ((tsx-mode . apheleia-mode)
-         (typescript-mode . apheleia-mode)
-         (typescript-tsx-mode . apheleia-mode)
-         (js-mode . apheleia-mode)
-         (json-mode . apheleia-mode)
-         (css-mode . apheleia-mode)
-         (scss-mode . apheleia-mode))
-  :defer t
-  :config
-  (push '(tsx-mode . prettier) apheleia-mode-alist)
-  (push '(scss-mode . prettier) apheleia-mode-alist)
-  (push '(css-mode . prettier) apheleia-mode-alist))
 
 (setq! web-mode-markup-indent-offset 2
        web-mode-css-indent-offset 2
@@ -467,6 +460,11 @@ name as well to trigger updates"
 (use-package! gptel)
 
 (after! magit
+  ;; strictly speaking unnecessary (it's the default)
+  ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
+  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+  (setq magit-bury-buffer-function #'magit-restore-window-configuration)
+
   (defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
     (interactive)
     (self-insert-command 1 ?-))
@@ -488,11 +486,6 @@ name as well to trigger updates"
   
   (transient-append-suffix 'magit-branch "b"
     '("M" "default branch" amb/magit-checkout-default-branch)))
-
-;; strictly speaking unnecessary (it's the default)
-;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
-(setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
-(setq magit-bury-buffer-function #'magit-restore-window-configuration)
 
 (defun amb/magit-status-with-dotfiles-fallback ()
   (interactive)
@@ -532,7 +525,7 @@ name as well to trigger updates"
 (use-package! smerge-mode
   :after (hydra magit)
   :config
-  (defhydra unpackaged/smerge-hydra
+  (defhydra amb/smerge-hydra
     (:color pink :hint nil :post (smerge-auto-leave))
     "
 ^Move^       ^Keep^               ^Diff^                 ^Other^
@@ -565,9 +558,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
             (bury-buffer))
      "Save and bury buffer" :color blue)
     ("q" nil "cancel" :color blue))
+  (map! :leader :desc "resolve git conflicts" "gm" #'amb/smerge-hydra/body)
   :hook (magit-diff-visit-file . (lambda ()
                                    (when smerge-mode
-                                     (unpackaged/smerge-hydra/body)))))
+                                     (amb/smerge-hydra/body)))))
 
 (add-to-list '+evil-collection-disabled-list 'info)
 (set-evil-initial-state! 'info-mode 'emacs)

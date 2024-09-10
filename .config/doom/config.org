@@ -267,7 +267,8 @@ keybinding scheme as well sometime.
 
 #+begin_src elisp
 (use-package! evil-replace-with-register
-  :init (setq evil-replace-with-register-key (kbd "gr"))
+  :init
+  (setq evil-replace-with-register-key (kbd "gr"))
   :config (evil-replace-with-register-install))
 #+end_src
 *** evil-exchange
@@ -368,9 +369,10 @@ using it as a mnemonic binding for ~imenu~:
     (interactive)
     (if-let (filename (or buffer-file-name (bound-and-true-p list-buffers-directory)))
         (message (kill-new (f-relative filename (projectile-acquire-root))))
-      (error "Couldn't find filename in current buffer"))))
+      (error "Couldn't find filename in current buffer")))
 
-(map! :leader "fY" #'yank-buffer-filename-relative-to-project)
+  (map! :leader "fY" #'yank-buffer-filename-relative-to-project))
+
 #+end_src
 
 *** jump to arbitrary files in specific projects/directories from anywhere
@@ -671,10 +673,17 @@ name as well to trigger updates"
   ;; don't show current workspaces when we switch, since we always see them
   (advice-add #'+workspace/display :override #'ignore)
   ;; same for renaming and deleting (and saving, but oh well)
-  (advice-add #'+workspace-message :override #'ignore))
+  (advice-add #'+workspace-message :override #'ignore)
 
-;; need to run this later for it to not break frame size for some reason
-(run-at-time nil nil (cmd! (tab-bar-mode +1)))
+  ;; need to run this later for it to not break frame size for some reason
+  (run-at-time
+   nil
+   nil
+   (cmd!
+    (when amb/enable-workspace-tabs
+      (tab-bar-history-mode)
+      (tab-bar-mode +1)))))
+
 #+end_src
 
 This one is no better, but it /is/ simpler. Perhaps it's a better starting point for making a clickable version?
@@ -745,7 +754,10 @@ project). It's an idiosyncratic pattern, but it works brilliantly for me on work
 
   (map!
    :leader
-   :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos))
+   :desc "Open project TODOs.org file" "po" #'amb/goto-project-todos)
+
+  (add-to-list 'projectile-globally-ignored-files "!todo.org")
+  (add-to-list 'projectile-globally-ignored-files "!test.http"))
 #+end_src
 
 ** code compass
@@ -808,7 +820,7 @@ with fire.
 Auto-imports are handled by code actions; there's a function for that. It uses a vertico
 buffer instead of a pop-up, presumably via ~completing-read~, but frankly that's better.
 #+begin_src elisp
-(after! lsp
+(after! lsp-mode
   (defun amb/lsp-restart ()
     "The current lsp server? Turn it off and on again."
     (interactive)
@@ -830,9 +842,12 @@ buffer instead of a pop-up, presumably via ~completing-read~, but frankly that's
 
   (map!
    :gnvie "C-M-l" #'lsp-execute-code-action
-   :n "RET" #'amb/lsp-dwim)
+   (:map lsp-mode-map :n "RET" #'amb/lsp-dwim)
 
-  (map! :leader :desc "restart server" "clR" #'amb/lsp-restart))
+  ;; but, like, it *is* a prefix key???
+  ;; manually running this map! form after init works great; I suppose lsp module does some rebinding or some shit
+  ;; (map! :leader :desc "restart server" "clR" #'amb/lsp-restart)
+  ))
 
 (after! lsp-ui
   (map!
@@ -898,12 +913,12 @@ First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckrus
                 'jsx-tide)))
 #+end_src
 
-*** prettier et al with apheleia (until elken's module drops lol)
-#+begin_src elisp :tangle packages.el
+*** prettier et al with apheleia (disabled for testing now that elken's module has dropped)
+#+begin_src elisp :tangle (or "no" "packages.el")
 (package! apheleia)
-  #+end_src
+#+end_src
 
-#+begin_src elisp
+#+begin_src elisp :tangle no
 (use-package! apheleia
   :hook ((tsx-mode . apheleia-mode)
          (typescript-mode . apheleia-mode)
@@ -917,7 +932,7 @@ First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckrus
   (push '(tsx-mode . prettier) apheleia-mode-alist)
   (push '(scss-mode . prettier) apheleia-mode-alist)
   (push '(css-mode . prettier) apheleia-mode-alist))
-  #+end_src
+#+end_src
 
 *** web-mode
 #+begin_src elisp
@@ -1130,6 +1145,8 @@ tree-sitter version requires a semi-manual setup step to install all the languag
 With apologies to vc-mode, magit is the gold standard. So:
 #+begin_src elisp :noweb yes
 (after! magit
+  <<magit-window-management>>
+
   <<magit-auto-dash>>
 
   <<magit-sections>>
@@ -1139,7 +1156,7 @@ With apologies to vc-mode, magit is the gold standard. So:
 
 *** magit status, like the cat in the hat, should clean up after itself
 These are fine to set before magit is initialized, so they are directly tangled instead of injected into the ~after!~  block with noweb shenanigans.
-#+begin_src elisp
+#+begin_src elisp :tangle no :noweb-ref magit-window-management
   ;; strictly speaking unnecessary (it's the default)
   ;; (add-hook 'magit-pre-display-buffer-hook #'magit-save-window-configuration)
   (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
@@ -1149,8 +1166,7 @@ These are fine to set before magit is initialized, so they are directly tangled 
 *** If I can't type a space, why let me?
 In scenarios like branch names, whitespace is disallowed. But using the spacebar as a word
 separator is deep, deep muscle memory. Why fight it?
-#+name: magit-auto-dash
-#+begin_src elisp :tangle no
+#+begin_src elisp :tangle no :noweb-ref magit-auto-dash
   (defun just-use-a-dash-instead-sheesh (_nope &rest _dontcare)
     (interactive)
     (self-insert-command 1 ?-))
@@ -1159,14 +1175,12 @@ separator is deep, deep muscle memory. Why fight it?
 #+end_src
 
 *** magit-status sections
-#+name: magit-sections
-#+begin_src elisp :tangle no
+#+begin_src elisp :tangle no :noweb-ref magit-sections
 (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
 #+end_src
 
 *** custom actions in magit transients
-#+name: magit-custom-actions
-#+begin_src elisp :tangle no
+#+begin_src elisp :tangle no :noweb-ref magit-custom-actions
 (defun amb/magit-checkout-default-branch ()
   "Check out the default branch of the current repository."
   (interactive)
@@ -1257,7 +1271,7 @@ files containing git conflicts.
 (use-package! smerge-mode
   :after (hydra magit)
   :config
-  (defhydra unpackaged/smerge-hydra
+  (defhydra amb/smerge-hydra
     (:color pink :hint nil :post (smerge-auto-leave))
     "
 ^Move^       ^Keep^               ^Diff^                 ^Other^
@@ -1290,9 +1304,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
             (bury-buffer))
      "Save and bury buffer" :color blue)
     ("q" nil "cancel" :color blue))
+  (map! :leader :desc "resolve git conflicts" "gm" #'amb/smerge-hydra/body)
   :hook (magit-diff-visit-file . (lambda ()
                                    (when smerge-mode
-                                     (unpackaged/smerge-hydra/body)))))
+                                     (amb/smerge-hydra/body)))))
 #+end_src
 
 ** info-mode, or: RTFM
@@ -1394,14 +1409,35 @@ because ~setq~ is a macro) and everything went to heck.
 
 #+end_src
 
-*** keybinding fixes [0/1]
-#+begin_src elisp
-(map! :after org
- :map 'org-mode-map
-      "<tab>" 'org-cycle)
-#+end_src
+*** keybinding fixes
+I wonder if this is a kkp/CSIu thing? i.e. org expects to receive ~(kbd "TAB")~ but instead gets ~(kbd "<tab>")~.
 
-**** TODO fix ~c-h~ in org mode and re-add the fucking motion bois
+#+begin_src elisp
+(after! org
+  (map! :after org
+        :map 'org-mode-map
+        "<tab>" 'org-cycle)
+
+  (defun my-org-mode-backtick-replacement ()
+    "Replace a single backtick with = and triple backticks with a code block template."
+    (interactive)
+    (let ((context (buffer-substring-no-properties (max (point-min) (- (point) 2)) (point))))
+      (if (string= context "==")
+          (progn
+            (delete-char -2)
+            (insert "#+begin_src \n#+end_src\n")
+            (forward-line -1)
+            (move-beginning-of-line nil)
+            (backward-char))
+        (insert "="))))
+
+  (defun my-org-mode-key-remap ()
+    "Remap ` to custom function in org-mode."
+    (local-set-key (kbd "`") 'my-org-mode-backtick-replacement))
+
+  (add-hook 'org-mode-hook 'my-org-mode-key-remap))
+
+#+end_src
 
 *** outlines ✨ everywhere ✨with outshine
 #+begin_src elisp :tangle packages.el
