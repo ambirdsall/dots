@@ -6,7 +6,6 @@
 (local { : file-exists
          : identity } (dofile (wezterm-config-filepath :utils)))
 
-(local multiplexing (require :config/multiplexing))
 (local local-overrides
        (let [localfile (wezterm-config-filepath :local)]
          (if (file-exists localfile)
@@ -14,6 +13,10 @@
               (require localfile)
               { :apply identity })))
 
-(-> (config-builder)
-    multiplexing.apply
+(local config
+       (or
+        (and config-builder (config-builder))
+        {}))
+
+(-> config
     local-overrides.apply)

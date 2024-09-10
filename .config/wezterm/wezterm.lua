@@ -6,7 +6,6 @@ if wezterm.config_builder then
   config = wezterm.config_builder()
 end
 
-require('config/multiplexing').apply(config)
 require('config/keybinding').apply(config)
 require('config/appearance').apply(config)
 
