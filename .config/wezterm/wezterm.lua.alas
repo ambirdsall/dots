@@ -1,8 +1,0 @@
--- -*- mode: fennel -*-
-
-local fennel = require("fennel")
-table.insert(package.loaders or package.searchers, fennel.searcher)
-
--- local mod = fennel.dofile(os.getenv("HOME") .. "/.config/wezterm/wezterm.fnl")
--- return mod
-return fennel.dofile(os.getenv("HOME") .. "/.config/wezterm/wezterm.fnl")
