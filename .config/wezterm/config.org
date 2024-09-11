@@ -1,0 +1,345 @@
+#+title: Wezterm config
+
+#+begin_src elisp :results none
+(org-babel-tangle nil "wezterm.lua" "lua")
+#+end_src
+
+#+begin_src elisp :results none
+(add-hook! 'after-save-hook :local
+  (org-babel-tangle nil "wezterm.lua" "lua"))
+#+end_src
+
+* ~wezterm.lua~
+#+begin_src lua :noweb yes :tangle wezterm.lua
+<<top-level-defs>>
+
+local config = {}
+
+if wezterm.config_builder then
+  config = wezterm.config_builder()
+end
+
+<<keybinding>>
+<<appearance>>
+
+return config
+#+end_src
+
+#+begin_src lua :tangle no :noweb yes :noweb-ref top-level-defs
+local wezterm = require 'wezterm'
+#+end_src
+** source a ~.gitignore~d local config file if present? :YAGNI:
+
+* keybindings
+** set the terms: functions, aliases, etc
+
+#+begin_src lua :tangle no :noweb-ref keybinding
+
+local leader = function(key, action)
+  return { key=key, mods="LEADER", action=action }
+end
+
+local unbind = function(key, mods)
+  return { key=key, mods=mods, action=act.DisableDefaultAssignment }
+end
+
+#+end_src
+
+#+begin_src lua :tangle no :noweb yes :noweb-ref top-level-defs
+local act = wezterm.action
+#+end_src
+** and now, the keybindings
+*** set up keyboard
+#+begin_src lua :tangle no :noweb-ref keybinding
+-- config.enable_csi_u_key_encoding = true
+config.enable_kitty_keyboard = true
+#+end_src
+
+This bit is really mac-specific, but it doesn't hurt anything to set it on linux too
+#+begin_src lua :tangle no :noweb-ref keybinding
+config.send_composed_key_when_left_alt_is_pressed = false
+config.send_composed_key_when_right_alt_is_pressed = false
+#+end_src
+
+*** okay now we go ham
+
+#+begin_src lua :tangle no :noweb-ref keybinding
+config.leader = { key = "Space", mods = "CTRL", timeout_milliseconds = 1000 }
+#+end_src
+
+#+begin_src lua :tangle no :noweb yes :noweb-ref keybinding
+config.keys = {
+  { key = 'Enter', mods = 'SUPER', action = act.ToggleFullScreen },
+
+  { key = 'x', mods = 'SUPER', action = act.ShowLauncherArgs { flags = 'FUZZY|COMMANDS' } },
+
+  leader("Space", act.ActivateCopyMode),
+  leader("t", act.EmitEvent "toggle-colorscheme"),
+
+  <<keybinding-subsection>>
+}
+#+end_src
+**** open/shut them, open/shut them, give a little clap clap clap
+#+begin_src lua :tangle no :noweb-ref keybinding-subsection
+leader("c", act.SpawnTab "CurrentPaneDomain"),
+leader("s", act.SplitVertical { domain='CurrentPaneDomain' }),
+leader("v", act.SplitHorizontal { domain='CurrentPaneDomain' }),
+leader("z", act.TogglePaneZoomState),
+leader("x", act.CloseCurrentPane { confirm=false }),
+leader("b", wezterm.action_callback(function(_, pane) pane.move_to_new_tab() end)),
+#+end_src
+**** navigate panes
+Moving ace-window-style
+#+begin_src lua :tangle no :noweb-ref keybinding-subsection
+leader("w", act.PaneSelect),
+leader("W", act.PaneSelect { mode = "SwapWithActive" }),
+#+end_src
+
+#+begin_src lua :tangle no :noweb-ref keybinding-subsection
+leader("h", act.ActivatePaneDirection "Left"),
+leader("LeftArrow", act.ActivatePaneDirection "Left"),
+leader("j", act.ActivatePaneDirection "Down"),
+leader("DownArrow", act.ActivatePaneDirection "Down"),
+leader("k", act.ActivatePaneDirection "Up"),
+leader("UpArrow", act.ActivatePaneDirection "Up"),
+leader("l", act.ActivatePaneDirection "Right"),
+leader("RightArrow", act.ActivatePaneDirection "Right"),
+#+end_src
+**** tabs
+rename them:
+#+begin_src lua :tangle no :noweb-ref keybinding-subsection
+leader(",", act.PromptInputLine {
+  description = "Enter new name for tab",
+  action = wezterm.action_callback(function(window, pane, line)
+    if line and #line > 0 then
+      window:active_tab():set_title(line)
+    end
+  end),
+}),
+#+end_src
+
+select the one you want:
+#+begin_src lua :tangle no :noweb-ref keybinding-subsection
+leader('.', act.ShowTabNavigator),
+leader('`', act.ActivateLastTab),
+
+leader("1", act { ActivateTab=0 }),
+leader("2", act { ActivateTab=1 }),
+leader("3", act { ActivateTab=2 }),
+leader("4", act { ActivateTab=3 }),
+leader("5", act { ActivateTab=4 }),
+leader("6", act { ActivateTab=5 }),
+leader("7", act { ActivateTab=6 }),
+leader("8", act { ActivateTab=7 }),
+leader("9", act { ActivateTab=-1 }),
+leader("p", act { ActivateTabRelative=-1 }),
+leader("n", act { ActivateTabRelative=1 }),
+#+end_src
+
+***** TODO resizing current pane
+ (I don't know how to accomplish these yet)
+ leader("=", equalize pane sizes somehow),
+ leader("g", set current pane width to reciprocal of golden ratio vis-a-vis its containing window),
+**** workspaces
+- pick existing workspace
+- "detach" (i.e. switch to "default")
+- create new named workspace
+- rename current workspace
+- switch back to prior workspace
+#+begin_src lua :tangle no :noweb-ref keybinding-subsection
+leader("S", act.ShowLauncherArgs { flags = "FUZZY|WORKSPACES" }),
+
+leader("d", act.SwitchToWorkspace { name = "default" }),
+
+leader("C", act.PromptInputLine {
+  description = wezterm.format {
+    { Attribute = { Intensity = "Bold" } },
+    { Foreground = { AnsiColor = "Fuchsia" } },
+    { Text = "Enter name for new workspace" },
+  },
+  action = wezterm.action_callback(function(window, pane, line)
+    -- line will be `nil` if they hit escape without entering anything
+    -- An empty string if they just hit enter
+    -- Or the actual line of text they wrote
+    if line then
+      window:perform_action(
+        act.SwitchToWorkspace {
+          name = line,
+        },
+        pane
+      )
+    end
+  end),
+}),
+
+leader("R", act.PromptInputLine {
+  description = wezterm.format {
+    { Attribute = { Intensity = "Bold" } },
+    { Foreground = { AnsiColor = "Fuchsia" } },
+    { Text = "Enter name for new workspace" },
+  },
+  action = wezterm.action_callback(function(window, pane, line)
+    -- line will be `nil` if they hit escape without entering anything
+    -- An empty string if they just hit enter
+    -- Or the actual line of text they wrote
+    if line then
+      wezterm.mux.rename_workspace(
+        wezterm.mux.get_active_workspace(),
+        line
+      )
+    end
+  end),
+}),
+leader('L', act.SwitchWorkspaceRelative(-1)),
+#+end_src
+
+**** unbind annoying defaults
+#+begin_src lua :tangle no :noweb-ref keybinding-subsection
+unbind("Enter", "ALT"),
+unbind("Tab", "CTRL"),
+unbind("RightArrow", "SHIFT"),
+unbind("LeftArrow", "SHIFT"),
+unbind("UpArrow", "SHIFT"),
+unbind("DownArrow", "SHIFT"),
+#+end_src
+
+***** all default keybindings (cf. [[https://raw.githubusercontent.com/wez/wezterm/main/docs/config/default-keys.md][the original source]] if this gets out of date)
+The default key assignments are shown in the table below.
+
+If you don't want the default assignments to be registered, you can
+disable all of them with this configuration; if you chose to do this,
+you must explicitly register every binding.
+
+#+begin_src lua :tangle no
+config.disable_default_key_bindings = true
+#+end_src
+
+When using ~disable_default_key_bindings~, it is recommended that you assign
+~ShowDebugOverlay~ to something to aid in potential future troubleshooting.
+
+You may also use ~wezterm show-keys --lua~ to see the assignments
+in a form that you can copy and paste into your own configuration.
+****** table
+| Modifiers      | Key        | Action                                       |
+|----------------+------------+----------------------------------------------|
+| =SUPER=          | =c=          | ~CopyTo="Clipboard"~                           |
+| =SUPER=          | =v=          | ~PasteFrom="Clipboard"~                        |
+| =CTRL+SHIFT=     | =c=          | ~CopyTo="Clipboard"~                           |
+| =CTRL+SHIFT=     | =v=          | ~PasteFrom="Clipboard"~                        |
+|                | =Copy=        | ~CopyTo="Clipboard"~                           |
+|                | =Paste=       | ~PasteFrom="Clipboard"~                        |
+| =CTRL=           | =Insert=     | ~CopyTo="PrimarySelection"~                    |
+| =SHIFT=          | =Insert=     | ~PasteFrom="PrimarySelection"~                 |
+| =SUPER=          | =m=          | ~Hide~                                         |
+| =SUPER=          | =n=          | ~SpawnWindow~                                  |
+| =CTRL+SHIFT=     | =n=          | ~SpawnWindow~                                  |
+| =ALT=            | =Enter=      | ~ToggleFullScreen~                             |
+| =SUPER=          | =-=          | ~DecreaseFontSize~                             |
+| =CTRL=           | =-=          | ~DecreaseFontSize~                             |
+| =SUPER=          | ===          | ~IncreaseFontSize~                             |
+| =CTRL=           | ===          | ~IncreaseFontSize~                             |
+| =SUPER=          | =0=          | ~ResetFontSize~                                |
+| =CTRL=           | =0=          | ~ResetFontSize~                                |
+| =SUPER=          | =t=          | ~SpawnTab="CurrentPaneDomain"~                 |
+| =CTRL+SHIFT=     | =t=          | ~SpawnTab="CurrentPaneDomain"~                 |
+| =SUPER+SHIFT=    | =T=          | ~SpawnTab="DefaultDomain"~                     |
+| =SUPER=          | =w=          | ~CloseCurrentTab{confirm=true}~                |
+| =SUPER=          | =1=          | ~ActivateTab=0~                                |
+| =SUPER=          | =2=          | ~ActivateTab=1~                                |
+| =SUPER=          | =3=          | ~ActivateTab=2~                                |
+| =SUPER=          | =4=          | ~ActivateTab=3~                                |
+| =SUPER=          | =5=          | ~ActivateTab=4~                                |
+| =SUPER=          | =6=          | ~ActivateTab=5~                                |
+| =SUPER=          | =7=          | ~ActivateTab=6~                                |
+| =SUPER=          | =8=          | ~ActivateTab=7~                                |
+| =SUPER=          | =9=          | ~ActivateTab=-1~                               |
+| =CTRL+SHIFT=     | =w=          | ~CloseCurrentTab{confirm=true}~                |
+| =CTRL+SHIFT=     | =1=          | ~ActivateTab=0~                                |
+| =CTRL+SHIFT=     | =2=          | ~ActivateTab=1~                                |
+| =CTRL+SHIFT=     | =3=          | ~ActivateTab=2~                                |
+| =CTRL+SHIFT=     | =4=          | ~ActivateTab=3~                                |
+| =CTRL+SHIFT=     | =5=          | ~ActivateTab=4~                                |
+| =CTRL+SHIFT=     | =6=          | ~ActivateTab=5~                                |
+| =CTRL+SHIFT=     | =7=          | ~ActivateTab=6~                                |
+| =CTRL+SHIFT=     | =8=          | ~ActivateTab=7~                                |
+| =CTRL+SHIFT=     | =9=          | ~ActivateTab=-1~                               |
+| =SUPER+SHIFT=    | =[=          | ~ActivateTabRelative=-1~                       |
+| =CTRL+SHIFT=     | =Tab=        | ~ActivateTabRelative=-1~                       |
+| =CTRL=           | =PageUp=     | ~ActivateTabRelative=-1~                       |
+| =SUPER+SHIFT=    | =]=          | ~ActivateTabRelative=1~                        |
+| =CTRL=           | =Tab=        | ~ActivateTabRelative=1~                        |
+| =CTRL=           | =PageDown=   | ~ActivateTabRelative=1~                        |
+| =CTRL+SHIFT=     | =PageUp=     | ~MoveTabRelative=-1~                           |
+| =CTRL+SHIFT=     | =PageDown=   | ~MoveTabRelative=1~                            |
+| =SHIFT=          | =PageUp=     | ~ScrollByPage=-1~                              |
+| =SHIFT=          | =PageDown=   | ~ScrollByPage=1~                               |
+| =SUPER=          | =r=          | ~ReloadConfiguration~                          |
+| =CTRL+SHIFT=     | =R=          | ~ReloadConfiguration~                          |
+| =SUPER=          | =h=          | ~HideApplication~ (macOS only)                 |
+| =SUPER=          | =k=          | ~ClearScrollback="ScrollbackOnly"~             |
+| =CTRL+SHIFT=     | =K=          | ~ClearScrollback="ScrollbackOnly"~             |
+| =CTRL+SHIFT=     | =L=          | ~ShowDebugOverlay~                             |
+| =CTRL+SHIFT=     | =P=          | ~ActivateCommandPalette~                       |
+| =CTRL+SHIFT=     | =U=          | ~CharSelect~                                   |
+| =SUPER=          | =f=          | ~Search={CaseSensitiveString=""}~              |
+| =CTRL+SHIFT=     | =F=          | ~Search={CaseSensitiveString=""}~              |
+| =CTRL+SHIFT=     | =X=          | ~ActivateCopyMode~                             |
+| =CTRL+SHIFT=     | =Space=      | ~QuickSelect~                                  |
+| =CTRL+SHIFT+ALT= | ="=          | ~SplitVertical={domain="CurrentPaneDomain"}~   |
+| =CTRL+SHIFT+ALT= | =%=          | ~SplitHorizontal={domain="CurrentPaneDomain"}~ |
+| =CTRL+SHIFT+ALT= | =LeftArrow=  | ~AdjustPaneSize={"Left", 1}~                   |
+| =CTRL+SHIFT+ALT= | =RightArrow= | ~AdjustPaneSize={"Right", 1}~                  |
+| =CTRL+SHIFT+ALT= | =UpArrow=    | ~AdjustPaneSize={"Up", 1}~                     |
+| =CTRL+SHIFT+ALT= | =DownArrow=  | ~AdjustPaneSize={"Down", 1}~                   |
+| =CTRL+SHIFT=     | =LeftArrow=  | ~ActivatePaneDirection="Left"~                 |
+| =CTRL+SHIFT=     | =RightArrow= | ~ActivatePaneDirection="Right"~                |
+| =CTRL+SHIFT=     | =UpArrow=    | ~ActivatePaneDirection="Up"~                   |
+| =CTRL+SHIFT=     | =DownArrow=  | ~ActivatePaneDirection="Down"~                 |
+| =CTRL+SHIFT=     | =Z=          | ~TogglePaneZoomState~                          |
+
+* appearance
+
+#+begin_src lua :tangle no :noweb-ref appearance
+
+local color_schemes = { 'DanQing (base16)', 'DanQing Light (base16)', 'Dracula+' }
+local color_scheme_toggle_counter = 0
+
+wezterm.on('toggle-colorscheme', function(window, pane)
+  local overrides = window:get_config_overrides() or {}
+  if not overrides.color_scheme then
+    -- overrides.color_scheme = 'Navy and Ivory (terminal.sexy)'
+    overrides.color_scheme = 'neobones_light'
+  else
+    overrides.color_scheme = nil
+  end
+  window:set_config_overrides(overrides)
+  wezterm.run_child_process { 'emacsclient', '-nw', '--socket-name=ttylated', '--eval', "'(amb/toggle-themes)'" }
+end)
+
+config.color_scheme = color_schemes[1]
+config.hide_tab_bar_if_only_one_tab = true
+config.use_fancy_tab_bar = true
+config.window_padding = {
+  left = 0,
+  right = 0,
+  top = 0,
+  bottom = 0,
+}
+#+end_src
+
+** TODO theme switcher succeeds in toggling the =ttylated= emacs daemon's theme
+
+* fennel! [0/12]
+** TODO install antifennel
+*** TODO macos
+*** TODO fedora
+** TODO this /does/ work block-by-block, right?
+** TODO add new fennel blocks but don't tangle them
+** TODO tangle them to an equivalent but unused top-level config file
+** TODO write new =wezterm.lua= that just loads fennel and that config
+** TODO tangle that instead
+** TODO when that works, delete the old lua config
+
+# Local Variables:
+# org-indent-mode: nil
+# End:
