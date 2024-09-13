@@ -19,4 +19,7 @@ dots/clear_name () {
 
 if [[ $(uname) == 'Darwin' ]]; then
     export IS_MAC=t
+else
+    # I know me, it's a safe assumption
+    export IS_LINUX=t
 fi

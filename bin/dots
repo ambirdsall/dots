@@ -1,15 +1,63 @@
 #!/bin/bash
 
-EDITOR='emacsclient -nw --alternate-editor=vim'
-GIT_CMD="git --git-dir=$HOME/.dots/ --work-tree=$HOME"
+dots/git_cmd () {
+  git --git-dir=$HOME/.dots/ --work-tree=$HOME $@
+}
 
-if [[ $# -gt 0 ]]; then
-    if [[ "$1" == "c" ]]; then
+die () {
+  echo "$@" >&2
+  exit 1
+}
+
+main () {
+  if [[ $# -eq 0 ]]; then
+    dots/git_cmd status
+  else
+    sub_cmd=$1
+    case $sub_cmd in
+      "tangle")
         shift
-        $GIT_CMD commit -m "${*}"
-    else
-        $GIT_CMD ${*}
-    fi
-else
-    $GIT_CMD status
-fi
+        local files_to_tangle
+        # all arguments are files to tangle
+        if [[ $# -gt 0 ]]; then
+          files_to_tangle=$@
+          # ensure all arguments are actual files that exist before doing anything
+          for f in $files_to_tangle; do
+            if [[ ! -f $f ]]; then
+              die "File $f does not exist"
+            fi
+          done
+
+          # if we got this far, it's time to boogie
+          for f in $files_to_tangle; do
+            doom +org tangle $f
+          done
+        else
+          local literate_config_filename_pattern='config\.org$'
+
+          if [[ -n "$IS_MAC" ]]; then
+              literate_config_filename_pattern='config\.org$|config\.macos\.org$'
+          fi
+
+          # If $IS_LINUX is defined, add config.linux.org to the pattern
+          if [[ -n "$IS_LINUX" ]]; then
+              literate_config_filename_pattern='config\.org$|config\.linux\.org$'
+          fi
+          files_to_tangle=$(dots/git_cmd ls-files | grep -E $literate_config_filename_pattern)
+          for f in $files_to_tangle; do
+            doom +org tangle "$f"
+          done
+        fi
+        ;;
+      "c") # is this still needed, given the alias in ~/.gitconfig?
+        shift
+        dots/git_cmd commit -m "${*}"
+        ;;
+      *)
+        dots/git_cmd "${*}"
+        ;;
+    esac
+  fi
+}
+
+main "$@"
