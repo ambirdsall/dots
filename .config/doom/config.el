@@ -161,6 +161,64 @@ used interactively."
 (use-package! evil-textobj-line
   :after evil)
 
+(defhydra hydra-window-nav (:hint nil :exit nil)
+  "
+Navigate Windows (exit with RET, ESC, q, or C-g)
+  ^Navigate^
+  ^^^^^^^^
+  _h_/_<left>_ ←   _j_/_<down>_ ↓   _k_/_<up>_ ↑   _l_/_<right>_ →
+  ^Rearrange^
+  ^^^^^^^^
+  _H_/_S-<left>_ ←   _J_/_S-<down>_ ↓   _K_/_S-<up>_ ↑   _L_/_S-<right>_ →
+"
+  ;; Navigation
+  ("h" evil-window-left)
+  ("<left>" evil-window-left)
+  ("j" evil-window-down)
+  ("<down>" evil-window-down)
+  ("k" evil-window-up)
+  ("<up>" evil-window-up)
+  ("l" evil-window-right)
+  ("<right>" evil-window-right)
+
+  ;; Move windows
+  ("H" +evil/window-move-left)
+  ("S-<left>" +evil/window-move-left)
+  ("J" +evil/window-move-down)
+  ("S-<down>" +evil/window-move-down)
+  ("K" +evil/window-move-up)
+  ("S-<up>" +evil/window-move-up)
+  ("L" +evil/window-move-right)
+  ("S-<right>" +evil/window-move-right)
+
+  ;; Exit hydra
+  ("RET" nil :exit t)
+  ("ESC" nil :exit t)
+  ("q" nil :exit t)
+  ("C-g" nil :exit t))
+
+(map! :leader
+      :desc "get movin'" "w." #'hydra-window-nav/body)
+
+(use-package! ace-window
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
+        aw-scope 'frame
+        aw-dispatch-always 't
+        aw-dispatch-alist '((?x aw-delete-window "Delete Window")
+                            (?m aw-swap-window "Swap Windows")
+                            (?M aw-move-window "Move Window")
+                            (?c aw-copy-window "Copy Window")
+                            (?b aw-switch-buffer-in-window "Select Buffer")
+                            (?B aw-switch-buffer-other-window "Switch Buffer Other Window")
+                            (?n aw-flip-window)
+                            (?c aw-split-window-fair "Split Fair Window")
+                            (?v aw-split-window-vert "Split Vert Window")
+                            (?z aw-split-window-horz "Split Horz Window")
+                            (?o delete-other-windows "Delete Other Windows")
+                            (?? aw-show-dispatch-help)))
+  (map! :leader "ww" #'ace-window))
+
 (defun sudo ()
   "Use TRAMP to `sudo' the current buffer."
   (interactive)

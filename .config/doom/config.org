@@ -349,7 +349,75 @@ using it as a mnemonic binding for ~imenu~:
 (use-package! evil-textobj-line
   :after evil)
 #+end_src
-* buffers, windows, frames, workspaces... all that emacs shit [0/1]
+* buffers, windows, frames, workspaces... all that emacs shit [0/5]
+** window navigation
+#+begin_src elisp
+(defhydra hydra-window-nav (:hint nil :exit nil)
+  "
+Navigate Windows (exit with RET, ESC, q, or C-g)
+  ^Navigate^
+  ^^^^^^^^
+  _h_/_<left>_ ←   _j_/_<down>_ ↓   _k_/_<up>_ ↑   _l_/_<right>_ →
+  ^Rearrange^
+  ^^^^^^^^
+  _H_/_S-<left>_ ←   _J_/_S-<down>_ ↓   _K_/_S-<up>_ ↑   _L_/_S-<right>_ →
+"
+  ;; Navigation
+  ("h" evil-window-left)
+  ("<left>" evil-window-left)
+  ("j" evil-window-down)
+  ("<down>" evil-window-down)
+  ("k" evil-window-up)
+  ("<up>" evil-window-up)
+  ("l" evil-window-right)
+  ("<right>" evil-window-right)
+
+  ;; Move windows
+  ("H" +evil/window-move-left)
+  ("S-<left>" +evil/window-move-left)
+  ("J" +evil/window-move-down)
+  ("S-<down>" +evil/window-move-down)
+  ("K" +evil/window-move-up)
+  ("S-<up>" +evil/window-move-up)
+  ("L" +evil/window-move-right)
+  ("S-<right>" +evil/window-move-right)
+
+  ;; Exit hydra
+  ("RET" nil :exit t)
+  ("ESC" nil :exit t)
+  ("q" nil :exit t)
+  ("C-g" nil :exit t))
+
+(map! :leader
+      :desc "get movin'" "w." #'hydra-window-nav/body)
+#+end_src
+
+*** ace-window
+#+begin_src elisp :tangle packages.el
+(package! ace-window)
+#+end_src
+
+#+begin_src elisp
+
+(use-package! ace-window
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)
+        aw-scope 'frame
+        aw-dispatch-always 't
+        aw-dispatch-alist '((?x aw-delete-window "Delete Window")
+                            (?m aw-swap-window "Swap Windows")
+                            (?M aw-move-window "Move Window")
+                            (?c aw-copy-window "Copy Window")
+                            (?b aw-switch-buffer-in-window "Select Buffer")
+                            (?B aw-switch-buffer-other-window "Switch Buffer Other Window")
+                            (?n aw-flip-window)
+                            (?c aw-split-window-fair "Split Fair Window")
+                            (?v aw-split-window-vert "Split Vert Window")
+                            (?z aw-split-window-horz "Split Horz Window")
+                            (?o delete-other-windows "Delete Other Windows")
+                            (?? aw-show-dispatch-help)))
+  (map! :leader "ww" #'ace-window))
+#+end_src
 ** files, both local and remote
 *** oops, I need to ~sudo~ edit this file
 #+begin_src elisp
@@ -412,7 +480,6 @@ doing so, a 1:1 mapping with workspaces quickly creates a terrible clutter.
 (after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
 #+end_src
 
-** TODO ace-window
 ** Don't confirm before quitting
 I said what I said.
 #+begin_src elisp
@@ -514,10 +581,10 @@ I mean, it's nice.
 #+begin_src elisp
 (whitespace-mode 1)
 #+end_src
-*** theme this bad boy [0/2]
-**** TODO wrap all theme config in a single ~(unless noninteractive <theme config>)~ form and =noweb= in the different logical sections
+*** theme this bad boy [0/1]
+I should really wrap all theme config in a single ~(unless noninteractive <theme config>)~ form and =noweb= in the different logical sections
 **** that said...
-***** Define a theme switcher utility
+***** Define a theme switcher utility [0/1]
 Sometimes (usually) I want dark mode; sometimes (presenting, in direct sunlight, or just
 mixing it up) I want light mode. What I do /not/ want is to have to pick a specific theme
 out of a haystack by name each time I want to toggle between light and dark; give me
