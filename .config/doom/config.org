@@ -1814,3 +1814,7 @@ used interactively."
 * Footnotes
 
 [fn:1] This is the white-on-white crime our politicians /should/ be talking about, if you ask me.
+
+# Local Variables:
+# org-indent-mode: nil
+# End:
