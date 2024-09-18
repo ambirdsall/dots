@@ -161,35 +161,39 @@ used interactively."
 (use-package! evil-textobj-line
   :after evil)
 
-(defhydra hydra-window-nav (:hint nil :exit nil)
+(defhydra amb/window-nav-hydra (:hint nil :exit nil)
   "
 Navigate Windows (exit with RET, ESC, q, or C-g)
   ^Navigate^
-  ^^^^^^^^
-  _h_/_<left>_ ←   _j_/_<down>_ ↓   _k_/_<up>_ ↑   _l_/_<right>_ →
+  _h_ ←  _j_ ↓  _k_ ↑  _l_ →
+
   ^Rearrange^
-  ^^^^^^^^
-  _H_/_S-<left>_ ←   _J_/_S-<down>_ ↓   _K_/_S-<up>_ ↑   _L_/_S-<right>_ →
+  _H_ ←  _J_ ↓  _K_ ↑  _L_ →
+  _x_ Close _s_/_v_ Split
+
+  ^Repurpose^
+  _._ Nearby file  _p_/_SPC_ Project file  _r_ Recent file
 "
   ;; Navigation
   ("h" evil-window-left)
-  ("<left>" evil-window-left)
   ("j" evil-window-down)
-  ("<down>" evil-window-down)
   ("k" evil-window-up)
-  ("<up>" evil-window-up)
   ("l" evil-window-right)
-  ("<right>" evil-window-right)
 
   ;; Move windows
   ("H" +evil/window-move-left)
-  ("S-<left>" +evil/window-move-left)
   ("J" +evil/window-move-down)
-  ("S-<down>" +evil/window-move-down)
   ("K" +evil/window-move-up)
-  ("S-<up>" +evil/window-move-up)
   ("L" +evil/window-move-right)
-  ("S-<right>" +evil/window-move-right)
+
+  ;; Act on windows
+  ("x" +workspace/close-window-or-workspace)
+  ("." find-file)
+  ("p" projectile-find-file)
+  ("SPC" projectile-find-file)
+  ("r" consult-recent-file)
+  ("s" evil-window-split)
+  ("v" evil-window-vsplit)
 
   ;; Exit hydra
   ("RET" nil :exit t)
@@ -198,7 +202,7 @@ Navigate Windows (exit with RET, ESC, q, or C-g)
   ("C-g" nil :exit t))
 
 (map! :leader
-      :desc "get movin'" "w." #'hydra-window-nav/body)
+      :desc "get movin'" "w." #'amb/window-nav-hydra/body)
 
 (use-package! ace-window
   :config
@@ -438,7 +442,7 @@ If the window occupies the entire frame, restore its original size."
 ;; Bind the command to the leader key.
 (map! :leader
       :desc "more of current window"
-      "w." #'amb/more-current-window)
+      "wM" #'amb/more-current-window)
 
 (setq standard-indent 2)
 
