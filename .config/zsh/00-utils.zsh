@@ -17,6 +17,23 @@ dots/clear_name () {
     fi
 }
 
+dots/file () {
+    if [ -f "$1" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Opposite of `unset`.
+dots/set () {
+    if [ -n "$1" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 if [[ $(uname) == 'Darwin' ]]; then
     export IS_MAC=t
 else

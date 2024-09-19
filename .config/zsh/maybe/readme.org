@@ -1,0 +1,5 @@
+#+title: configs to only source conditionally
+
+you know, if I have a wezterm-only script, I should just... not source that file in other
+terminal emulators. For example.
+
