@@ -544,6 +544,37 @@ If the window occupies the entire frame, restore its original size."
 (after! dap-mode
   (setq dap-python-debugger 'debugpy))
 
+(after! tree-sitter-langs
+  (defun fold-all-methods-in-class ()
+    "Fold all methods within the current class in any Tree-sitter-enabled buffer."
+    (interactive)
+    (let* ((root-node (tsc-root-node tree-sitter-tree))
+           (query (tsc-make-query
+                   tree-sitter-language
+                   "
+                 (class_definition
+                   body: (block
+                     [
+                       (function_definition
+                         name: (identifier) @method-name
+                         body: (block) @method-body)
+                       (decorated_definition
+                         definition: (function_definition
+                           name: (identifier) @method-name
+                           body: (block) @method-body))
+                     ]
+                   ))
+                 "))
+           (captures (tsc-query-captures query root-node #'tsc--buffer-input)))
+      (dotimes (i (length captures))
+        (let* ((capture (aref captures i))
+               (capture-name (car capture))
+               (capture-node (cdr capture)))
+          (when (string= capture-name "method-body")
+            (save-excursion
+              (goto-char (tsc-node-start-position capture-node))
+              (+fold/close))))))))
+
 (use-package! fennel-mode
   :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
 
