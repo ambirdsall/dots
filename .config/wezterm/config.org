@@ -316,7 +316,7 @@ wezterm.on('toggle-colorscheme', function(window, pane)
   wezterm.run_child_process { 'emacsclient', '-nw', '--socket-name=ttylated', '--eval', "'(amb/toggle-themes)'" }
 end)
 
-config.color_scheme = color_schemes[1]
+config.color_scheme = config.color_scheme or color_schemes[1]
 config.hide_tab_bar_if_only_one_tab = true
 config.use_fancy_tab_bar = true
 config.window_padding = {
