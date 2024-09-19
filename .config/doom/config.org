@@ -1082,19 +1082,19 @@ First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckrus
        web-mode-code-indent-offset 2)
 
 (setq! web-mode-engines-alist
-      '(;("angular" . "\\.html")
-        ("vue" . "\\.vue")
-        ("phoenix" . "\\.html\\.eex")
-        ("erb" . "\\.html\\.erb")))
+       '(;("angular" . "\\.html")
+         ("vue" . "\\.vue")
+         ("phoenix" . "\\.html\\.eex")
+         ("erb" . "\\.html\\.erb")))
 #+end_src
 
 *** TODO vue
 Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This must be improved.
 #+begin_quote
- '(auto-insert-alist
-   '((("\\.vue\\'" . "Vue component")
-      .
-      ["template.vue" web-mode autoinsert-yas-expand])))
+'(auto-insert-alist
+'((("\\.vue\\'" . "Vue component")
+.
+["template.vue" web-mode autoinsert-yas-expand])))
 #+end_quote
 
 *** tailwindcss
@@ -1135,10 +1135,10 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 #+begin_src elisp
 (after! alchemist-mode
   (map! (:when (modulep! :lang elixir)    ; local conditional
-        (:map alchemist-mode-map
-         :localleader
-         "tt" #'exunit-toggle-file-and-test
-         "tT" #'exunit-toggle-file-and-test-other-window))))
+          (:map alchemist-mode-map
+           :localleader
+           "tt" #'exunit-toggle-file-and-test
+           "tT" #'exunit-toggle-file-and-test-other-window))))
 
 #+end_src
 *** yuck
@@ -1165,8 +1165,8 @@ remembering it.
 (defun insert-guile-shebang ()
   (interactive)
   (save-excursion
-   (beginning-of-buffer)
-   (insert "#!/usr/local/bin/guile \\
+    (beginning-of-buffer)
+    (insert "#!/usr/local/bin/guile \\
 -e main -s
 !#
 

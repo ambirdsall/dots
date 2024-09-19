@@ -533,10 +533,10 @@ If the window occupies the entire frame, restore its original size."
        web-mode-code-indent-offset 2)
 
 (setq! web-mode-engines-alist
-      '(;("angular" . "\\.html")
-        ("vue" . "\\.vue")
-        ("phoenix" . "\\.html\\.eex")
-        ("erb" . "\\.html\\.erb")))
+       '(;("angular" . "\\.html")
+         ("vue" . "\\.vue")
+         ("phoenix" . "\\.html\\.eex")
+         ("erb" . "\\.html\\.erb")))
 
 (use-package! lsp-tailwindcss
   :after lsp)
@@ -551,18 +551,18 @@ If the window occupies the entire frame, restore its original size."
 
 (after! alchemist-mode
   (map! (:when (modulep! :lang elixir)    ; local conditional
-        (:map alchemist-mode-map
-         :localleader
-         "tt" #'exunit-toggle-file-and-test
-         "tT" #'exunit-toggle-file-and-test-other-window))))
+          (:map alchemist-mode-map
+           :localleader
+           "tt" #'exunit-toggle-file-and-test
+           "tT" #'exunit-toggle-file-and-test-other-window))))
 
 (setq! geiser-active-implementations '(guile))
 
 (defun insert-guile-shebang ()
   (interactive)
   (save-excursion
-   (beginning-of-buffer)
-   (insert "#!/usr/local/bin/guile \\
+    (beginning-of-buffer)
+    (insert "#!/usr/local/bin/guile \\
 -e main -s
 !#
 
