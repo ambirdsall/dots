@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+ps aux | rg -S --color=always "$@" \
+       | rg -v 'rg -S' \
+       | rg -v proctologist
+
+# TODO make this, idk, a nice emacs 'run this hydra and fuck off like a nice little CLI'
+#      script. where the hydra has some options to filter/act but mostly quits and dumps
+#      its colorized output to stdout (stretch goal: iff it's writing to a TTY and not a
+#      CLI tool's STDIN)
