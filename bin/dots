@@ -49,10 +49,10 @@ main () {
           done
         fi
         ;;
-      "c") # is this still needed, given the alias in ~/.gitconfig?
-        shift
-        dots/git_cmd commit -m "${*}"
-        ;;
+      # "c") # is this still needed, given the alias in ~/.gitconfig?
+      #   shift
+      #   dots/git_cmd commit -m "${*}"
+      #   ;;
       *)
         dots/git_cmd "${*}"
         ;;
