@@ -313,7 +313,7 @@ wezterm.on('toggle-colorscheme', function(window, pane)
     overrides.color_scheme = nil
   end
   window:set_config_overrides(overrides)
-  wezterm.run_child_process { 'emacsclient', '-nw', '--socket-name=ttylated', '--eval', "'(amb/toggle-themes)'" }
+  wezterm.run_child_process { os.getenv 'SHELL', '-l', '-c', os.getenv "HOME" .. "/bin/toggle-tty-emacs-color-theme" }
 end)
 
 config.color_scheme = config.color_scheme or color_schemes[1]
