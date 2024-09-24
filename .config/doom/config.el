@@ -325,15 +325,19 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
 (setq frame-title-format
       '(""
         (:eval
+         (if-let ((workspace-name (safe-persp-name (get-current-persp))))
+           (format "%s ⋮ " workspace-name)))
+        (:eval
+         (let ((project-name (projectile-project-name))
+               (workspace-name (safe-persp-name (get-current-persp))))
+           (unless (or (string= "-" project-name) (string= workspace-name project-name))
+             (format (if (buffer-modified-p)  " ◉ %s / " " %s / ") project-name))))
+        (:eval
          (if (s-contains-p org-roam-directory (or buffer-file-name ""))
              (replace-regexp-in-string
               ".*/[0-9]*-?" "☰ "
               (subst-char-in-string ?_ ?  buffer-file-name))
-           "%b"))
-        (:eval
-         (let ((project-name (projectile-project-name)))
-           (unless (string= "-" project-name)
-             (format (if (buffer-modified-p)  " ◉ %s" "  ●  %s") project-name))))))
+           "%b"))))
 
 (custom-set-faces!
   '(+workspace-tab-face :inherit default :family "Overpass" :height 135)
