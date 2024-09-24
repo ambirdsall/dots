@@ -1106,7 +1106,7 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 (use-package! lsp-tailwindcss
   :after lsp)
 #+end_src
-** there are more languages under the sun than ~:lang~ can speak [0/2]
+** there are more languages under the sun than ~:lang~ can speak [0/3]
 *** python
 **** debugger support, at least in theory
 #+begin_src elisp
@@ -1179,7 +1179,7 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 #+begin_src elisp :tangle packages.el
 (package! yuck-mode)
 #+end_src
-*** scheme, or: you've got gall, you've got guile
+*** scheme, or: you've got gall, you've got guile [0/1]
 Apologies to racket, which is a nicer language per se, but guile's already got its grubby
 little +mitts+ C ABI in lots of interesting parts of the linux ecosystem and I just don't
 have time to shop around. If the list stored at ~geiser-active-implementations~ has length >
@@ -1207,7 +1207,7 @@ remembering it.
 ")))
 #+end_src
 
-**** pimp my +ride+ .guile
+**** TODO move this to =~/.config/guile/config.org= :: pimp my +ride+ .guile
 This is my guile repl config. Let's frontload the potentially confusing bit: I would like to rely on the [[https://gitlab.com/NalaGinrut/guile-colorized][guile-colorized]] library, which
 is
 a) a lovely little quality-of-life improvement, and
@@ -1315,8 +1315,7 @@ tree-sitter version requires a semi-manual setup step to install all the languag
 (use-package! gptel)
 #+end_src
 
-* some packages feel like self-contained apps
-** {ma,}git
+* {ma,}git
 With apologies to vc-mode, magit is the gold standard. So:
 #+begin_src elisp :noweb yes
 (after! magit
@@ -1329,7 +1328,10 @@ With apologies to vc-mode, magit is the gold standard. So:
   <<magit-custom-actions>>)
 #+end_src
 
-*** magit status, like the cat in the hat, should clean up after itself
+Not all the following config has to do with magit, but when it does, it gets tangled into
+that ~after!~ form.
+
+** magit status, like the cat in the hat, should clean up after itself
 These are fine to set before magit is initialized, so they are directly tangled instead of injected into the ~after!~  block with noweb shenanigans.
 #+begin_src elisp :tangle no :noweb-ref magit-window-management
   ;; strictly speaking unnecessary (it's the default)
@@ -1338,7 +1340,7 @@ These are fine to set before magit is initialized, so they are directly tangled 
   (setq magit-bury-buffer-function #'magit-restore-window-configuration)
 #+end_src
 
-*** If I can't type a space, why let me?
+** If I can't type a space, why let me?
 In scenarios like branch names, whitespace is disallowed. But using the spacebar as a word
 separator is deep, deep muscle memory. Why fight it?
 #+begin_src elisp :tangle no :noweb-ref magit-auto-dash
@@ -1349,12 +1351,12 @@ separator is deep, deep muscle memory. Why fight it?
   (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
 #+end_src
 
-*** magit-status sections
+** magit-status sections
 #+begin_src elisp :tangle no :noweb-ref magit-sections
 (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
 #+end_src
 
-*** custom actions in magit transients
+** custom actions in magit transients
 #+begin_src elisp :tangle no :noweb-ref magit-custom-actions
 (defun amb/magit-checkout-default-branch ()
   "Check out the default branch of the current repository."
@@ -1371,7 +1373,7 @@ separator is deep, deep muscle memory. Why fight it?
   '("M" "default branch" amb/magit-checkout-default-branch))
 #+end_src
 
-*** dotfiles
+** dotfiles
 I manage my dotfiles with a bare git repository; this takes a little extra effort to set
 up properly. With a hat tip to [[https://github.com/hylophile/.files/blob/d2d41871bd6a74e4b55fadf44d46613d0bcacb53/.config/doom/config.org#dotfiles][hylo]], from whom much of this is adapted.
 
@@ -1437,7 +1439,7 @@ projectile-project-root-files-bottom-up)))
 
 (map! :leader "SPC" #'amb/projectile-find-file)
 #+end_src
-*** nice git conflic resolution hydra
+** nice git conflic resolution hydra
 Gold standard, yes, but not be all and end all. This defines a nice hydra for working with
 files containing git conflicts.
 
@@ -1485,7 +1487,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                      (amb/smerge-hydra/body)))))
 #+end_src
 
-** info-mode, or: RTFM
+* info-mode, or: RTFM
 #+begin_src elisp
 (add-to-list '+evil-collection-disabled-list 'info)
 (set-evil-initial-state! 'info-mode 'emacs)
@@ -1494,8 +1496,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       "j" #'next-line
       "k" #'previous-line)
 #+end_src
-** org-mode config [0/1]
-*** drop it in a box
+* org-mode config [0/1]
+** drop it in a box
 Notes must be at hand to be helpful, ideally on any of several computers:
 #+begin_src elisp
 (let ((dir "~/Dropbox/org/"))
@@ -1503,7 +1505,7 @@ Notes must be at hand to be helpful, ideally on any of several computers:
        (setq org-directory dir)))
 #+end_src
 
-*** make org-mode act nicer
+** make org-mode act nicer
 #+begin_src elisp
 (setq! org-log-into-drawer t
        org-hierarchical-todo-statistics nil
@@ -1511,7 +1513,7 @@ Notes must be at hand to be helpful, ideally on any of several computers:
        org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
 #+end_src
 
-*** make org-mode look nicer
+** make org-mode look nicer
 #+begin_src elisp
 (custom-set-faces!
   '(outline-1 :weight extra-bold :height 1.25)
@@ -1530,7 +1532,7 @@ Notes must be at hand to be helpful, ideally on any of several computers:
 (add-hook! (org-mode) (org-appear-mode 1))
 #+end_src
 
-*** roam
+** roam
 First, I need a roam directory to serve as the "slipbox":
 #+begin_src elisp
 (setq org-roam-directory "~/Dropbox/roam/")
@@ -1560,7 +1562,7 @@ Org-roam-ui tries to keep up with the latest features of org-roam, which conflic
 (package! org-roam-ui)
 #+end_src
 
-*** the yet-neglected agenda view
+** the yet-neglected agenda view
 These values can be dynamically constructed by concatenating the values of
 ~org-roam-directory~ and ~org-roam-dailies-directory~; I did try to use those to make this
 more future-proof, but that just passed along the unresolved symbol names (I assume
@@ -1584,7 +1586,7 @@ because ~setq~ is a macro) and everything went to heck.
 
 #+end_src
 
-*** keybinding fixes
+** keybinding fixes
 I wonder if this is a kkp/CSIu thing? i.e. org expects to receive ~(kbd "TAB")~ but instead gets ~(kbd "<tab>")~.
 
 #+begin_src elisp
@@ -1614,7 +1616,7 @@ I wonder if this is a kkp/CSIu thing? i.e. org expects to receive ~(kbd "TAB")~ 
 
 #+end_src
 
-*** outlines ✨ everywhere ✨with outshine
+** outlines ✨ everywhere ✨with outshine
 #+begin_src elisp :tangle packages.el
 (package! outshine
   :recipe (:host github :repo "alphapapa/outshine"))
@@ -1626,7 +1628,7 @@ I wonder if this is a kkp/CSIu thing? i.e. org expects to receive ~(kbd "TAB")~ 
   :config
   (add-hook 'prog-mode-hook 'outshine-mode))
 #+end_src
-*** graphviz 📉_(ツ)_📈
+** graphviz 📉_(ツ)_📈
 #+begin_src elisp :tangle packages.el
 (package! graphviz-dot-mode)
 #+end_src
@@ -1635,7 +1637,7 @@ I wonder if this is a kkp/CSIu thing? i.e. org expects to receive ~(kbd "TAB")~ 
 (use-package! graphviz-dot-mode
   :after org)
 #+end_src
-*** export backends
+** export backends
 #+begin_src elisp :tangle packages.el
 (package! ox-gfm)
 #+end_src
@@ -1649,7 +1651,7 @@ I wonder if this is a kkp/CSIu thing? i.e. org expects to receive ~(kbd "TAB")~ 
 
 #+end_src
 
-*** no noweb? no: noweb.
+** no noweb? no: noweb.
 This snippet is taken directly from the org-mode info manual.
 #+begin_src elisp
 (setq org-babel-default-header-args
