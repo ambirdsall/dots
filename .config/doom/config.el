@@ -641,7 +641,34 @@ If the window occupies the entire frame, restore its original size."
           (magit-refresh)))))
   
   (transient-append-suffix 'magit-branch "b"
-    '("M" "default branch" amb/magit-checkout-default-branch)))
+    '("M" "default branch" amb/magit-checkout-default-branch))
+
+  (defun amb/copy-github-permalink ()
+    "Generate a GitHub permalink for the current file at the current revision (full SHA).
+  If a region is active, link to the highlighted line(s)."
+    (interactive)
+    (let* ((remote-url (magit-get "remote" (magit-get-remote) "url"))
+           (repo-url (replace-regexp-in-string
+                      (rx string-start
+                          "git@"
+                          (group (+ (not (any ":")))) ; match domain
+                          ":"
+                          (group (+ (not (any "."))))
+                          (optional ".git")
+                          string-end)
+                      "https://\\1/\\2" remote-url))
+           (full-sha (magit-rev-parse "HEAD"))
+           (file-path (magit-file-relative-name buffer-file-name))
+           (start-line (line-number-at-pos (region-beginning)))
+           (end-line (line-number-at-pos (region-end)))
+           (lines (if (use-region-p)
+                      (if (= start-line end-line)
+                          (format "#L%d" start-line)
+                        (format "#L%d-L%d" start-line end-line))
+                    ""))
+           (permalink (format "%s/blob/%s/%s%s" repo-url full-sha file-path lines)))
+      (copy-to-clipboard permalink)
+      (message "GitHub permalink: %s" permalink))))
 
 (defun amb/magit-status-with-dotfiles-fallback ()
   (interactive)
