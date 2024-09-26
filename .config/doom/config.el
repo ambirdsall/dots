@@ -574,7 +574,7 @@ If the window occupies the entire frame, restore its original size."
         (let* ((capture (aref captures i))
                (capture-name (car capture))
                (capture-node (cdr capture)))
-          (when (string= capture-name "method-body")
+          (when (string= capture-name "method-name")
             (save-excursion
               (goto-char (tsc-node-start-position capture-node))
               (+fold/close))))))))

@@ -1147,11 +1147,12 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
         (let* ((capture (aref captures i))
                (capture-name (car capture))
                (capture-node (cdr capture)))
-          (when (string= capture-name "method-body")
+          (when (string= capture-name "method-name")
             (save-excursion
               (goto-char (tsc-node-start-position capture-node))
               (+fold/close))))))))
 #+end_src
+
 *** TODO is this fennel config needed now that ~(doom! :lang (lua +fennel))~ exists?
 #+begin_src elisp :tangle packages.el
 (package! fennel-mode)
