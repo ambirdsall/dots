@@ -19,6 +19,7 @@ if wezterm.config_builder then
   config = wezterm.config_builder()
 end
 
+<<multiplexing>>
 <<keybinding>>
 <<appearance>>
 
@@ -30,6 +31,30 @@ local wezterm = require 'wezterm'
 #+end_src
 ** source a ~.gitignore~d local config file if present? :YAGNI:
 
+* TODO fennel! [0/12]
+** TODO install antifennel
+*** TODO macos
+*** TODO fedora
+** TODO this /does/ work block-by-block, right?
+** TODO add new fennel blocks but don't tangle them
+** TODO tangle them to an equivalent but unused top-level config file
+** TODO write new =wezterm.lua= that just loads fennel and that config
+** TODO tangle that instead
+** TODO when that works, delete the old lua config
+
+* multiplexing
+#+begin_src lua :tangle no :noweb-ref multiplexing
+config.unix_domains = {
+  {
+    name = 'default',
+  },
+  {
+    name = 'dev'
+  },
+}
+
+config.default_gui_startup_args = { 'connect', 'default' }
+#+end_src
 * keybindings
 ** set the terms: functions, aliases, etc
 
@@ -61,12 +86,11 @@ config.send_composed_key_when_left_alt_is_pressed = false
 config.send_composed_key_when_right_alt_is_pressed = false
 #+end_src
 
-*** okay now we go ham
-
+*** take me to your leader key
 #+begin_src lua :tangle no :noweb-ref keybinding
 config.leader = { key = "Space", mods = "CTRL", timeout_milliseconds = 1000 }
 #+end_src
-
+*** actions that are "global" to a session
 #+begin_src lua :tangle no :noweb yes :noweb-ref keybinding
 config.keys = {
   { key = 'Enter', mods = 'SUPER', action = act.ToggleFullScreen },
@@ -79,7 +103,7 @@ config.keys = {
   <<keybinding-subsection>>
 }
 #+end_src
-**** open/shut them, open/shut them, give a little clap clap clap
+*** open/shut them, open/shut them, give a little clap clap clap
 #+begin_src lua :tangle no :noweb-ref keybinding-subsection
 leader("c", act.SpawnTab "CurrentPaneDomain"),
 leader("s", act.SplitVertical { domain='CurrentPaneDomain' }),
@@ -88,7 +112,7 @@ leader("z", act.TogglePaneZoomState),
 leader("x", act.CloseCurrentPane { confirm=false }),
 leader("b", wezterm.action_callback(function(_, pane) pane.move_to_new_tab() end)),
 #+end_src
-**** navigate panes
+*** navigate panes
 Moving ace-window-style
 #+begin_src lua :tangle no :noweb-ref keybinding-subsection
 leader("w", act.PaneSelect),
@@ -105,7 +129,7 @@ leader("UpArrow", act.ActivatePaneDirection "Up"),
 leader("l", act.ActivatePaneDirection "Right"),
 leader("RightArrow", act.ActivatePaneDirection "Right"),
 #+end_src
-**** tabs
+*** tabs
 rename them:
 #+begin_src lua :tangle no :noweb-ref keybinding-subsection
 leader(",", act.PromptInputLine {
@@ -136,11 +160,11 @@ leader("p", act { ActivateTabRelative=-1 }),
 leader("n", act { ActivateTabRelative=1 }),
 #+end_src
 
-***** TODO resizing current pane
+**** TODO resizing current pane
  (I don't know how to accomplish these yet)
  leader("=", equalize pane sizes somehow),
  leader("g", set current pane width to reciprocal of golden ratio vis-a-vis its containing window),
-**** workspaces
+*** workspaces
 - pick existing workspace
 - "detach" (i.e. switch to "default")
 - create new named workspace
@@ -190,10 +214,12 @@ leader("R", act.PromptInputLine {
     end
   end),
 }),
-leader('L', act.SwitchWorkspaceRelative(-1)),
+
+leader('N', act.SwitchWorkspaceRelative(1)),
+leader('P', act.SwitchWorkspaceRelative(-1)),
 #+end_src
 
-**** unbind annoying defaults
+*** unbind annoying defaults
 #+begin_src lua :tangle no :noweb-ref keybinding-subsection
 unbind("Enter", "ALT"),
 unbind("Tab", "CTRL"),
@@ -203,7 +229,7 @@ unbind("UpArrow", "SHIFT"),
 unbind("DownArrow", "SHIFT"),
 #+end_src
 
-***** all default keybindings (cf. [[https://raw.githubusercontent.com/wez/wezterm/main/docs/config/default-keys.md][the original source]] if this gets out of date)
+**** all default keybindings (cf. [[https://raw.githubusercontent.com/wez/wezterm/main/docs/config/default-keys.md][the original source]] if this gets out of date)
 The default key assignments are shown in the table below.
 
 If you don't want the default assignments to be registered, you can
@@ -219,7 +245,7 @@ When using ~disable_default_key_bindings~, it is recommended that you assign
 
 You may also use ~wezterm show-keys --lua~ to see the assignments
 in a form that you can copy and paste into your own configuration.
-****** table
+***** table
 | Modifiers      | Key        | Action                                       |
 |----------------+------------+----------------------------------------------|
 | =SUPER=          | =c=          | ~CopyTo="Clipboard"~                           |
@@ -301,24 +327,36 @@ in a form that you can copy and paste into your own configuration.
 ** color theme switcher
 #+begin_src lua :tangle no :noweb-ref appearance
 
-local color_schemes = { 'DanQing (base16)', 'DanQing Light (base16)', 'Dracula+' }
+local color_schemes = {
+  -- 'DanQing (base16)',
+  'Atelier Dune (base16)',
+  'DanQing Light (base16)',
+  'Dracula+'
+}
 local color_scheme_toggle_counter = 0
 
 wezterm.on('toggle-colorscheme', function(window, pane)
   local overrides = window:get_config_overrides() or {}
   if not overrides.color_scheme then
     -- overrides.color_scheme = 'Navy and Ivory (terminal.sexy)'
-    overrides.color_scheme = 'neobones_light'
+    -- overrides.color_scheme = 'neobones_light'
+    overrides.color_scheme = 'Atelier Dune Light (base16)'
   else
     overrides.color_scheme = nil
   end
   window:set_config_overrides(overrides)
+  wezterm.log_info("~/ is: " .. os.getenv "HOME")
+  wezterm.log_info("$PATH is: " .. os.getenv "PATH")
+  -- wezterm.run_child_process { os.getenv 'SHELL', '-l', '-c', '"echo hey there from wezterminal >> /tmp/um"' }
   wezterm.run_child_process { os.getenv 'SHELL', '-l', '-c', os.getenv "HOME" .. "/bin/toggle-tty-emacs-color-theme" }
 end)
 
 config.color_scheme = config.color_scheme or color_schemes[1]
+config.color_scheme = 'Atelier Dune (base16)'
 #+end_src
-*** TODO theme switcher actually does toggle the =ttylated= emacs daemon's theme (if it's running)
+*** TODO make theme switcher global (i.e. not set via window config overrides)
+*** DONE theme switcher actually does toggle the =ttylated= emacs daemon's theme
+in macOS, this only works if wezterm was started via shell, not Spotlight
 ** tab bar
 #+begin_src lua :tangle no :noweb-ref appearance
 config.hide_tab_bar_if_only_one_tab = true
@@ -333,18 +371,47 @@ config.window_padding = {
   bottom = 3,
 }
 #+end_src
-
-* fennel! [0/12]
-** TODO install antifennel
-*** TODO macos
-*** TODO fedora
-** TODO this /does/ work block-by-block, right?
-** TODO add new fennel blocks but don't tangle them
-** TODO tangle them to an equivalent but unused top-level config file
-** TODO write new =wezterm.lua= that just loads fennel and that config
-** TODO tangle that instead
-** TODO when that works, delete the old lua config
-
+** text
+It would be clean to make this bit only tangle conditionally based on the font being
+installed, but since wezterm uses font fallbacks, it's not strictly necessary.
+#+begin_src lua :tangle no :noweb-ref appearance
+config.font = wezterm.font 'Fira Code'
+config.font_size = 12
+config.front_end = "WebGpu"
+#+end_src
 # Local Variables:
 # org-indent-mode: nil
 # End:
+
+* TODO macos hotkey window!
+
+* TODO reuse named workspace layouts
+
+** option 1 :: manual scripting
+
+*** workspace =labor-atory=
+this one should be sourced from a machine-local script
+
+**** TODO BE :: pwd =$artisan_be=, ~e .~
+***** vertical split :: ~make console~ on right
+****** horizontal split :: ~pyright -w~ below ('middle')
+******* horizontal split :: zsh below
+**** TODO FE :: pwd =$artisan_fe=, ~e .~
+
+**** TODO service :: pwd $artisan_be, ~art debug~
+***** vertical split :: pwd $artisan_fe, ~yarn dev~ on right
+****** horizontal split :: ~echo package.json | entr yarn install~ below
+******* horizontal split :: zsh below
+***** horizontal split :: zsh below
+
+**** TODO art :: pwd =$artisan_be/lib=, ~e art.org~
+
+***** vertical split :: zsh to right
+
+
+*** workspace =yak salon=
+**** TODO $HOME, $HOME on the range :: pwd =$HOME=, zsh
+**** TODO wez the term :: pwd =~/.config/wezterm=, ~e config.org~
+**** TODO hammer the spoon :: pwd =~/.hammerspoon=, ~e config.org~
+**** TODO doomconf :: pwd =~/.config/doom=, ~e config.org~
+**** TODO doom per se
