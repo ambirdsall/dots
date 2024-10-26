@@ -5,3 +5,44 @@
 *** are there built-in APIs to use?
 *** query the existing window's dimensions
 * TODO move to a literate config
+* create an interactive picker to jump to a chrome window by name (maybe also by any of its tab names???) [1/4]
+** DONE 1. get all chrome window names
+#+begin_src lua
+function listChromeWindowTitles()
+    local chromeApp = hs.application.find("Google Chrome")
+    if not chromeApp then
+        print("Google Chrome is not running.")
+        return
+    end
+
+    local chromeWindows = chromeApp:allWindows()
+    if #chromeWindows == 0 then
+        print("No Google Chrome windows found.")
+        return
+    end
+
+    local chromeWindowNames = {}
+    for _, win in ipairs(chromeWindows) do
+        local title = win:title()
+
+        -- Use pattern matching to extract the window name
+        local windowName = title:match("^(.-) %- Google Chrome %-")
+
+        if windowName then
+            table.insert(chromeWindowNames, windowName)
+        end
+    end
+
+    return chromeWindowNames
+end
+
+-- Call the function to list the window titles and get the window names
+local windowNames = listChromeWindowTitles()
+print("Extracted Window Names:")
+for _, name in ipairs(windowNames) do
+    print(name)
+end
+#+end_src
+** TODO 2. feed the window names into a hammerspoon picker UI
+** TODO 3. if the user makes a valid selection instead of cancelling with, idk, esc,, focus the window with the selected name
+** TODO 4. okay now translate it to fennel lmao

@@ -320,7 +320,7 @@
          :items emacs-bindings}])
 
 (local common-keys
-       [{:mods [:cmd]
+       [{:mods [:cmd :alt]
          :key :space
          :action "spacehammer.lib.modal:activate-modal"}
         {:mods [:alt]
