@@ -34,6 +34,17 @@ make linux
 make macos
 #+end_src
 
+Now, aspirationally:
+
+#+begin_src shell
+dots doctor
+#+end_src
+
+Once you have a clean bill of health, tangle all literate configs with
+#+begin_src shell
+dots build
+#+end_src
+
 * managing this git directory
 The =~/bin/dots= file provides a =dots= command to handle all interaction with the git repo. It wraps
 ~git~, passing the correct directories to ~--git-dir~ and ~--work-tree~ and paving a few common paths:
@@ -42,11 +53,18 @@ The =~/bin/dots= file provides a =dots= command to handle all interaction with t
 
 * todo list
 ** TODO install roboto mono in all OSes (for experimenting with NANO emacs)
-** TODO organize a system for task to find and build all literate configs [0/4]
-*** TODO consistent filename convention lmao
-*** TODO ~dots build~ or ~dots build all~ :: tangle all literate configs
-Does this need to be a specific command? If ~dots ls-files | grep ${filename}.org |
-$tangle_cmd~  is snappy enough to run for everything, and at least for now, I'm fine with
-untracked files needing to be more manually tangled.
-*** TODO ~dots build <directory-or-file>~ :: tangle a specific config
-*** TODO ~dots build --watch~ / ~-w~ :: tangle a specific config every time the file changes
+** TODO persistently tangle literate configs in =dots= repo on save
+*** TODO define a new ~after-save~ hook in emacs to tangle dots literate configs based on file-local variables
+**** org-mode-specific
+**** usually a noop
+**** relies on buffer-local variables being defined
+*** TODO set those values for all literate configs with magic comments
+*** TODO ...profit?
+** TODO cli script to tangle all literate configs in =dots= repo
+cf.
+#+begin_src shell
+doom help +org tangle
+#+end_src
+
+*** TODO =dots tangle=? =dots tangle <file>?=
+*** TODO =make tangle= maybe should exist too but only by shelling out to =dots=.
