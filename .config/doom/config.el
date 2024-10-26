@@ -54,6 +54,15 @@ the active region will be used."
        mac-option-modifier 'meta
        ns-function-modifier 'super)
 
+(use-package! kkp
+  :config
+  (global-kkp-mode +1)
+  (define-key! local-function-key-map
+    [M-return] (kbd "M-RET")
+    [M-tab] (kbd "M-TAB")
+    [M-backspace] (kbd "M-DEL")
+    [M-delete] (kbd "M-DEL")))
+
 (add-hook! 'tty-setup-hook :depth -90
   (defun +tty-init-kkp-h ()
     (global-kkp-mode +1)
@@ -297,7 +306,7 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
 (unless noninteractive
   (setq
    amb/doom-dark-theme 'doom-one
-   amb/doom-light-theme 'doom-one-light)
+   amb/doom-light-theme (if (display-graphic-p) 'modus-operandi 'doom-one-light))
 
   (defun amb/toggle-themes ()
     "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
@@ -357,7 +366,7 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
                                 (cl-loop for name in names
                                          for i to (length names)
                                          collect
-                                         (concat (propertize (format " %d" (1+ i)) 'face
+                                         (concat (propertize (format " %d" i) 'face
                                                              `(:inherit ,(if (equal current-name name)
                                                                              '+workspace-tab-selected-face
                                                                            '+workspace-tab-face)
@@ -548,7 +557,7 @@ If the window occupies the entire frame, restore its original size."
 (after! dap-mode
   (setq dap-python-debugger 'debugpy))
 
-(after! tree-sitter-langs
+(after! (tree-sitter-langs consult)
   (defun fold-all-methods-in-class ()
     "Fold all methods within the current class in any Tree-sitter-enabled buffer."
     (interactive)
@@ -577,7 +586,70 @@ If the window occupies the entire frame, restore its original size."
           (when (string= capture-name "method-name")
             (save-excursion
               (goto-char (tsc-node-start-position capture-node))
-              (+fold/close))))))))
+              (+fold/close)))))))
+
+  (defun amb/tree-sitter-list-functions ()
+    "Extract function and method definitions with class and function nesting using Tree-sitter."
+    (let* ((root-node (tsc-root-node tree-sitter-tree))
+           ;; Tree-sitter query to capture function definitions
+           (query (tsc-make-query
+                   tree-sitter-language
+                   "
+                 (function_definition
+                   name: (identifier) @func-name)
+                 "))
+           (captures (tsc-query-captures query root-node #'tsc--buffer-input))
+           (current-nest '()) ;; Stack to track class/function nesting
+           (functions '()))   ;; Store the functions to return for Imenu
+      (dotimes (i (length captures))
+        (let* ((capture (aref captures i))
+               (func-node (cdr capture))
+               (func-name (tsc-node-text func-node))
+               ;; Determine function's starting position
+               (pos (tsc-node-start-position func-node)))
+          ;; Update current nesting context by checking parent nodes
+          (setq current-nest (amb/get-nesting-context func-node))
+          ;; Create the Imenu entry
+          (push (cons (string-join (append current-nest (list func-name)) " / ") pos) functions)))
+      ;; Return functions, reversing the order
+      (nreverse functions)))
+
+  (defun amb/get-nesting-context (node)
+    "Get the nesting context (class or function names) for a function."
+    (let (context)
+      (while (setq node (tsc-get-parent node))
+        (cond
+         ;; Capture class names for Python-like languages
+         ((string= (tsc-node-type node) "class_definition")
+          (push (tsc-node-text (tsc-get-child-by-field node :name)) context))
+         ;; Capture outer function names
+         ((string= (tsc-node-type node) "function_definition")
+          (push (tsc-node-text (tsc-get-child-by-field node :name)) context))))
+      context))
+
+  (defun amb/setup-tree-sitter-imenu ()
+    "Set up Imenu using Tree-sitter to extract function and method definitions."
+    (if tree-sitter-mode
+        (setq-local lsp-enable-imenu nil
+                    lsp-ui-enable-imenu nil
+                    imenu-create-index-function #'amb/tree-sitter-list-functions)
+      (kill-local-variable 'imenu-create-index-function)))
+
+  ;; Automatically enable for all tree-sitter-enabled modes
+  (add-hook 'tree-sitter-mode-hook #'amb/setup-tree-sitter-imenu))
+
+  (defun amb/show-nesting-context-at-point ()
+    "Show the nesting context for the Tree-sitter node at point."
+    (interactive)
+    (let* ((node-at-point (tsc-get-descendant-for-position-range
+                           (tsc-root-node tree-sitter-tree)
+                           (point) (point)))
+           (nesting-context (amb/get-nesting-context node-at-point)))
+      (message "Nesting context: %s" (string-join nesting-context " / "))))
+
+(map! :after python
+      :map python-mode-map
+      "C-c C-u" #'python-nav-backward-up-list)
 
 (use-package! fennel-mode
   :config (add-to-list 'auto-mode-alist '("\\.fnl\\'" . fennel-mode)))
@@ -818,7 +890,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (after! org
   (map! :after org
         :map 'org-mode-map
-        "<tab>" 'org-cycle)
+        "<tab>" #'org-cycle
+        :nvie "C-M-S-RET" #'org-insert-todo-subheading
+        :nvie "C-M-S-<return>" #'org-insert-todo-subheading
+        :nvie "M-<return>" #'org-insert-heading)
 
   (defun my-org-mode-backtick-replacement ()
     "Replace a single backtick with = and triple backticks with a code block template."

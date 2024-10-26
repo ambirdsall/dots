@@ -129,10 +129,16 @@ Relatedly, leaving this in ~packages.el~ so I can just dump the activation code 
 (package! kkp)
 #+end_src
 
-The naive config (for why it's disabled see immediately below):
-#+begin_src elisp :tangle no
+The naive config +(for why it's disabled see immediately below)+ it is now re-enabled but tbh I'm not sure if it will actually fix my minor grievances:
+#+begin_src elisp
 (use-package! kkp
-  :config (global-kkp-mode +1))
+  :config
+  (global-kkp-mode +1)
+  (define-key! local-function-key-map
+    [M-return] (kbd "M-RET")
+    [M-tab] (kbd "M-TAB")
+    [M-backspace] (kbd "M-DEL")
+    [M-delete] (kbd "M-DEL")))
 #+end_src
 
 The following snipped was added as a test at Henrik's request; it does what I want, and
@@ -593,13 +599,13 @@ I should really wrap all theme config in a single ~(unless noninteractive <theme
 Sometimes (usually) I want dark mode; sometimes (presenting, in direct sunlight, or just
 mixing it up) I want light mode. What I do /not/ want is to have to pick a specific theme
 out of a haystack by name each time I want to toggle between light and dark; give me
-instead the blithe simplicity of a lightswitch flipped in passing. Or rather, let me give
-it to myself, so I can flit over to a different light and/or dark theme at my pleasure:
+instead the blithe simplicity of a lightswitch flipped in passing.
+
 #+begin_src elisp
 (unless noninteractive
   (setq
    amb/doom-dark-theme 'doom-one
-   amb/doom-light-theme 'doom-one-light)
+   amb/doom-light-theme (if (display-graphic-p) 'modus-operandi 'doom-one-light))
 
   (defun amb/toggle-themes ()
     "Cycle through a set of predefined themes according to whatever unholy logic is currently residing in its inner `cond' form."
@@ -729,7 +735,7 @@ Notably, clicking on the tabs accomplishes nothing helpful with this setup.
                                 (cl-loop for name in names
                                          for i to (length names)
                                          collect
-                                         (concat (propertize (format " %d" (1+ i)) 'face
+                                         (concat (propertize (format " %d" i) 'face
                                                              `(:inherit ,(if (equal current-name name)
                                                                              '+workspace-tab-selected-face
                                                                            '+workspace-tab-face)
@@ -1121,7 +1127,7 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 **** fold all methods in a class body
 - does this need to be python-only? no.
 #+begin_src elisp
-(after! tree-sitter-langs
+(after! (tree-sitter-langs consult)
   (defun fold-all-methods-in-class ()
     "Fold all methods within the current class in any Tree-sitter-enabled buffer."
     (interactive)
@@ -1150,9 +1156,74 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
           (when (string= capture-name "method-name")
             (save-excursion
               (goto-char (tsc-node-start-position capture-node))
-              (+fold/close))))))))
-#+end_src
+              (+fold/close)))))))
 
+  (defun amb/tree-sitter-list-functions ()
+    "Extract function and method definitions with class and function nesting using Tree-sitter."
+    (let* ((root-node (tsc-root-node tree-sitter-tree))
+           ;; Tree-sitter query to capture function definitions
+           (query (tsc-make-query
+                   tree-sitter-language
+                   "
+                 (function_definition
+                   name: (identifier) @func-name)
+                 "))
+           (captures (tsc-query-captures query root-node #'tsc--buffer-input))
+           (current-nest '()) ;; Stack to track class/function nesting
+           (functions '()))   ;; Store the functions to return for Imenu
+      (dotimes (i (length captures))
+        (let* ((capture (aref captures i))
+               (func-node (cdr capture))
+               (func-name (tsc-node-text func-node))
+               ;; Determine function's starting position
+               (pos (tsc-node-start-position func-node)))
+          ;; Update current nesting context by checking parent nodes
+          (setq current-nest (amb/get-nesting-context func-node))
+          ;; Create the Imenu entry
+          (push (cons (string-join (append current-nest (list func-name)) " / ") pos) functions)))
+      ;; Return functions, reversing the order
+      (nreverse functions)))
+
+  (defun amb/get-nesting-context (node)
+    "Get the nesting context (class or function names) for a function."
+    (let (context)
+      (while (setq node (tsc-get-parent node))
+        (cond
+         ;; Capture class names for Python-like languages
+         ((string= (tsc-node-type node) "class_definition")
+          (push (tsc-node-text (tsc-get-child-by-field node :name)) context))
+         ;; Capture outer function names
+         ((string= (tsc-node-type node) "function_definition")
+          (push (tsc-node-text (tsc-get-child-by-field node :name)) context))))
+      context))
+
+  (defun amb/setup-tree-sitter-imenu ()
+    "Set up Imenu using Tree-sitter to extract function and method definitions."
+    (if tree-sitter-mode
+        (setq-local lsp-enable-imenu nil
+                    lsp-ui-enable-imenu nil
+                    imenu-create-index-function #'amb/tree-sitter-list-functions)
+      (kill-local-variable 'imenu-create-index-function)))
+
+  ;; Automatically enable for all tree-sitter-enabled modes
+  (add-hook 'tree-sitter-mode-hook #'amb/setup-tree-sitter-imenu))
+
+  (defun amb/show-nesting-context-at-point ()
+    "Show the nesting context for the Tree-sitter node at point."
+    (interactive)
+    (let* ((node-at-point (tsc-get-descendant-for-position-range
+                           (tsc-root-node tree-sitter-tree)
+                           (point) (point)))
+           (nesting-context (amb/get-nesting-context node-at-point)))
+      (message "Nesting context: %s" (string-join nesting-context " / "))))
+#+end_src
+**** structural navigation
+Might as well put that org-mode muscle memory to good use:
+#+begin_src elisp
+(map! :after python
+      :map python-mode-map
+      "C-c C-u" #'python-nav-backward-up-list)
+#+end_src
 *** TODO is this fennel config needed now that ~(doom! :lang (lua +fennel))~ exists?
 #+begin_src elisp :tangle packages.el
 (package! fennel-mode)
@@ -1321,7 +1392,10 @@ tree-sitter version requires a semi-manual setup step to install all the languag
 #+end_src
 
 * {ma,}git
-With apologies to vc-mode, magit is the gold standard. So:
+** the skeleton ~(after! magit ...)~ form specific config can be nowebbed into
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
 #+begin_src elisp :noweb yes
 (after! magit
   <<magit-window-management>>
@@ -1334,10 +1408,6 @@ With apologies to vc-mode, magit is the gold standard. So:
 
   <<magithub>>)
 #+end_src
-
-Not all the following config has to do with magit, but when it does, it gets tangled into
-that ~after!~ form.
-
 
 ** magit status, like the cat in the hat, should clean up after itself
 These are fine to set before magit is initialized, so they are directly tangled instead of injected into the ~after!~  block with noweb shenanigans.
@@ -1627,11 +1697,15 @@ because ~setq~ is a macro) and everything went to heck.
 ** keybinding fixes
 I wonder if this is a kkp/CSIu thing? i.e. org expects to receive ~(kbd "TAB")~ but instead gets ~(kbd "<tab>")~.
 
+I also wonder if =kkp.el= or Henrik's adjustments atop it fix things for me?
 #+begin_src elisp
 (after! org
   (map! :after org
         :map 'org-mode-map
-        "<tab>" 'org-cycle)
+        "<tab>" #'org-cycle
+        :nvie "C-M-S-RET" #'org-insert-todo-subheading
+        :nvie "C-M-S-<return>" #'org-insert-todo-subheading
+        :nvie "M-<return>" #'org-insert-heading)
 
   (defun my-org-mode-backtick-replacement ()
     "Replace a single backtick with = and triple backticks with a code block template."
