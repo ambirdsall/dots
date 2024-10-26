@@ -36,8 +36,9 @@ emv () {
   fi
 }
 
-emm () {
-  e $(um)
+em () {
+  local file_to_edit=$(um)
+  [[ -n $file_to_edit ]] && e $file_to_edit
 }
 
 rem () {
@@ -61,7 +62,7 @@ alias tetris='emacs -q --no-splash -f tetris'
 
 # oh, oh, it's ~magit~
 magit () {
-    emacsclient --socket=magit -nw -e "
+  emacsclient --socket=magit -nw -e "
 (progn
   (or (advice-member-p 'save-buffers-kill-terminal '+magit/quit)
       (advice-add '+magit/quit :before 'save-buffers-kill-terminal))

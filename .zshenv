@@ -44,11 +44,6 @@ if dots/at_hand vim; then
         fi
     }
 fi
-if dots/at_hand emacs; then
-    em () {
-        emacsclient -nw --alternate-editor=vim ${@}
-    }
-fi
 
 if [[ $XDG_SESSION_TYPE -eq wayland ]]; then
     export MOZ_ENABLE_WAYLAND=1

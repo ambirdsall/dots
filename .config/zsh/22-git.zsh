@@ -115,7 +115,12 @@ alias GPF="GP --ff-only"
 # thread a little.
 alias gr="git rebase"
 alias gr-="git rebase -"
-alias grm="com && co- && gr-"
+dots/clear_name grm
+grm () {
+  local big_kahuna_branch=$(git rev-parse --abbrev-ref origin/HEAD | cut -c8-)
+  g fetch origin $big_kahuna_branch:$big_kahuna_branch
+  g rebase $big_kahuna_branch
+}
 alias gri="g ri" # home-cooked git-ri, which simplifies syntax of `git rebase -i`
 
 # ** branch
