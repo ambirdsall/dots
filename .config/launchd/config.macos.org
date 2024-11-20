@@ -1,0 +1,94 @@
+#+title: So you just logged into a mac...
+
+This directory contains the launch agent definitions to start shit up automatically.
+
+To install a launch agent, make sure you've installed the application it runs, and then
+copy the corresponding plist into ~/Library/LaunchAgents.
+
+* start flycut at login
+#+begin_src xml :tangle (shell-command-to-string "test -e /Applications/Flycut.app && echo -n '~/Library/LaunchAgents/com.amb.flycut.plist'  || echo -n no")
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.amb.flycut</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/open</string>
+        <string>/Applications/Flycut.app</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
+#+end_src
+
+* start emacs daemons at login
+
+** ttylated
+#+begin_src xml :tangle (shell-command-to-string "command -v emacs > /dev/null && echo -n '~/Library/LaunchAgents/com.amb.emacs.ttylated.plist' || echo -n no")
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.amb.emacs.ttylated</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/emacs</string>
+        <string>-nw</string>
+        <string>--daemon=ttylated</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
+#+end_src
+
+** interminable
+#+begin_src xml :tangle (shell-command-to-string "command -v emacs > /dev/null && echo -n '~/Library/LaunchAgents/com.amb.emacs.interminable.plist' || echo -n no")
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.amb.emacs.interminable</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/emacs</string>
+        <string>--daemon=interminable</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
+#+end_src
+
+** magit
+#+begin_src xml :tangle (shell-command-to-string "command -v emacs > /dev/null && echo -n '~/Library/LaunchAgents/com.amb.emacs.magit.plist' || echo -n no")
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.amb.emacs.magit</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/emacs</string>
+        <string>-nw</string>
+        <string>--daemon=magit</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <false/>
+</dict>
+</plist>
+#+end_src
