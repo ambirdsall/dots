@@ -1,5 +1,5 @@
 __zrc_log () {
-    [ -n "$VERBOSE_ZSH_CONFIG" ] && printf "$1"
+    [ -n "$VERBOSE_ZSH_CONFIG" ] && printf "$1" || true
 }
 __zrc_logn () {
     # the "n" stands for "newline"
