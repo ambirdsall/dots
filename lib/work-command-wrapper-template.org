@@ -1,0 +1,746 @@
+#+title: ~art~ CLI command
+
+#+begin_src elisp :results none
+(org-babel-tangle-file (buffer-file-name))
+#+end_src
+
+#+begin_src elisp :results none
+(add-hook! 'after-save-hook :local
+  (org-babel-tangle-file (buffer-file-name)))
+#+end_src
+
+* so you just started on a new job
+** TODO run ~mkdir -p $work_repo/{lib,bin}~
+** TODO copy this file to ~$work_repo/lib/$cmd_name.org~
+** TODO update the company name with =:%s/company_name/<company name>/gc=
+** TODO update the generated command's filename
+** TODO update zsh completions filename
+** TODO update the environment variables
+** TODO update the interactive helper functions
+** TODO update the doctor command with any key files or whatnot
+** TODO update the set of commands to fit the project
+* prefatory definitions
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+** shebang
+#+begin_src shell :tangle ../bin/cmd_name
+#!/usr/bin/env bash
+
+#+end_src
+
+** env vars and helpers
+#+begin_src shell :tangle ../bin/cmd_name
+<<env-vars-bash>>
+
+<<interactive-pickers>>
+
+<<jump-to-directory-fns>>
+
+#+end_src
+
+* the skeleton of the ~art~ command per se
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+It's just a big ~case~ statement dispatching to subcommands:
+#+begin_src sh :tangle ../bin/cmd_name
+main() {
+  local current_dir=$(pwd)
+
+  case $1 in
+    <<subcommand-cases>>
+    <<default-subcommand-case>>
+    ,*)
+      local maybe_custom_cmd="art-$1"
+      if command -v $maybe_custom_cmd > /dev/null; then
+        shift
+        $maybe_custom_cmd "$@"
+      else
+        echo "Subcommand '$@' not known and custom command '$maybe_custom_cmd' not found in \$PATH" && exit 1
+      fi
+      ;;
+  esac
+}
+
+main "$@"
+#+end_src
+
+* subcommands: where the magic happens [1/7]
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+
+** default action (i.e. no args given)
+#+begin_src shell :tangle no :noweb-ref default-subcommand-case
+"")
+  case $current_dir in
+    $company_name_fe|$company_name_be)
+      art start
+      ;;
+    ,*)
+      # GOTO considered helpful
+      local __end=$(echo -e "frontend\nbackend\n...yes?" | fzf --prompt "should we go to the frontend or backend repo?")
+      if [[ $__end == "...yes?" ]]; then
+        pushd $company_name_dev_dir
+      elif [[ $__end == "frontend" ]]; then
+        pushd $company_name_fe
+      elif [[ $__end == "backend" ]]; then
+        pushd $company_name_be
+      fi
+      ;;
+  esac
+  ;;
+#+end_src
+
+** metacommands, or: who ~art~ the ~art~?
+*** ~--zsh~ :: output zsh completions for easy use in dotfiles
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"--zsh")
+  cat "$ZSH_COMPLETION_SOURCE"
+  ;;
+#+end_src
+
+*** ~doctor~ :: is your setup right?
+check:
+- [-] all dev dirs exist
+  this one got #cancelled because:
+  1. if you have a local copy of =art= to run, ipso facto
+     a local =sales_rep_backend= must exist; and
+  2. at that point, like, whatever
+- [X] all commands run by =art= (fzf, docker compose, yarn) are in $PATH
+- [X] and look good doing it
+
+#+begin_src shell :tangle no :noweb-ref default-subcommand-case
+"doctor")
+  FIELD_WIDTH=30
+  echo "  Checking backend development dependencies:"
+  printf "%-${FIELD_WIDTH}s" "  Do you have an '.env' file"
+  test -f $company_name_be/.env && echo "✅" || echo "❌"
+  printf "%-${FIELD_WIDTH}s" "  Can you run 'docker compose'"
+  docker compose &> /dev/null && echo "✅" || echo "❌"
+  printf "%-${FIELD_WIDTH}s" "  Can you run 'make'"
+  command -v make &> /dev/null && echo "✅" || echo "❌"
+  printf "%-${FIELD_WIDTH}s" "  Can you run 'poetry'"
+  command -v poetry &> /dev/null && echo "✅" || echo "❌"
+  echo -e "\n  Checking frontend development dependencies:"
+  printf "%-${FIELD_WIDTH}s" "  Do you have an '.env' file"
+  test -f $company_name_fe/.env && echo "✅" || echo "❌"
+  printf "%-${FIELD_WIDTH}s" "  Can you run 'yarn'"
+  command -v yarn &> /dev/null && echo "✅" || echo "❌"
+  echo -e "\n  Checking dependencies of the 'art' command:"
+  printf "%-${FIELD_WIDTH}s" "  Can you run 'fzf'"
+  command -v fzf &> /dev/null && echo "✅" || echo "❌"
+  if ! ps -o comm= $PPID | grep -q "zsh"; then
+    echo -e "\n  It appears '$(basename ${0})' was run from a different shell than zsh;"
+    echo -e "  this is not a problem, but completions are only available for zsh."
+  fi
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'doctor:Check if your development environment is ready'
+#+end_src
+** building, running, debugging, interacting with running software
+*** ~start~ AKA ~run~ AKA ~up~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"run"|"start"|"up")
+  case $current_dir in
+    $company_name_fe)
+      yarn dev
+      ;;
+    $company_name_be)
+      shift
+      docker compose \
+        -f $company_name_be/docker-compose.yml \
+        -f $company_name_be/docker-compose-debug.yml \
+        up \
+        --scale selenium=0 \
+        --scale datadog-agent=0 \
+        "$@" # allow passing additional flags (e.g. `--build`) through to docker compose
+      ;;
+  esac
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+"start:Start the application dev server(s); skips unused services and adds config to enable python breakpoints (cf. 'art attach')"
+"run:Start the application dev server(s); skips unused services and adds config to enable python breakpoints (cf. 'art attach')"
+"up:Start the application dev server(s); skips unused services and adds config to enable python breakpoints (cf. 'art attach')"
+#+end_src
+
+*** ~restart~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"restart")
+  shift
+  if [[ $# -gt 0 ]]; then
+    docker compose restart $@
+  else
+    docker compose restart $(pick_docker_service)
+  fi
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'restart:Restart one or more docker compose services; uses interactive picker if none are specified as args'
+#+end_src
+
+*** ~ci~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"ci")
+  case $current_dir in
+    $company_name_be)
+      shift
+      docker compose -f docker-compose-ci.yml up $@
+      ;;
+    $company_name_fe)
+      shift
+      yarn dev:prod
+      ;;
+  esac
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'ci:Start the application dev server(s) using docker-compose-ci.yml'
+#+end_src
+*** ~build~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"build")
+  shift
+  case $current_dir in
+    $company_name_be)
+      docker build . "$@"
+      ;;
+    $company_name_fr)
+      local build_type=$(echo -e "dev\nprod" | fzf)
+      if [[ $build_type == "prod" ]]; then
+        yarn build:prod "$@"
+      else
+        yarn build "$@"
+      fi
+      ;;
+  esac
+;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'build:Runs a repo-specific command to build the application images/bundle from source'
+#+end_src
+
+*** ~nuke~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"nuke")
+  case $current_dir in
+    $company_name_be)
+      shift
+      case $1 in
+        --save-db)
+          docker rm -f $(docker ps -a | grep -v postgres | tail -n +2 | awk '{print $1}') && docker volume rm $(docker volume ls  -q | grep -v db_data) && docker build --no-cache .
+          ;;
+        ,*)
+          docker rm -f $(docker ps -a -q) && docker volume rm $(docker volume ls -q) && docker build --no-cache .
+          ;;
+      esac
+      ;;
+    $company_name_fe)
+      rm -rf node_modules && yarn
+      ;;
+  esac
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'nuke:Remove (all docker images and volumes OR node_modules/) and rebuild'
+#+end_src
+
+*** ~attach~ AKA ~debug~ :: connect to a docker image's tty for debugging [0/2]
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"attach"|"debug")
+  case $current_dir in
+    $company_name_be)
+      echo "Mind your ps and qs: control-p followed by control-q detaches your tty without stopping the service"
+      docker attach $(pick_docker_image)
+      ;;
+    ,*)
+      cd $company_name_be \
+        && echo "Mind your ps and qs: control-p followed by control-q detaches your tty without stopping the service" \
+        && docker attach $(pick_docker_image)
+      ;;
+  esac
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'attach:Connect your terminal to a running docker image'
+'debug:Connect your terminal to a running docker image'
+#+end_src
+
+**** TODO handle image name/id as positional arg
+
+**** TODO attach to ~web~ by default
+*** ~logs~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"log"|"logs")
+  shift
+  if [[ $# -gt 0 ]]; then
+    docker compose -f $company_name_be/docker-compose.yml logs -f "$@"
+  else
+    local service=$(pick_docker_service)
+    if [ -n $service ]; then
+      docker compose -f $company_name_be/docker-compose.yml logs -f $service
+    fi
+  fi
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'logs:Follow the log output of a specific docker-compose service'
+#+end_src
+
+*** ~console~ AKA ~repl~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"repl"|"console")
+  case $current_dir in
+    $company_name_fe)
+      yarn node
+      ;;
+    $company_name_be)
+      make console
+      ;;
+    ,*)
+      docker compose -f $company_name_be/docker-compose.yml exec web ipython -i management/ipython-env.py || python
+      ;;
+  esac
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'console:Open an interactive python/node console'
+'repl:Open an interactive python/node console'
+#+end_src
+
+*** ~sh~ :: run shell command in context of dockerized python image (e.g. alembic or poetry commands)
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"sh")
+  shift
+  docker compose -f $company_name_be/docker-compose.yml exec web "$@"
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'sh:Run args as a shell command inside the docker compose web service'
+#+end_src
+
+*** ~services~ :: docker what now
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"services")
+  docker compose -f $company_name_be/docker-compose.yml ps | awk 'NR > 1 {print $4}'
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'services:List running docker compose services'
+#+end_src
+** database and user management
+*** ~db~ :: get current db state (and list recent revisions to show if it's up-to-date)
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"db")
+  art sh alembic current -v && art sh alembic history -i | head
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'db:Output the current state and list latest migrations for the local DB'
+#+end_src
+*** ~sql~ [0/1]
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"sql")
+  shift
+  PGPASSWORD="${DB_PASSWORD}" docker compose exec db psql -U "${DB_USER}" -d "${DB_NAME}" -c $@
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'sql:Run a SQL statement in the db service and display its output'
+#+end_src
+
+**** TODO check args: if none or if post-shift $1 is `-f`, remove `-c` to run in interactive mode.
+
+*** ~migrate~ and ~rollback~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"migrate")
+  docker compose -f $company_name_be/docker-compose.yml exec web alembic upgrade head && art sh alembic history -i | head
+  ;;
+"rollback")
+  shift
+  local DOWNGRADE_ARG=${1--1} # if no arg is provided by the user, default to "-1"
+  docker compose -f $company_name_be/docker-compose.yml exec web alembic downgrade $DOWNGRADE_ARG && art sh alembic history -i | head
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'migrate:Upgrade local db to the latest migration'
+'rollback:Downgrade local db to specified migration, or the previous one by default'
+#+end_src
+
+*** TODO ~rebase~ or ~db:rebase~ or ~merge~ or ~db:merge~ or ~db:migrate:merge~ or fuckin' whatever
+ideal:
+- detect if migration failed due to branching
+  - if so, bust out this bad motherfucker and ask if the user wants to autofix with =alembic merge heads=
+#+begin_src shell :tangle no
+local GREEN='\033[32m'
+local RED='\033[31m'
+local BOLD='\033[1m'
+local ITALIC='\033[3m'
+local STRONG='\033[1;3m'
+local RESET='\033[0m'
+
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠠⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⡀⠀⠙⢶⣄⠀⠀⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⢠⣶⣦⣤⣀⣀⣤⣤⣄⣀⠀⢀⣀⣴⠂⠀⠀⠀⠀⠀⠀⠀⠐⠉⠉⣉⣉⣽⣿⣿⣷⣾⣿⣷⣄⡸⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠿⠿⢿⣿⣿⣿⣭⣭⣿⣿⣿⣿⣟⣁⠀⠀⠀⠀⠀⠀⠀⠀⣠⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠶⠤⠀⠀⢠⡾⢿⣿⣿⣿⣿⡿⠉⠀⠀⠀⠈⠙⢻⣿⣿⣿⡛⢻⣷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠛⠋⠀⠀⠀⠉⠻⣿⣿⣿⣿⣦⡀⠀⠁⠀⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣦⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣯⡙⢦⠀⠀⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⠀⠀⠀⠙⠻⠿⠿⣿⣿⣿⣿⣶⣄⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⡄⠀⠀⣿⣿⣿⣿⣿⣿⣿⣦⠀⠀⠀⠀⠰⣄⠀⠀⠀⠀⠈⠛⢿⣿⡏⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣿⣿⣿⡝⡇⠀⠀⠹⡇⠙⢿⣿⣿⣿⣿⣿⣶⣦⣄⣀⣈⣳⣶⣤⣤⣄⣀⠈⠋⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⣿⣿⣿⣿⡇⠁⠀⠀⠀⠙⣠⠤⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡛⠻⣷⣄⡀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠈⢲⡄⠀⢀⡠⠔⠂⠀⠀⠀⠀⣸⣿⣿⣿⡿⢹⠇⠀⠀⠀⠀⠈⢀⣤⣶⣾⣿⣿⣿⣿⣿⣿⣿⡟⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⣾⣧⣾⣿⣶⣶⣶⣤⣀⠀⠀⣿⣿⣿⣿⠇⠋⠀⠀⠀⠀⢀⣴⣿⣿⣿⣿⣿⠟⠛⢿⣿⣿⣿⣿⡄⠀⠻⣿⡿⠿⠛⠛⠛⠛⠿⡿⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⢀⣼⣿⣿⣿⣿⣿⣿⣿⣷⣮⡁⠀⣿⣿⣿⣿⠀⠀⠀⠀⠀⢠⠞⣻⣿⣿⣿⡿⠁⠀⠀⠈⣿⣿⣿⣿⣧⠀⠀⠀⢀⡀⠀⠀⠀⣴⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⢠⡿⢹⣿⣿⡋⠀⠈⢻⣿⣿⣿⡟⠆⢻⣿⣿⣿⡇⠀⠀⠀⠀⠀⢰⣿⣿⣿⣿⡇⠀⠀⠀⠀⢸⣿⣿⣿⣿⠀⠀⠀⣀⣭⣽⣶⣬⣿⡄⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⣰⣷⣿⣿⠿⠃⠀⠀⢸⣿⣿⣿⣿⡄⠘⣿⣿⣿⣿⣄⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣄⠀⠀⠀⣾⣿⣿⣿⣿⠀⠴⣻⣿⣿⣿⣿⣿⣿⣿⣦⡀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⣴⣿⡿⠋⠀⠀⠀⠀⠀⣼⣿⣿⣿⢿⡇⠀⠘⣿⣿⣿⣿⣦⡀⠀⠀⢸⡟⢿⣿⣿⣿⣿⣧⡀⣰⣿⣿⣿⣿⡏⠀⣼⣿⣿⣿⠋⠀⠉⣿⣿⣌⣷⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠈⠛⠁⠀⠀⠀⠀⠀⢸⣿⣿⣿⡏⠘⠀⠀⠀⠈⢻⣿⣿⣿⣿⣷⣤⡀⠳⠀⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠈⣿⣿⣿⣿⠀⠀⠈⠛⠻⢿⣿⣷⡄⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣇⠀⠀⠀⠀⠀⠀⠉⠻⣿⣿⣿⣿⣿⣷⣶⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⣿⢿⣿⣿⣧⡀⠀⠀⠀⠀⠈⠿⠇⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⣦⣀⠀⠀⠀⠀⠀⠀⠈⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡏⠀⠀⠘⠌⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⣿⣶⣶⣤⣤⣤⣄⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠀⠀⠀⠀⢀⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⣀⣤⣤⣴⣾⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⡀⠀⠀⢤⣬⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⡁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀${RESET}"
+echo -e "${GREEN} ⠀⠀⠀⠀⠀⠀⠠⠾⣿⣿⣿⣶⣤⣤⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣠⣶⣦⣄⡀⠀⠀⣶⢒⠲⣄${RESET}"
+echo -e "${GREEN} ⣾⣥⣤⣼⣿⣶⣶⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣾⣵⣾⡿${RESET}"
+echo
+echo -e "${RED}You've got latest migration ${STRONG}files${RESET}${RED}, plural: ${BOLD}HEAD${RESET}${RED}s must roll!{RESET}"
+echo "Please pull upstream changes: we only want one alembic head"
+echo "For more context, see https://alembic.sqlalchemy.org/en/latest/branches.html"
+exit 1
+#+end_src
+
+- bonus points: detect if migration _would_ fail on =origin/development= (maybe also =origin/main=)
+  - if so, tell their asses to rebase or whatever, idk, i'm not yr dad
+    - unless we hire Evelyn or Iain, in which case they better be getting bank to not do shit
+*** ~seed~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"seed")
+  shift
+  docker compose -f $company_name_be/docker-compose.yml exec --no-TTY web python -m management.setup_demo_data full_setup $@
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'seed:Call with an email account name to create a demo user with full setup'
+#+end_src
+
+*** ~seed:light~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"seed:light")
+  shift
+  docker compose -f $company_name_be/docker-compose.yml exec --no-TTY web python -m management.setup_demo_data light_weight_setup $1
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'seed\:light:Call with an email account name to create a demo user with lightweight setup'
+#+end_src
+
+*** ~creds~
+Is there a way to source ~$company_name_be/.env~ no matter where I run this from?
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"creds")
+  PGPASSWORD="${DB_PASSWORD}" docker compose -f $company_name_be/docker-compose.yml exec db psql -U "${DB_USER}" -d "${DB_NAME}" -t -A -c "select email from public.user as u where u.email like '%artisan.co';"
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'creds:Forgot the UUID suffix for your demo email account? List all users with artisan.co emails in local DB'
+#+end_src
+
+** navigate to project directories
+*** ~go~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"go"|"teleport")
+  shift
+  cda "$@"
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'go:cd to parent directory of Company_Name repo(s). Accepts a subdirectory arg.'
+'teleport:cd to parent directory of Company_Name repo(s). Accepts a subdirectory arg.'
+#+end_src
+
+*** ~gob~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"gob")
+  shift
+  cdab "$@"
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'gob:cd to backend repo. Accepts a subdirectory arg.'
+#+end_src
+
+*** ~gof~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"gof")
+  shift
+  cdaf "$@"
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'gof:cd to frontend repo. Accepts a subdirectory arg.'
+#+end_src
+
+** running tests
+*** ~test~
+The comments are here for the benefit of people who may one day use the compiled shell script
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"test")
+  case $current_dir in
+    $company_name_be)
+      shift
+      # explicitly naming test files/directories as positional arguments overrides the
+      # --ignore flag, i.e. you can still run the e2e tests with this command
+      docker compose exec web pytest \
+          --disable-warnings \
+          --ignore=tests/e2e \
+          --pdbcls=IPython.terminal.debugger:TerminalPdb \
+          -s \
+          $@
+      ;;
+    $artisan_fr)
+      shift
+      yarn test $@
+      ;;
+  esac
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'test:Run tests. Forwards args to the repo-specific test command and skips e2e tests by default.'
+#+end_src
+*** ~test:ci~ [0/2]
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"test:ci")
+  case $current_dir in
+    $artisan_be)
+      shift
+      docker compose -f docker-compose-ci.yml exec -T web pytest \
+          --disable-warnings \
+          --ignore=tests/e2e \
+          --pdbcls=IPython.terminal.debugger:TerminalPdb \
+          -s \
+          $@
+      ;;
+    $artisan_fr)
+      shift
+      yarn test $@
+      ;;
+  esac
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'test\:ci:Run tests using the same commands as CI (i.e. BE tests use docker-compose-ci.yml)'
+#+end_src
+
+**** TODO is it possible to opt out of local env vars for local BE runs?
+*** ~test:watch~ AKA ~tw~
+#+begin_src shell :tangle no :noweb-ref subcommand-cases
+"test:watch"|"tw")
+  if [[ "$current_dir" == "$artisan_be"* ]]; then
+    shift
+    docker compose exec web ptw --clear -- \
+      --disable-warnings \
+      --ignore=tests/e2e \
+      --pdbcls=IPython.terminal.debugger:TerminalPdb \
+      -s \
+      $@
+  elif [[ "$current_dir" == "$artisan_fe"* ]]; then
+    shift
+    yarn test:watch $@
+  fi
+  ;;
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref subcommand-list
+'test\:watch:Run tests whenever files change using repo-specific test command'
+'tw:Run tests whenever files change using repo-specific test command'
+#+end_src
+
+*** TODO ~test:e2e~
+* zsh completions
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+#+begin_src shell :tangle art-completions.zsh
+<<env-vars-zsh>>
+
+_artbot() {
+  local current_dir=$(pwd)
+  local -a subcommands
+  subcommands=(
+      <<subcommand-list>>
+  )
+
+  _arguments -C \
+    '1: :->subcommand' \
+    '*::arg:->args'
+
+  case $state in
+    subcommand)
+      _describe 'subcommand' subcommands
+      ;;
+
+    args)
+      case $words[1] in
+        (go|teleport)
+          case $current_dir in
+            $artisan_be)
+              _artbot_go_backend
+              ;;
+            $artisan_fe)
+              _artbot_go_frontend
+              ;;
+            ,*)
+              _artbot_go_root
+              ;;
+          esac
+          ;;
+        gob)
+          _artbot_go_backend
+          ;;
+        gof)
+          _artbot_go_frontend
+          ;;
+        (test|tw)
+          case $current_dir in
+            $artisan_be)
+              _artbot_go_backend
+              ;;
+            $artisan_fe)
+              _artbot_go_frontend
+              ;;
+          esac
+          ;;
+      esac
+      ;;
+  esac
+}
+_artbot_go_root() {
+  _files -W $artisan_dev_dir
+}
+_artbot_go_backend() {
+  _files -W $artisan_be
+}
+_artbot_go_frontend() {
+  _files -W $artisan_fe
+}
+compdef '_artbot' art
+#+end_src
+
+** TODO (at least partially) define subcommand-specific completions in that subcommand's subtree
+** TODO detect not just if $PWD /is/ a repo base dir, but if it's /inside/ one when completing ~go|teleport~
+
+* Appendices
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+** environment variables
+#+begin_src shell :tangle no :noweb-ref env-vars
+export artisan_dev_dir
+export artisan_fe=$artisan_dev_dir/sales_rep_frontend
+export artisan_be=$artisan_dev_dir/sales_rep_backend
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref env-vars-zsh
+# Get the script's source location (even if invoked via a symlink)
+SOURCE="${0:A}"
+
+# the `:h` means "the directory containing the preceding thing", thus:
+SOURCE_REPO="${SOURCE:h:h}"
+ZSH_COMPLETION_SOURCE="${SOURCE_REPO}/lib/art-completions.zsh"
+artisan_dev_dir="${SOURCE_REPO:h}"
+
+<<env-vars>>
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref env-vars-bash
+# Get the script's source location (even if invoked via a symlink)
+SOURCE="$(readlink -f "${BASH_SOURCE[0]}")"
+
+SOURCE_REPO="$(dirname "$(dirname "$SOURCE")")"
+ZSH_COMPLETION_SOURCE="${SOURCE_REPO}/lib/art-completions.zsh"
+artisan_dev_dir="$(dirname "$SOURCE_REPO")"
+
+<<env-vars>>
+#+end_src
+
+** interactive helper functions
+:PROPERTIES:
+:VISIBILITY: children
+:END:
+*** interactively select docker images and services
+#+begin_src shell :tangle no :noweb-ref interactive-pickers
+pick_docker_service () {
+  docker compose ps | awk 'NR > 1 {print $4}' | fzf
+}
+
+pick_docker_image () {
+  docker ps | grep -oE 'sales_rep_backend-[^ ]+$' | fzf
+}
+#+end_src
+*** TODO jump to key directories, with zsh completion for subdirectories
+split up functions, which are portable, and completions, which are zsh-only.
+#+begin_src shell :tangle no :noweb-ref jump-to-directory-fns
+cda () {
+  if [[ $# -gt 0 ]]; then
+    cdd $artisan_dev_dir/${@}
+  else
+    cdd $artisan_dev_dir
+  fi
+}
+#+end_src
+
+#+begin_src shell :tangle art-completions.zsh
+compdef '_files -W ~/c/artisan' cda
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref jump-to-directory-fns
+cdab () {
+  if [[ $# -gt 0 ]]; then
+    cdd $artisan_dev_dir/sales_rep_backend/${@}
+  else
+    cdd $artisan_dev_dir/sales_rep_backend/
+  fi
+}
+#+end_src
+#+begin_src shell :tangle art-completions.zsh
+compdef '_files -W ~/c/artisan/sales_rep_backend' cdab
+#+end_src
+
+#+begin_src shell :tangle no :noweb-ref jump-to-directory-fns
+cdaf () {
+  if [[ $# -gt 0 ]]; then
+    cdd $artisan_dev_dir/sales_rep_frontend/${@}
+  else
+    cdd $artisan_dev_dir/sales_rep_frontend/
+  fi
+}
+#+end_src
+#+begin_src shell :tangle art-completions.zsh
+compdef '_files -W ~/c/artisan/sales_rep_frontend' cdaf
+#+end_src
