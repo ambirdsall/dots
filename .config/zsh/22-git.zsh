@@ -131,6 +131,18 @@ alias gbl="git branch -l"
 l () {
   # no args
   if [[ $# -eq 0 ]]; then
+    git log --oneline -8
+  # one arg which is an integer
+  elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
+    git log --oneline -$1
+  # hopefully anything else is a valid set of additional git log args
+  else
+    git log --oneline "$@"
+  fi
+}
+L () {
+  # no args
+  if [[ $# -eq 0 ]]; then
     git log --oneline --date=format:'%Y-%m-%d' --format='%C(yellow)%h%Creset [%C(blue)%cd%Creset] %s' -8
   # one arg which is an integer
   elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
@@ -141,7 +153,7 @@ l () {
   fi
 }
 
-L () {
+LL () {
   # First we calculate how much space we have for the commit summary lines so we can
   # format the output nicely; this lets us easily scan the dates at the end of each line.
   # To do so, we measure the terminal width with `tput cols` and subtract the known length of
