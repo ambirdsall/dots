@@ -165,11 +165,7 @@ leader("n", act { ActivateTabRelative=1 }),
  leader("=", equalize pane sizes somehow),
  leader("g", set current pane width to reciprocal of golden ratio vis-a-vis its containing window),
 *** workspaces
-- pick existing workspace
-- "detach" (i.e. switch to "default")
-- create new named workspace
-- rename current workspace
-- switch back to prior workspace
+**** make, switch, and manage them by name
 #+begin_src lua :tangle no :noweb-ref keybinding-subsection
 leader("S", act.ShowLauncherArgs { flags = "FUZZY|WORKSPACES" }),
 
@@ -215,8 +211,21 @@ leader("R", act.PromptInputLine {
   end),
 }),
 
+#+end_src
+
+**** navigate the workspace list qua list
+These commands are semantically correct, following the emacs-style keybind convention:
+#+begin_src lua :tangle no :noweb-ref keybinding-subsection
 leader('N', act.SwitchWorkspaceRelative(1)),
 leader('P', act.SwitchWorkspaceRelative(-1)),
+#+end_src
+
+This one, in contrast, is not really semantically correct (or rather, it's semantically
+different from the keybinding it's aping from my personal tmux config), but
+1) it's /deeply/-established muscle memory at this point, and
+2) it acts the same iff there are ≤ 2 workspaces, which is the overwhelmingly common case for me
+#+begin_src lua :tangle no :noweb-ref keybinding-subsection
+leader('L', act.SwitchWorkspaceRelative(-1)),
 #+end_src
 
 *** unbind annoying defaults
@@ -252,8 +261,8 @@ in a form that you can copy and paste into your own configuration.
 | =SUPER=          | =v=          | ~PasteFrom="Clipboard"~                        |
 | =CTRL+SHIFT=     | =c=          | ~CopyTo="Clipboard"~                           |
 | =CTRL+SHIFT=     | =v=          | ~PasteFrom="Clipboard"~                        |
-|                | =Copy=        | ~CopyTo="Clipboard"~                           |
-|                | =Paste=       | ~PasteFrom="Clipboard"~                        |
+|                | =Copy=       | ~CopyTo="Clipboard"~                           |
+|                | =Paste=      | ~PasteFrom="Clipboard"~                        |
 | =CTRL=           | =Insert=     | ~CopyTo="PrimarySelection"~                    |
 | =SHIFT=          | =Insert=     | ~PasteFrom="PrimarySelection"~                 |
 | =SUPER=          | =m=          | ~Hide~                                         |

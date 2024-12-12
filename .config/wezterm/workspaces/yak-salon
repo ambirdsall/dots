@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+
+# the cd && pwd song and dance is to avoid hypothetical shenanigans from invoking the
+# script from a relative path. Do I need to do this? I don't know, probably not.
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$script_dir/utils.bash"
+
+main () {
+    local range=$(named_tab '$HOME, $HOME on the range' $HOME "cowsay -f tux 'gottem'
+")
+    local wez_the_term=$(named_tab 'wez the term' ~/.config/wezterm 'e config.org')
+    if [ $IS_MAC ]; then
+        local hammer_the_spoons=$(named_tab 'hammer the spoons' ~/.hammerspoon 'e config.org')
+    fi
+    local doomconf=$(named_tab doomconf ~/.config/doom 'e config.org')
+    local doom_per_se=$(named_tab 'doom per se' ~/.emacs.d)
+    local keeb=$(named_tab keeb ~/c/qmk_firmware 'e keyboards/ergodox_ez/keymaps/ergodox/keymap.c')
+}
+
+main "$@"
