@@ -211,7 +211,8 @@ Navigate Windows (exit with RET, ESC, q, or C-g)
   ("C-g" nil :exit t))
 
 (map! :leader
-      :desc "get movin'" "w." #'amb/window-nav-hydra/body)
+      :desc "get movin'" "w." #'amb/window-nav-hydra/body
+      :desc "Manage windows" "W" #'amb/window-nav-hydra/body)
 
 (use-package! ace-window
   :config
@@ -942,7 +943,8 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
  "Nw" #'widen
  :desc "jump to first non-blank" "of" #'evil-first-non-blank
  :desc "new frame" "oF" #'make-frame
- "W" #'subword-mode)
+ :desc "Spell checker" "tS" #'spell-fu-mode
+ :desc "Subword mode" "ts" #'subword-mode)
 
 (map!
  "C-;" #'evil-avy-goto-char-timer

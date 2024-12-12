@@ -357,7 +357,7 @@ using it as a mnemonic binding for ~imenu~:
 #+end_src
 * buffers, windows, frames, workspaces... all that emacs shit [0/5]
 ** window navigation
-*** hydra at =SPC w.=
+*** hydra at =SPC W= / =SPC w.=
 #+begin_src elisp
 (defhydra amb/window-nav-hydra (:hint nil :exit nil)
   "
@@ -400,7 +400,8 @@ Navigate Windows (exit with RET, ESC, q, or C-g)
   ("C-g" nil :exit t))
 
 (map! :leader
-      :desc "get movin'" "w." #'amb/window-nav-hydra/body)
+      :desc "get movin'" "w." #'amb/window-nav-hydra/body
+      :desc "Manage windows" "W" #'amb/window-nav-hydra/body)
 #+end_src
 
 *** ace-window
@@ -1802,7 +1803,8 @@ This snippet is taken directly from the org-mode info manual.
  "Nw" #'widen
  :desc "jump to first non-blank" "of" #'evil-first-non-blank
  :desc "new frame" "oF" #'make-frame
- "W" #'subword-mode)
+ :desc "Spell checker" "tS" #'spell-fu-mode
+ :desc "Subword mode" "ts" #'subword-mode)
 
 (map!
  "C-;" #'evil-avy-goto-char-timer
@@ -1810,7 +1812,7 @@ This snippet is taken directly from the org-mode info manual.
  :ni "C-(" #'sp-backward-slurp-sexp
  (:when (not (display-graphic-p)) :map (evil-insert-state-map evil-motion-state-map) "C-z" #'suspend-frame))
 #+end_src
-
+*** TODO why can't I overwrite the =:desc= from the default spell checker binding on =SPC t s=?
 ** Who configures the configuration?
 I do.
 
