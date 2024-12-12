@@ -49,6 +49,7 @@ reattach-to-user-namespace
 ripgrep
 rlwrap
 shellcheck
+terminal-notifier
 texinfo
 tfenv
 tldr

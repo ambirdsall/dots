@@ -249,7 +249,8 @@
                     }
                 ]
             },
-            "name": "Home Row Mods"
+            "name": "Home Row Mods",
+            "virtual_hid_keyboard": { "keyboard_type_v2": "ansi" }
         }
     ]
 }
