@@ -1,0 +1,10 @@
+[Unit]
+Description=Terminal-specific emacs daemon on socket "ttylated"
+After=default.target
+
+[Service]
+ExecStart=/usr/bin/emacs -nw --fg-daemon=ttylated
+Restart=always
+
+[Install]
+WantedBy=default.target
