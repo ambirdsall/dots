@@ -6,13 +6,13 @@
 
 Programmatically get the keyboard device file! Don't tangle this config with an external keyboard plugged in unless you're feeling lucky.
 #+NAME: keyboard-device-file
-#+begin_src shell
+#+begin_src shell :tangle no
 find /dev/input/by-{path,id} -name '*-kbd' | head -n 1 | tr -d "\n"
 #+end_src
 
 Confusing name, historical reasons, yada yada yada
 #+NAME: PrtSc
-#+begin_src shell :results tangle
+#+begin_src shell :tangle no :results tangle
 echo -n sys
 #+end_src
 
