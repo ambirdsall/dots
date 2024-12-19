@@ -28,22 +28,25 @@ main () {
             fi
           done
 
-          # if we got this far, it's time to boogie
-          for f in $files_to_tangle; do
-            doom +org tangle $f
-          done
         else
-          local literate_config_filename_pattern='config\.org$'
+          local literate_config_filename_pattern
 
-          if [[ -n "$IS_MAC" ]]; then
+          case $OS in
+            🍎|🍏)
               literate_config_filename_pattern='config\.org$|config\.macos\.org$'
-          fi
-
-          # If $IS_LINUX is defined, add config.linux.org to the pattern
-          if [[ -n "$IS_LINUX" ]]; then
+              ;;
+            🐧)
               literate_config_filename_pattern='config\.org$|config\.linux\.org$'
-          fi
-          files_to_tangle=$(dots/git_cmd ls-files | grep -E $literate_config_filename_pattern)
+              ;;
+            *)
+              literate_config_filename_pattern='config\.org$'
+              ;;
+          esac
+          files_to_tangle=$(dots/git_cmd ls-files ~ | grep -E $literate_config_filename_pattern)
+        fi
+
+        if [[ -n "$files_to_tangle" ]]; then
+          # if we got this far, it's time to boogie
           for f in $files_to_tangle; do
             doom +org tangle "$f"
           done

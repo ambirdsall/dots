@@ -34,9 +34,19 @@ dots/set () {
     fi
 }
 
-if [[ $(uname) == 'Darwin' ]]; then
-    export IS_MAC=t
-else
-    # I know me, it's a safe assumption
-    export IS_LINUX=t
-fi
+case $(uname) in
+    Darwin)
+        export IS_MAC=t
+        export OS_TYPE=macos
+        export OS=🍎
+    ;;
+    Linux)
+        export IS_LINUX=t
+        export OS_TYPE=linux
+        export OS=🐧
+    ;;
+    *)
+        export OS_TYPE=wtf
+        export OS=👾
+    ;;
+esac
