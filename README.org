@@ -42,7 +42,7 @@ dots doctor
 
 Once you have a clean bill of health, tangle all literate configs with
 #+begin_src shell
-dots build
+dots tangle
 #+end_src
 
 * managing this git directory
