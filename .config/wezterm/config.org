@@ -75,8 +75,8 @@ local act = wezterm.action
 #+end_src
 ** and now, the keybindings
 *** set up keyboard
+I originally used ~config.enable_csi_u_key_encoding = true~, but =kkp= is a better mapping.
 #+begin_src lua :tangle no :noweb-ref keybinding
--- config.enable_csi_u_key_encoding = true
 config.enable_kitty_keyboard = true
 #+end_src
 
@@ -386,7 +386,7 @@ installed, but since wezterm uses font fallbacks, it's not strictly necessary.
 #+begin_src lua :tangle no :noweb-ref appearance
 config.font = wezterm.font 'Fira Code'
 config.font_size = 12
-config.front_end = "WebGpu"
+config.front_end = "OpenGL"
 #+end_src
 # Local Variables:
 # org-indent-mode: nil

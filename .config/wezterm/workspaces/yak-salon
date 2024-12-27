@@ -15,6 +15,7 @@ main () {
     local doomconf=$(named_tab doomconf ~/.config/doom 'e config.org')
     local doom_per_se=$(named_tab 'doom per se' ~/.emacs.d)
     local keeb=$(named_tab keeb ~/c/qmk_firmware 'e keyboards/ergodox_ez/keymaps/ergodox/keymap.c')
+    wezterm cli activate-pane --pane-id $range
 }
 
 main "$@"
