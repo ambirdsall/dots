@@ -9,13 +9,13 @@
 .SUFFIXES:
 .PHONY: brew-deps defaults-write
 
-install: .emacs.d tpm
+install: .emacs.d .tmux/plugins/tpm
 
 .emacs.d:
 	git clone git@github.com:doomemacs/doomemacs.git ~/.emacs.d
 	~/.emacs.d/bin/doom install
 
-tpm:
+.tmux/plugins/tpm:
 	git clone git@github.com:tmux-plugins/tpm ~/.tmux/plugins/tpm
 	~/.tmux/plugins/tpm/bin/install_plugins
 
