@@ -60,4 +60,5 @@ wget
 xmlto
 yarn
 yq
+zellij
 zsh

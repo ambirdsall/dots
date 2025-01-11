@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 # commands to ignore
-cmdignore=(ncdu htop tmux top vim vimserv nvim emacs e v)
+cmdignore=(ncdu htop tmux top vim vimserv nvim emacs e v zellij)
 
 # set gt 0 to enable GNU units for time results
 gnuunits=0
