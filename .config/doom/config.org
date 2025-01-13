@@ -1614,7 +1614,7 @@ Notes must be at hand to be helpful, ideally on any of several computers:
        (setq org-directory dir)))
 #+end_src
 
-** make org-mode act nicer
+** make org-mode act nicer...
 #+begin_src elisp
 (setq! org-log-into-drawer t
        org-hierarchical-todo-statistics nil
@@ -1622,7 +1622,7 @@ Notes must be at hand to be helpful, ideally on any of several computers:
        org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
 #+end_src
 
-** make org-mode look nicer
+** ...look nicer...
 #+begin_src elisp
 (custom-set-faces!
   '(outline-1 :weight extra-bold :height 1.25)
@@ -1641,7 +1641,7 @@ Notes must be at hand to be helpful, ideally on any of several computers:
 (add-hook! (org-mode) (org-appear-mode 1))
 #+end_src
 
-** roam
+** ...and, like the buffalo, roam
 First, I need a roam directory to serve as the "slipbox":
 #+begin_src elisp
 (setq org-roam-directory "~/Dropbox/roam/")
