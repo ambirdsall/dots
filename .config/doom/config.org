@@ -1849,7 +1849,7 @@ This is shamelessly lifted from [[https://tecosaur.github.io/emacs-config/config
 eccentric who reads emacs configs, odds are good that either you're already familiar with
 it or you should be.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defvar +literate-tangle--proc nil)
 (defvar +literate-tangle--proc-start-time nil)
 
