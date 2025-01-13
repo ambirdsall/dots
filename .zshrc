@@ -62,7 +62,7 @@ again () {
     clear && VERBOSE_ZSH_CONFIG=t zsh
 }
 
-list_sessions_if_inside_tmux
+list_multiplexer_sessions
 
 # TODO because most aliases got moved into ~/.config/zsh/**, with
 # ~/aliases.zsh serving as easy entry point for re-sourcing, most of these
