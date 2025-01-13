@@ -1,7 +1,31 @@
 #!/usr/bin/env zsh
 
 # commands to ignore
-cmdignore=(ncdu htop tmux top vim vimserv nvim emacs e v zellij)
+# this is an incomplete list; expect to revisit moderately often to add things like:
+# - pagers (and commands that frequently open them)
+# - aliases for editing key files
+cmdignore=(
+    bat
+    dots
+    e
+    ea
+    el
+    e.
+    emacs
+    g
+    git
+    htop
+    less
+    ncdu
+    nvim
+    tmux
+    top
+    v
+    vim
+    vimserv
+    zellij
+    zrc
+)
 
 # set gt 0 to enable GNU units for time results
 gnuunits=0
