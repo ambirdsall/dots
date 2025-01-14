@@ -10,9 +10,7 @@ list_multiplexer_sessions () {
     fi
 
     if dots/at_hand zellij; then
-        zellij_sessions=$(zellij list-sessions 2>& /dev/null || true)
-
-        if [ -n $zellij_sessions ]; then
+        if [ -z "$(env | grep -i zellij)" ]; then
             echo "Zellij sessions:"
             zellij list-sessions
             printf "\n"
