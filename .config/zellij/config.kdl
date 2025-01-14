@@ -302,6 +302,10 @@ plugins {
 // eg. "file:/path/to/my-plugin.wasm"
 // eg. "https://example.com/my-plugin.wasm"
 load_plugins {
+    compact-bar
+    session-manager
+    configuration
+    welcome
 }
  
 // Use a simplified UI without special fonts (arrow glyphs)
