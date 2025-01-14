@@ -6,13 +6,19 @@ get exported to specific init files.
 
 At present, this /almost/ only tangles to elisp files for doom emacs to load; it also builds ~/.guile
 
-#+begin_src elisp :tangle packages.el
-<<packages-preamble>>
-#+end_src
 #+begin_src elisp
 <<config-preamble>>
 #+end_src
 
+In order to conditionally define config, we have some toggles which can be overridden via a non-git-tracked local file:
+#+begin_src elisp
+<<default-toggles>>
+<<load-local-toggle-overrides>>
+#+end_src
+
+#+begin_src elisp :tangle packages.el
+<<packages-preamble>>
+#+end_src
 * work nicely with the surrounding computer
 ** clipboard
 By default, editing stuff in emacs shouldn't pollute the system clipboard:
@@ -105,7 +111,7 @@ Sometimes on macOS, emacs will throw a constant stream of errors that end with "
 Also, I have had certain macOS computers on which emacs consistently has a misdefined
 ~woman-manpath~, which is weird! Particularly since ~(describe-variable 'woman-manpath)~
 will report a functioning, correct-looking original value. If this hits you, you'll need
-to reset the value in =~/.config/doom/local.el= so it's manually set correctly. Or rerun
+to reset the value in =~/.config/doom/local-config.el= so it's manually set correctly. Or rerun
 ~doom env~ on the command line in a context where ~MANPATH~ is correct. Here is a minimal
 (i.e. with all nonstandard and/or versioned paths from language-specific package manager
 installation locations removed) reference version:
@@ -124,7 +130,7 @@ installation locations removed) reference version:
 Leaving the untangled manual config in place for a bit so things work with my computers
 which aren't running a super up-to-date version of doom.
 
-Relatedly, leaving this in ~packages.el~ so I can just dump the activation code in ~local.el~ if needed.
+Relatedly, leaving this in =packages.el= so I can just dump the activation code in =local-config.el= if needed.
 #+begin_src elisp :tangle packages.el
 (package! kkp)
 #+end_src
@@ -717,13 +723,16 @@ For example when I open my config file it the window will be titled config.org â
 Taken from [[https://discourse.doomemacs.org/t/permanently-display-workspaces-in-the-tab-bar/4088][hylo's discourse post]], thanks hylo.
 
 Notably, clicking on the tabs accomplishes nothing helpful with this setup.
+#+begin_src elisp :tangle no :noweb-ref default-toggles
+(defvar amb/enable-workspace-tabs nil
+  "Do I really want to show tabs of the workspace names?")
+
+#+end_src
+
 #+begin_src elisp
 (custom-set-faces!
   '(+workspace-tab-face :inherit default :family "Overpass" :height 135)
   '(+workspace-tab-selected-face :inherit (highlight +workspace-tab-face)))
-
-(defvar amb/enable-workspace-tabs nil
-  "Do I really want to show tabs of the workspace names? Tell me via this variable.")
 
 (after! persp-mode
   (defun workspaces-formatted ()
@@ -1368,12 +1377,18 @@ tree-sitter version requires a semi-manual setup step to install all the languag
 #+end_src
 ** "I hear lisp is good for AI"
 *** copilot
-#+begin_src elisp :tangle "packages.el"
+#+begin_src elisp :tangle no :noweb-ref default-toggles
+(defvar amb/enable-copilot nil
+  "Is my company paying for, and actively encouraging me to use, github copilot?")
+
+#+end_src
+
+#+begin_src elisp :tangle (if (boundp 'amb/enable-copilot) "packages.el" "no")
 (package! copilot
   :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
 #+end_src
 
-#+begin_src elisp
+#+begin_src elisp :tangle (if (boundp 'amb/enable-copilot) "config.el" "no")
 ;; accept completion from copilot and fallback to company
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
@@ -1828,11 +1843,6 @@ Some functionality uses this to identify you, e.g. GPG configuration, email clie
 
 *** shortcuts to open doom config file(s)
 #+begin_src elisp
-(defvar amb/computer-specific-config (expand-file-name "local.el" doom-private-dir)
-  "A file for computer-specific config, hidden from git; for
-example, configuration for a work computer and its (possibly
-private) product projects.")
-
 (map! :leader
       :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
       :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
@@ -1924,11 +1934,38 @@ it or you should be.
 
 #+end_src
 ** The secrets I keep with myself, or: praise the Lord and pass the =.gitignore=
-This snippet loads a computer-specific config file if it's present. It goes
-last, giving me a convenient place for ad hoc overrides of any setting in here.
-#+begin_src elisp
-(let ((amb/computer-specific-config (concat doom-private-dir "local.el")))
-  (and (file-exists-p amb/computer-specific-config) (load amb/computer-specific-config)))
+In general, I would like my config to travel with me from computer to computer: this
+streamlines maintaining old but still functioning laptops, work-provided computers, etc.
+But there are some exceptions: maybe an older laptop needs a small hack to work around a
+strange bug, or maybe my job provides an account for some proprietary bit of tooling that
+should only run while I'm actually working that job; for those, I support a few
+computer-specific config files, to be loaded if present:
+- =local-toggles.el= is loaded very early in my config; its primary purpose is setting toggles
+  so I can define configuration for opt-in features, which are only enabled on a
+  computer-by-computer basis.
+- =local-config.el= is loaded last, giving me a convenient place for ad hoc overrides of any
+  setting in here.
+*** define vars for local config files for future reference
+#+begin_src elisp :noweb-ref config-preamble
+(defvar amb/computer-specific-config (expand-file-name "local-config.el" doom-private-dir)
+  "A file for computer-specific config and overrides, hidden from git; for example,
+configuration for a work computer and its (possibly private) product projects.")
+
+(defvar amb/computer-specific-toggles (expand-file-name "local-toggles.el" doom-private-dir)
+  "A file for {en,dis}abling configuration and features on a computer-specific basis,
+hidden from git; for example, configuration for proprietary
+features enabled for a work computer by a company account.")
+#+end_src
+
+*** load file with local overrides if present
+#+begin_src elisp :noweb-ref load-local-toggle-overrides
+(if (file-exists-p amb/computer-specific-toggles)
+      (load amb/computer-specific-toggles))
+#+end_src
+
+#+begin_src elisp :noweb-ref config-epilogue
+(if (file-exists-p amb/computer-specific-config)
+      (load amb/computer-specific-config))
 #+end_src
 ** text manipulation utility macros
 Working with text combines a huge variety of content-specific considerations with a very
@@ -1969,6 +2006,10 @@ used interactively."
 * Footnotes
 
 [fn:1] This is the white-on-white crime our politicians /should/ be talking about, if you ask me.
+
+#+begin_src elisp :noweb yes
+<<config-epilogue>>
+#+end_src
 
 # Local Variables:
 # org-indent-mode: nil

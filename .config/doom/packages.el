@@ -32,9 +32,6 @@
 
 (package! yaml-pro)
 
-(package! copilot
-  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
-
 (package! gptel)
 
 (unpin! org-roam)

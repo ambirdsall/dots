@@ -2,6 +2,24 @@
 
 ;; commentary: what the fuck
 
+(defvar amb/computer-specific-config (expand-file-name "local-config.el" doom-private-dir)
+  "A file for computer-specific config and overrides, hidden from git; for example,
+configuration for a work computer and its (possibly private) product projects.")
+
+(defvar amb/computer-specific-toggles (expand-file-name "local-toggles.el" doom-private-dir)
+  "A file for {en,dis}abling configuration and features on a computer-specific basis,
+hidden from git; for example, configuration for proprietary
+features enabled for a work computer by a company account.")
+
+(defvar amb/enable-workspace-tabs nil
+  "Do I really want to show tabs of the workspace names?")
+
+(defvar amb/enable-copilot nil
+  "Is my company paying for, and actively encouraging me to use, github copilot?")
+
+(if (file-exists-p amb/computer-specific-toggles)
+      (load amb/computer-specific-toggles))
+
 (setq! select-enable-clipboard nil)
 
 (map! "C-M-y" #'clipboard-yank)
@@ -353,9 +371,6 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
   '(+workspace-tab-face :inherit default :family "Overpass" :height 135)
   '(+workspace-tab-selected-face :inherit (highlight +workspace-tab-face)))
 
-(defvar amb/enable-workspace-tabs nil
-  "Do I really want to show tabs of the workspace names? Tell me via this variable.")
-
 (after! persp-mode
   (defun workspaces-formatted ()
     ;; fancy version as in screenshot
@@ -681,15 +696,6 @@ If the window occupies the entire frame, restore its original size."
   :hook (yaml-mode . yaml-pro-ts-mode)
   )
 
-;; accept completion from copilot and fallback to company
-(use-package! copilot
-  :hook (prog-mode . copilot-mode)
-  :bind (:map copilot-completion-map
-              ("<tab>" . 'copilot-accept-completion-by-word)
-              ("TAB" . 'copilot-accept-completion-by-word)
-              ("C-TAB" . 'copilot-accept-completion)
-              ("C-<tab>" . 'copilot-accept-completion)))
-
 (use-package! gptel)
 
 (after! magit
@@ -955,15 +961,25 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 (setq user-full-name "Alex Birdsall"
       user-mail-address "ambirdsall@gmail.com")
 
-(defvar amb/computer-specific-config (expand-file-name "local.el" doom-private-dir)
-  "A file for computer-specific config, hidden from git; for
-example, configuration for a work computer and its (possibly
-private) product projects.")
-
 (map! :leader
       :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
       :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
       :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
 
-(let ((amb/computer-specific-config (concat doom-private-dir "local.el")))
-  (and (file-exists-p amb/computer-specific-config) (load amb/computer-specific-config)))
+(defvar amb/computer-specific-config (expand-file-name "local-config.el" doom-private-dir)
+  "A file for computer-specific config and overrides, hidden from git; for example,
+configuration for a work computer and its (possibly private) product projects.")
+
+(defvar amb/computer-specific-toggles (expand-file-name "local-toggles.el" doom-private-dir)
+  "A file for {en,dis}abling configuration and features on a computer-specific basis,
+hidden from git; for example, configuration for proprietary
+features enabled for a work computer by a company account.")
+
+(if (file-exists-p amb/computer-specific-toggles)
+      (load amb/computer-specific-toggles))
+
+(if (file-exists-p amb/computer-specific-config)
+      (load amb/computer-specific-config))
+
+(if (file-exists-p amb/computer-specific-config)
+      (load amb/computer-specific-config))
