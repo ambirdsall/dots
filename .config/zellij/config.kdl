@@ -20,7 +20,7 @@ keybinds clear-defaults=true {
         bind "p" { GoToPreviousTab; SwitchToMode "locked"; }
         bind "r" { SwitchToMode "resize"; }
         bind "R" { SwitchToMode "renamepane"; }
-        bind "v" { NewPane; SwitchToMode "locked"; }
+        bind "v" { NewPane "right"; SwitchToMode "locked"; }
         bind "s" { NewPane "down"; SwitchToMode "locked"; }
         bind "S" {
             LaunchOrFocusPlugin "session-manager" {
