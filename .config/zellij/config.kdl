@@ -3,14 +3,19 @@ keybinds clear-defaults=true {
     locked {
         bind "Ctrl Space" { SwitchToMode "normal"; }
     }
+    shared_except "locked" {
+        bind "Ctrl g" { SwitchToMode "locked"; }
+        bind "Ctrl q" { Quit; }
+    }
     normal {
+        bind "." { SwitchToMode "move"; }
         bind "c" { NewTab; SwitchToMode "locked"; }
         bind "d" { Detach; }
         bind "e" { TogglePaneEmbedOrFloating; SwitchToMode "locked"; }
         bind "f" { TogglePaneEmbedOrFloating; SwitchToMode "locked"; }
-        bind "h" { MoveFocus "left"; SwitchToMode "locked"; }
-        bind "H" { MovePane "left"; SwitchToMode "locked"; }
-        bind "j" { MoveFocus "down"; SwitchToMode "locked"; }
+        bind "h" { MoveFocus "Left"; SwitchToMode "locked"; }
+        bind "H" { MovePane "Left"; SwitchToMode "locked"; }
+        bind "j" { MoveFocus "Down"; SwitchToMode "locked"; }
         bind "J" { MovePane "down"; SwitchToMode "locked"; }
         bind "k" { MoveFocus "up"; SwitchToMode "locked"; }
         bind "K" { MovePane "up"; SwitchToMode "locked"; }
@@ -44,40 +49,36 @@ keybinds clear-defaults=true {
         bind "8" { GoToTab 8; SwitchToMode "locked"; }
         bind "9" { GoToTab 9; SwitchToMode "locked"; }
     }
-    shared_except "locked" {
-        bind "Ctrl g" { SwitchToMode "locked"; }
-        bind "Ctrl q" { Quit; }
-    }
-    shared_except "locked" "move" {
+    shared_except "move" "locked" {
         bind "Ctrl h" { SwitchToMode "move"; }
-    }
-    shared_except "locked" "session" {
-        bind "Ctrl o" { SwitchToMode "session"; }
-    }
-    shared_except "locked" "scroll" {
-        bind "Ctrl s" { SwitchToMode "scroll"; }
-    }
-    shared_except "locked" "scroll" "search" "tmux" {
-        bind "Ctrl b" { SwitchToMode "tmux"; }
-    }
-    shared_except "locked" "tab" {
-        bind "Ctrl t" { SwitchToMode "tab"; }
-    }
-    shared_except "locked" "pane" {
-        bind "Ctrl p" { SwitchToMode "pane"; }
     }
     shared_except "locked" "resize" {
         bind "Ctrl r" { SwitchToMode "resize"; }
     }
+    shared_except "session" "locked" {
+        bind "Ctrl o" { SwitchToMode "session"; }
+    }
+    shared_except "scroll" "locked" {
+        bind "Ctrl s" { SwitchToMode "scroll"; }
+    }
+    shared_except "locked" "tab" {
+        bind "Ctrl t" { SwitchToMode "tab"; }
+    }
+    shared_except "scroll" "search" "tmux" "locked" {
+        bind "Ctrl b" { SwitchToMode "tmux"; }
+    }
+    shared_except "locked" "pane" {
+        bind "Ctrl p" { SwitchToMode "pane"; }
+    }
     shared_except "normal" "locked" "entersearch" {
         bind "enter" { SwitchToMode "normal"; }
     }
-    // shared_except "normal" "locked" "entersearch" "renametab" "renamepane" {
-        // bind "esc" { SwitchToMode "normal"; }
-    // }
-    shared_except "locked" "entersearch" "renametab" "renamepane" {
-        bind "esc" { SwitchToMode "locked"; }
+    shared_except "normal" "locked" "entersearch" "renametab" "renamepane" {
+        bind "esc" { SwitchToMode "normal"; }
     }
+    // shared_except "locked" "entersearch" "renametab" "renamepane" {
+    //     bind "esc" { SwitchToMode "locked"; }
+    // }
     shared_among "pane" "tmux" {
         bind "x" { CloseFocus; SwitchToMode "locked"; }
     }
@@ -155,18 +156,27 @@ keybinds clear-defaults=true {
         bind "Ctrl r" { SwitchToMode "normal"; }
     }
     move {
-        bind "left" { MovePane "left"; }
-        bind "down" { MovePane "down"; }
-        bind "up" { MovePane "up"; }
-        bind "right" { MovePane "right"; }
-        bind "h" { MovePane "left"; }
         bind "Ctrl h" { SwitchToMode "normal"; }
-        bind "j" { MovePane "down"; }
-        bind "k" { MovePane "up"; }
-        bind "l" { MovePane "right"; }
+        bind "left" { MoveFocus "left"; }
+        bind "shift left" { MovePane "left"; }
+        bind "down" { MoveFocus "down"; }
+        bind "shift down" { MovePane "down"; }
+        bind "up" { MoveFocus "up"; }
+        bind "shift up" { MovePane "up"; }
+        bind "right" { MoveFocus "right"; }
+        bind "shift right" { MovePane "right"; }
+        bind "h" { MoveFocus "left"; }
+        bind "H" { MovePane "left"; }
+        bind "j" { MoveFocus "down"; }
+        bind "J" { MovePane "down"; }
+        bind "k" { MoveFocus "up"; }
+        bind "K" { MovePane "up"; }
+        bind "l" { MoveFocus "right"; }
+        bind "L" { MovePane "right"; }
         bind "n" { MovePane; }
+        bind "N" { MovePaneBackwards; }
         bind "p" { MovePaneBackwards; }
-        bind "tab" { MovePane; }
+        // bind "tab" { MovePane; }
     }
     scroll {
         bind "e" { EditScrollback; SwitchToMode "locked"; }
@@ -204,25 +214,6 @@ keybinds clear-defaults=true {
             SwitchToMode "normal"
         }
     }
-    // shared {
-    //     bind "Alt left" { MoveFocusOrTab "left"; }
-    //     bind "Alt down" { MoveFocus "down"; }
-    //     bind "Alt up" { MoveFocus "up"; }
-    //     bind "Alt right" { MoveFocusOrTab "right"; }
-    //     bind "Alt +" { Resize "Increase"; }
-    //     bind "Alt -" { Resize "Decrease"; }
-    //     bind "Alt =" { Resize "Increase"; }
-    //     bind "Alt [" { PreviousSwapLayout; }
-    //     bind "Alt ]" { NextSwapLayout; }
-    //     bind "Alt f" { ToggleFloatingPanes; }
-    //     bind "Alt h" { MoveFocusOrTab "left"; }
-    //     bind "Alt i" { MoveTab "left"; }
-    //     bind "Alt j" { MoveFocus "down"; }
-    //     bind "Alt k" { MoveFocus "up"; }
-    //     bind "Alt l" { MoveFocusOrTab "right"; }
-    //     bind "Alt n" { NewPane; }
-    //     bind "Alt o" { MoveTab "right"; }
-    // }
     shared_among "scroll" "search" {
         bind "PageDown" { PageScrollDown; }
         bind "PageUp" { PageScrollUp; }
