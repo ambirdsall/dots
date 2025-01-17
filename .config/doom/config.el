@@ -249,7 +249,11 @@ Navigate Windows (exit with RET, ESC, q, or C-g)
                             (?z aw-split-window-horz "Split Horz Window")
                             (?o delete-other-windows "Delete Other Windows")
                             (?? aw-show-dispatch-help)))
-  (map! :leader "ww" #'ace-window))
+  (map! :leader "ww" #'ace-window)
+  (custom-set-faces!
+  '(aw-leading-char-face
+    :foreground "white" :background "dark green"
+    :weight bold :height 2.5 :box (:line-width 10 :color "dark green"))))
 
 (defun sudo ()
   "Use TRAMP to `sudo' the current buffer."
