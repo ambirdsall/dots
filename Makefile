@@ -12,7 +12,8 @@
 install: .emacs.d .tmux/plugins/tpm
 
 .emacs.d:
-	git clone git@github.com:doomemacs/doomemacs.git ~/.emacs.d
+	git clone --depth 1 git@github.com:doomemacs/doomemacs.git ~/.emacs.d
+	echo "(doom! :config literate)" > ~/.config/doom/init.el
 	~/.emacs.d/bin/doom install
 
 .tmux/plugins/tpm:
