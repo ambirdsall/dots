@@ -943,6 +943,35 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
       (cons '(:noweb . "yes")
             (assq-delete-all :noweb org-babel-default-header-args)))
 
+(defun amb/window-delete-popup-frame (&rest _)
+  "Kill selected selected frame if it has parameter `amb-window-popup-frame'.
+Use this function via a hook."
+  (when (frame-parameter nil 'amb-window-popup-frame)
+    (delete-frame)))
+
+(defmacro amb/define-window-popup-command (command)
+  "Define interactive function which calls COMMAND in a new frame.
+Make the new frame have the `amb-window-popup-frame' parameter."
+  `(defun ,(intern (format "amb/window-popup-%s" command)) ()
+     ,(format "Run `%s' in a popup frame with `amb-window-popup-frame' parameter.
+Also see `amb/window-delete-popup-frame'." command)
+     (interactive)
+     (let ((frame (make-frame '((amb-window-popup-frame . t)))))
+       (select-frame frame)
+       ;; buffers whose names start with a space char are considered hidden
+       (switch-to-buffer " amb/window-hidden-buffer-for-popup-frame")
+       (condition-case nil
+           (call-interactively ',command)
+         ((quit error user-error)
+          (delete-frame frame))))))
+
+(after! org
+  (amb/define-window-popup-command org-capture)
+  (add-hook 'org-capture-after-finalize-hook #'amb/window-delete-popup-frame))
+
+(advice-add 'copy-unicode-char-to-clipboard :after 'amb/window-delete-popup-frame)
+(amb/define-window-popup-command copy-unicode-char-to-clipboard)
+
 (map!
  :leader
  :desc "prior buffer" "=" #'evil-switch-to-windows-last-buffer

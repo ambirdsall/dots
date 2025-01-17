@@ -1809,6 +1809,85 @@ This snippet is taken directly from the org-mode info manual.
 (nano (user-emacs-directory . "~/.config/emacsen/nano"))
 #+end_src
 
+* transient pop-up frames for externally-triggered one-of emacs actions
+hat tip to [[https://protesilaos.com/codelog/2024-09-19-emacs-command-popup-frame-emacsclient/][Prot]]
+** helpers to open/close popup frames
+#+begin_src elisp
+(defun amb/window-delete-popup-frame (&rest _)
+  "Kill selected selected frame if it has parameter `amb-window-popup-frame'.
+Use this function via a hook."
+  (when (frame-parameter nil 'amb-window-popup-frame)
+    (delete-frame)))
+
+(defmacro amb/define-window-popup-command (command)
+  "Define interactive function which calls COMMAND in a new frame.
+Make the new frame have the `amb-window-popup-frame' parameter."
+  `(defun ,(intern (format "amb/window-popup-%s" command)) ()
+     ,(format "Run `%s' in a popup frame with `amb-window-popup-frame' parameter.
+Also see `amb/window-delete-popup-frame'." command)
+     (interactive)
+     (let ((frame (make-frame '((amb-window-popup-frame . t)))))
+       (select-frame frame)
+       ;; buffers whose names start with a space char are considered hidden
+       (switch-to-buffer " amb/window-hidden-buffer-for-popup-frame")
+       (condition-case nil
+           (call-interactively ',command)
+         ((quit error user-error)
+          (delete-frame frame))))))
+
+#+end_src
+*** TODO rewrite macro to take an optional hook argument for more self-contained/DWIM operation
+If a hook is provided, the "close frame" function is added to the hook by the macro; else,
+the "close frame" function is added to the command per se as ~:after~ advice
+** popup frame commands
+#+begin_src elisp
+(after! org
+  (amb/define-window-popup-command org-capture)
+  (add-hook 'org-capture-after-finalize-hook #'amb/window-delete-popup-frame))
+
+(advice-add 'copy-unicode-char-to-clipboard :after 'amb/window-delete-popup-frame)
+(amb/define-window-popup-command copy-unicode-char-to-clipboard)
+#+end_src
+** for reference, here's Elken's simplified macOS adaptation
+#+begin_src elisp :tangle no
+  (defun popup-frame-delete (&rest _)
+    "Kill selected frame if it has parameter `popup-frame'."
+    (when-let ((bundle (frame-parameter nil 'bundle-identifier)))
+      (ns-do-applescript (format "tell application id \"%s\" to activate" bundle)))
+    (when (frame-parameter nil 'popup-frame)
+      (delete-frame)))
+
+  (defmacro popup-frame-define (command)
+    "Define interactive function to call COMMAND in frame with TITLE."
+    `(defun ,(intern (format "popup-frame-%s" command)) ()
+       (interactive)
+       (let* ((display-buffer-alist '(("")
+                                      (display-buffer-full-frame)))
+              (bundle-identifier (when IS-MAC
+                                   (ns-do-applescript "tell application \"System Events\" to get bundle identifier of first process whose frontmost is true")))
+              (frame (make-frame
+                      `((title . ,(format "popup-frame-%s" ',command))
+                        (window-system . ns)
+                        (menu-bar-lines . 1)
+                        (transient . t)
+                        (height . 25)
+                        (width . 70)
+                        (popup-frame . t)
+                        (bundle-identifier . ,bundle-identifier)))))
+         (select-frame-set-input-focus frame)
+         (switch-to-buffer " popup-frame-hidden-buffer")
+         (condition-case nil
+             (progn
+               (call-interactively ',command)
+               (delete-other-windows)
+               (hide-mode-line-mode))
+           ((quit error user-error)
+            (progn
+              (when bundle-identifier
+                (ns-do-applescript (format "tell application id \"%s\" to activate" bundle-identifier)))
+              (delete-frame frame)))))))
+#+end_src
+
 * appendices
 ** TODO uncategorized keybindings :: clean up
 #+begin_src elisp
