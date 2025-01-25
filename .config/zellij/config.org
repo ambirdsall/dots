@@ -1,0 +1,589 @@
+#+title: Zellij config
+
+#+begin_src elisp :results none
+(org-babel-tangle-file (buffer-file-name))
+#+end_src
+
+#+begin_src elisp :results none
+(add-hook! 'after-save-hook :local
+  (org-babel-tangle-file (buffer-file-name)))
+#+end_src
+
+* keybinds
+#+begin_src kdl :tangle config.kdl
+keybinds clear-defaults=true {
+#+end_src
+
+** =Ctrl Space= :: normal functions behind a leader key
+#+begin_src kdl :tangle config.kdl
+    locked {
+        bind "Ctrl Space" { SwitchToMode "normal"; }
+    }
+    shared_except "locked" "entersearch" "renametab" "renamepane" {
+        bind "esc" { SwitchToMode "locked"; }
+    }
+    shared_except "locked" {
+        bind "Ctrl g" { SwitchToMode "normal"; }
+        bind "Ctrl q" { Quit; }
+    }
+#+end_src
+
+#+begin_src kdl :tangle config.kdl
+    normal {
+        bind "." { SwitchToMode "move"; }
+        bind "c" { NewTab; SwitchToMode "locked"; }
+        bind "d" { Detach; }
+        bind "e" { TogglePaneEmbedOrFloating; SwitchToMode "locked"; }
+        bind "f" { TogglePaneEmbedOrFloating; SwitchToMode "locked"; }
+        bind "h" { MoveFocus "Left"; SwitchToMode "locked"; }
+        bind "H" { MovePane "Left"; SwitchToMode "locked"; }
+        bind "j" { MoveFocus "Down"; SwitchToMode "locked"; }
+        bind "J" { MovePane "down"; SwitchToMode "locked"; }
+        bind "k" { MoveFocus "up"; SwitchToMode "locked"; }
+        bind "K" { MovePane "up"; SwitchToMode "locked"; }
+        bind "l" { MoveFocus "right"; SwitchToMode "locked"; }
+        bind "L" { MovePane "right"; SwitchToMode "locked"; }
+        bind "n" { GoToNextTab; SwitchToMode "locked"; }
+        bind "p" { GoToPreviousTab; SwitchToMode "locked"; }
+        bind "r" { SwitchToMode "resize"; }
+        bind "R" { SwitchToMode "renamepane"; }
+        bind "v" { NewPane "right"; SwitchToMode "locked"; }
+        bind "s" { NewPane "down"; SwitchToMode "locked"; }
+        bind "S" {
+            LaunchOrFocusPlugin "session-manager" {
+                floating true
+                move_to_focused_tab true
+            }
+            SwitchToMode "locked"
+        }
+        bind "x" { CloseFocus; SwitchToMode "locked"; }
+        bind "z" { ToggleFocusFullscreen; SwitchToMode "locked"; }
+        bind "," { SwitchToMode "renametab"; }
+        bind "`" { ToggleTab; SwitchToMode "locked"; }
+        bind "Space" { SwitchToMode "scroll"; }
+        bind "1" { GoToTab 1; SwitchToMode "locked"; }
+        bind "2" { GoToTab 2; SwitchToMode "locked"; }
+        bind "3" { GoToTab 3; SwitchToMode "locked"; }
+        bind "4" { GoToTab 4; SwitchToMode "locked"; }
+        bind "5" { GoToTab 5; SwitchToMode "locked"; }
+        bind "6" { GoToTab 6; SwitchToMode "locked"; }
+        bind "7" { GoToTab 7; SwitchToMode "locked"; }
+        bind "8" { GoToTab 8; SwitchToMode "locked"; }
+        bind "9" { GoToTab 9; SwitchToMode "locked"; }
+    }
+#+end_src
+
+** =.= :: move (and resize)
+#+begin_src kdl :tangle config.kdl
+    move {
+        bind "left" { MoveFocus "left"; }
+        bind "h" { MoveFocus "left"; }
+        bind "shift left" { MovePane "left"; }
+        bind "H" { MovePane "left"; }
+        bind "Ctrl left" { Resize "Increase left"; }
+        bind "Ctrl h" { Resize "Increase left"; }
+        bind "Ctrl Shift left" { Resize "Decrease left"; }
+        bind "Ctrl H" { Resize "Decrease left"; }
+
+        bind "down" { MoveFocus "down"; }
+        bind "j" { MoveFocus "down"; }
+        bind "shift down" { MovePane "down"; }
+        bind "J" { MovePane "down"; }
+        bind "Ctrl right" { Resize "Increase right"; }
+        bind "Ctrl h" { Resize "Increase right"; }
+        bind "Ctrl Shift right" { Resize "Decrease right"; }
+        bind "Ctrl H" { Resize "Decrease right"; }
+
+        bind "up" { MoveFocus "up"; }
+        bind "k" { MoveFocus "up"; }
+        bind "K" { MovePane "up"; }
+        bind "shift up" { MovePane "up"; }
+        bind "Ctrl up" { Resize "Increase up"; }
+        bind "Ctrl h" { Resize "Increase up"; }
+        bind "Ctrl Shift up" { Resize "Decrease up"; }
+        bind "Ctrl H" { Resize "Decrease up"; }
+
+        bind "right" { MoveFocus "right"; }
+        bind "l" { MoveFocus "right"; }
+        bind "shift right" { MovePane "right"; }
+        bind "L" { MovePane "right"; }
+        bind "Ctrl right" { Resize "Increase right"; }
+        bind "Ctrl h" { Resize "Increase right"; }
+        bind "Ctrl Shift right" { Resize "Decrease right"; }
+        bind "Ctrl H" { Resize "Decrease right"; }
+
+        bind "n" { MovePane; }
+        bind "N" { MovePaneBackwards; }
+        bind "p" { MovePaneBackwards; }
+        bind "+" { Resize "Increase"; }
+        bind "-" { Resize "Decrease"; }
+    }
+#+end_src
+
+** =Ctrl r= :: resize
+#+begin_src kdl :tangle config.kdl
+    shared_except "locked" "resize" {
+        bind "Ctrl r" { SwitchToMode "resize"; }
+    }
+#+end_src
+
+#+begin_src kdl :tangle config.kdl
+    resize {
+        bind "left" { Resize "Increase left"; }
+        bind "down" { Resize "Increase down"; }
+        bind "up" { Resize "Increase up"; }
+        bind "right" { Resize "Increase right"; }
+        bind "+" { Resize "Increase"; }
+        bind "-" { Resize "Decrease"; }
+        bind "=" { Resize "Increase"; }
+        bind "H" { Resize "Decrease left"; }
+        bind "J" { Resize "Decrease down"; }
+        bind "K" { Resize "Decrease up"; }
+        bind "L" { Resize "Decrease right"; }
+        bind "h" { Resize "Increase left"; }
+        bind "j" { Resize "Increase down"; }
+        bind "k" { Resize "Increase up"; }
+        bind "l" { Resize "Increase right"; }
+        bind "Ctrl r" { SwitchToMode "normal"; }
+    }
+#+end_src
+
+** =Ctrl o= :: session
+#+begin_src kdl :tangle config.kdl
+    shared_except "session" "locked" {
+        bind "Ctrl o" { SwitchToMode "session"; }
+    }
+#+end_src
+
+#+begin_src kdl :tangle config.kdl
+    session {
+        bind "c" {
+            LaunchOrFocusPlugin "configuration" {
+                floating true
+                move_to_focused_tab true
+            }
+            SwitchToMode "normal"
+        }
+        bind "Ctrl o" { SwitchToMode "normal"; }
+        bind "p" {
+            LaunchOrFocusPlugin "plugin-manager" {
+                floating true
+                move_to_focused_tab true
+            }
+            SwitchToMode "normal"
+        }
+        bind "w" {
+            LaunchOrFocusPlugin "session-manager" {
+                floating true
+                move_to_focused_tab true
+            }
+            SwitchToMode "normal"
+        }
+    }
+#+end_src
+
+** =Space= or =Ctrl s= :: scroll and search
+#+begin_src kdl :tangle config.kdl
+    shared_except "scroll" "locked" {
+        bind "Ctrl s" { SwitchToMode "scroll"; }
+    }
+
+    shared_among "scroll" "search" {
+        bind "PageDown" { PageScrollDown; }
+        bind "PageUp" { PageScrollUp; }
+        bind "left" { PageScrollUp; }
+        bind "down" { ScrollDown; }
+        bind "up" { ScrollUp; }
+        bind "right" { PageScrollDown; }
+        bind "Ctrl b" { PageScrollUp; }
+        bind "Ctrl c" { ScrollToBottom; SwitchToMode "locked"; }
+        bind "d" { HalfPageScrollDown; }
+        bind "Ctrl f" { PageScrollDown; }
+        bind "h" { PageScrollUp; }
+        bind "j" { ScrollDown; }
+        bind "k" { ScrollUp; }
+        bind "l" { PageScrollDown; }
+        bind "u" { HalfPageScrollUp; }
+    }
+
+    scroll {
+        bind "e" { EditScrollback; SwitchToMode "locked"; }
+        bind "s" { SwitchToMode "entersearch"; SearchInput 0; }
+    }
+
+    entersearch {
+        bind "Ctrl c" { SwitchToMode "scroll"; }
+        bind "esc" { SwitchToMode "scroll"; }
+        bind "enter" { SwitchToMode "search"; }
+    }
+
+    search {
+        bind "c" { SearchToggleOption "CaseSensitivity"; }
+        bind "n" { Search "down"; }
+        bind "o" { SearchToggleOption "WholeWord"; }
+        bind "p" { Search "up"; }
+        bind "w" { SearchToggleOption "Wrap"; }
+    }
+#+end_src
+
+** =Ctrl t= :: tab
+#+begin_src kdl :tangle config.kdl
+    shared_except "locked" "tab" {
+        bind "Ctrl t" { SwitchToMode "tab"; }
+    }
+#+end_src
+
+#+begin_src kdl :tangle config.kdl
+    tab {
+        bind "left" { GoToPreviousTab; }
+        bind "down" { GoToNextTab; }
+        bind "up" { GoToPreviousTab; }
+        bind "right" { GoToNextTab; }
+        bind "1" { GoToTab 1; SwitchToMode "locked"; }
+        bind "2" { GoToTab 2; SwitchToMode "locked"; }
+        bind "3" { GoToTab 3; SwitchToMode "locked"; }
+        bind "4" { GoToTab 4; SwitchToMode "locked"; }
+        bind "5" { GoToTab 5; SwitchToMode "locked"; }
+        bind "6" { GoToTab 6; SwitchToMode "locked"; }
+        bind "7" { GoToTab 7; SwitchToMode "locked"; }
+        bind "8" { GoToTab 8; SwitchToMode "locked"; }
+        bind "9" { GoToTab 9; SwitchToMode "locked"; }
+        bind "[" { BreakPaneLeft; SwitchToMode "locked"; }
+        bind "]" { BreakPaneRight; SwitchToMode "locked"; }
+        bind "b" { BreakPane; SwitchToMode "locked"; }
+        bind "h" { GoToPreviousTab; }
+        bind "j" { GoToNextTab; }
+        bind "k" { GoToPreviousTab; }
+        bind "l" { GoToNextTab; }
+        bind "n" { NewTab; SwitchToMode "locked"; }
+        bind "r" { SwitchToMode "renametab"; TabNameInput 0; }
+        bind "s" { ToggleActiveSyncTab; SwitchToMode "locked"; }
+        bind "Ctrl t" { SwitchToMode "normal"; }
+        bind "x" { CloseTab; SwitchToMode "locked"; }
+        bind "tab" { ToggleTab; }
+    }
+#+end_src
+
+** =Ctrl b= :: tmux
+#+begin_src kdl :tangle config.kdl
+    shared_except "scroll" "search" "tmux" "locked" {
+        bind "Ctrl b" { SwitchToMode "tmux"; }
+    }
+
+    shared_among "session" "tmux" {
+        bind "d" { Detach; }
+    }
+
+    tmux {
+        bind "left" { MoveFocus "left"; SwitchToMode "locked"; }
+        bind "down" { MoveFocus "down"; SwitchToMode "locked"; }
+        bind "up" { MoveFocus "up"; SwitchToMode "locked"; }
+        bind "right" { MoveFocus "right"; SwitchToMode "locked"; }
+        bind "space" { NextSwapLayout; }
+        bind "\"" { NewPane "down"; SwitchToMode "locked"; }
+        bind "%" { NewPane "right"; SwitchToMode "locked"; }
+        bind "," { SwitchToMode "renametab"; }
+        bind "[" { SwitchToMode "scroll"; }
+        bind "Ctrl b" { Write 2; SwitchToMode "locked"; }
+        bind "c" { NewTab; SwitchToMode "locked"; }
+        bind "h" { MoveFocus "left"; SwitchToMode "locked"; }
+        bind "j" { MoveFocus "down"; SwitchToMode "locked"; }
+        bind "k" { MoveFocus "up"; SwitchToMode "locked"; }
+        bind "l" { MoveFocus "right"; SwitchToMode "locked"; }
+        bind "n" { GoToNextTab; SwitchToMode "locked"; }
+        bind "o" { FocusNextPane; }
+        bind "p" { GoToPreviousTab; SwitchToMode "locked"; }
+        bind "z" { ToggleFocusFullscreen; SwitchToMode "locked"; }
+    }
+}
+#+end_src
+
+** =Ctrl p= :: pane
+#+begin_src kdl :tangle config.kdl
+    shared_except "locked" "pane" {
+        bind "Ctrl p" { SwitchToMode "pane"; }
+    }
+    shared_except "normal" "locked" "entersearch" {
+        bind "enter" { SwitchToMode "normal"; }
+    }
+    shared_among "pane" "tmux" {
+        bind "x" { CloseFocus; SwitchToMode "locked"; }
+    }
+#+end_src
+
+
+#+begin_src kdl :tangle config.kdl
+    pane {
+        bind "left" { MoveFocus "left"; }
+        bind "down" { MoveFocus "down"; }
+        bind "up" { MoveFocus "up"; }
+        bind "right" { MoveFocus "right"; }
+        bind "c" { SwitchToMode "renamepane"; PaneNameInput 0; }
+        bind "d" { NewPane "down"; }
+        bind "e" { TogglePaneEmbedOrFloating; }
+        bind "f" { TogglePaneEmbedOrFloating; }
+        bind "F" { TogglePaneFrames; }
+        bind "h" { MoveFocus "left"; }
+        bind "H" { MovePane "left"; }
+        bind "j" { MoveFocus "down"; }
+        bind "J" { MovePane "down"; }
+        bind "k" { MoveFocus "up"; }
+        bind "K" { MovePane "up"; }
+        bind "l" { MoveFocus "right"; }
+        bind "L" { MovePane "right"; }
+        bind "v" { NewPane; }
+        bind "s" { NewPane "down"; }
+        bind "p" { SwitchFocus; }
+        bind "Ctrl p" { SwitchToMode "locked"; }
+        bind "r" { NewPane "right"; }
+        bind "w" { ToggleFloatingPanes; SwitchToMode "locked"; }
+        bind "x" { CloseFocus; }
+        bind "z" { ToggleFocusFullscreen; }
+    }
+#+end_src
+
+** renaming things
+#+begin_src kdl :tangle config.kdl
+    shared_among "renametab" "renamepane" {
+        bind "Ctrl c" { SwitchToMode "locked"; }
+    }
+    renametab {
+        bind "esc" { UndoRenameTab; SwitchToMode "tab"; }
+    }
+    renamepane {
+        bind "esc" { UndoRenamePane; SwitchToMode "pane"; }
+    }
+#+end_src
+
+* plugins
+Plugin aliases - can be used to change the implementation of Zellij
+changing these requires a restart to take effect
+#+begin_src kdl :tangle config.kdl
+plugins {
+    compact-bar location="zellij:compact-bar"
+    configuration location="zellij:configuration"
+    filepicker location="zellij:strider" {
+        cwd "/"
+    }
+    plugin-manager location="zellij:plugin-manager"
+    session-manager location="zellij:session-manager"
+    status-bar location="zellij:status-bar"
+    strider location="zellij:strider"
+    tab-bar location="zellij:tab-bar"
+    welcome-screen location="zellij:session-manager" {
+        welcome_screen true
+    }
+}
+#+end_src
+
+Plugins to load in the background when a new session starts
+eg. "my-plugin-alias"
+eg. "file:/path/to/my-plugin.wasm"
+eg. "https://example.com/my-plugin.wasm"
+#+begin_src kdl :tangle config.kdl
+load_plugins {
+    compact-bar
+    session-manager
+    configuration
+    welcome
+}
+#+end_src
+
+* misc settings
+** theme
+Choose the theme that is specified in the themes section.
+Default: default
+#+begin_src :tangle config.kdl
+theme "vesper"
+#+end_src
+
+** Enable automatic copying (and clearing) of selection when releasing mouse
+Default: true
+#+begin_src :tangle config.kdl
+copy_on_select true
+#+end_src
+
+* untangled, commented-out config options for reference
+** Use a simplified UI without special fonts (arrow glyphs)
+Options:
+- true
+- false (Default)
+
+#+begin_src :tangle no
+simplified_ui true
+#+end_src
+
+** Choose the base input mode of zellij.
+Default: normal
+#+begin_src :tangle no
+default_mode "locked"
+#+end_src
+
+** Choose the path to override cwd that zellij will use for opening new panes
+
+#+begin_src :tangle no
+default_cwd "/tmp"
+#+end_src
+
+** The name of the default layout to load on startup
+Default: "default"
+
+#+begin_src :tangle no
+default_layout "compact"
+#+end_src
+
+** The folder in which Zellij will look for layouts
+(Requires restart)
+
+#+begin_src :tangle no
+layout_dir "/tmp"
+#+end_src
+
+** The folder in which Zellij will look for themes
+(Requires restart)
+
+#+begin_src :tangle no
+theme_dir "/tmp"
+#+end_src
+
+** Toggle enabling the mouse mode.
+On certain configurations, or terminals this could
+potentially interfere with copying text.
+Options:
+- true (default)
+- false
+#+begin_src :tangle no
+mouse_mode false
+#+end_src
+
+** Toggle having pane frames around the panes
+Options:
+- true (default, enabled)
+- false
+#+begin_src :tangle no
+pane_frames false
+#+end_src
+
+** Mirror shared sessions
+When attaching to an existing session with other users,
+should the session be mirrored (true)
+or should each user have their own cursor (false)
+(Requires restart)
+Default: false
+#+begin_src :tangle no
+mirror_session true
+#+end_src
+
+** Configure the scroll back buffer size
+This is the number of lines zellij stores for each pane in the scroll back
+buffer. Excess number of lines are discarded in a FIFO fashion.
+(Requires restart)
+Valid values: positive integers
+Default value: 10000
+#+begin_src :tangle no
+scroll_buffer_size 10000
+#+end_src
+
+** Provide a command to execute when copying text.
+The text will be piped to the stdin of the program to perform the copy. This can be used
+with terminal emulators which do not support the OSC 52 ANSI control sequence that will be
+used by default if this option is not set.
+Examples:
+#+begin_src :tangle no
+copy_command "xclip -selection clipboard" // x11
+copy_command "wl-copy"                    // wayland
+copy_command "pbcopy"                     // osx
+
+copy_command "pbcopy"
+#+end_src
+
+** Choose the destination for copied text
+Allows using the primary selection buffer (on x11/wayland) instead of the system clipboard.
+Does not apply when using copy_command.
+Options:
+  - system (default)
+  - primary
+#+begin_src :tangle no
+copy_clipboard "primary"
+#+end_src
+
+** Path to the default editor to use to edit pane scrollbuffer
+Default: $EDITOR or $VISUAL
+#+begin_src :tangle no
+scrollback_editor "/usr/bin/vim"
+#+end_src
+
+** A fixed name to always give the Zellij session.
+Consider also setting `attach_to_session true,`
+otherwise this will error if such a session exists.
+Default: <RANDOM>
+#+begin_src :tangle no
+session_name "My singleton session"
+#+end_src
+
+** When `session_name` is provided, attaches to that session
+if it is already running or creates it otherwise.
+Default: false
+#+begin_src :tangle no
+attach_to_session true
+#+end_src
+
+** Toggle between having Zellij lay out panes according to a predefined set of layouts whenever possible
+Options:
+  - true (default)
+  - false
+#+begin_src :tangle no
+auto_layout false
+#+end_src
+
+** Whether sessions should be serialized to the cache folder (including their tabs/panes, cwds and running commands) so that they can later be resurrected
+Options:
+  - true (default)
+  - false
+#+begin_src :tangle no
+session_serialization false
+#+end_src
+
+** Whether pane viewports are serialized along with the session, default is false
+Options:
+  - true
+  - false (default)
+#+begin_src :tangle no
+serialize_pane_viewport false
+#+end_src
+
+** Scrollback lines to serialize along with the pane viewport when serializing sessions
+0 defaults to the scrollback size. If this number is higher than the scrollback size, it
+will also default to the scrollback size. This does nothing if `serialize_pane_viewport`
+is not true.
+#+begin_src :tangle no
+scrollback_lines_to_serialize 10000
+#+end_src
+
+** Enable or disable the rendering of styled and colored underlines (undercurl).
+May need to be disabled for certain unsupported terminals
+(Requires restart)
+Default: true
+#+begin_src :tangle no
+styled_underlines false
+#+end_src
+
+** How often in seconds sessions are serialized
+#+begin_src :tangle no
+serialization_interval 10000
+#+end_src
+
+** Enable or disable writing of session metadata to disk
+If disabled, other sessions might not know metadata info on this session.
+(Requires restart)
+Default: false
+#+begin_src :tangle no
+disable_session_metadata false
+#+end_src
+
+** Enable or disable support for the enhanced Kitty Keyboard Protocol (the host terminal must also support it)
+(Requires restart)
+Default: true (if the host terminal supports it)
+#+begin_src :tangle no
+support_kitty_keyboard_protocol true
+#+end_src
