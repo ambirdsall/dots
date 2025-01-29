@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# TODO add {--,}help arg handling and usage
+# or don't, I mean this is a *wicked* trivial script
+
+echo $PATH | tr : '\n'
