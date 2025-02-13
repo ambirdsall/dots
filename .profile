@@ -33,3 +33,7 @@ if command -v emacs > /dev/null; then
 fi
 
 export MOZ_ENABLE_WAYLAND=1
+
+if [ -f ~/.profile.local ]; then
+    source ~/.profile.local
+fi
