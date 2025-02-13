@@ -71,3 +71,21 @@ doom help +org tangle
 
 *** TODO =dots tangle=? =dots tangle <file>?=
 *** TODO =make tangle= maybe should exist too but only by shelling out to =dots=.
+* computer problems I have known
+** [[https://everymac.com/ultimate-mac-lookup/?search_keywords=MacBookPro12,1][macbook pro 12,1]] + xfce :: fixing scroll directions
+I had to add this to =/usr/share/X11/xorg.conf.d/40-libinput.conf=, with separate edits needed for the ~Section~
+entries for =pointer= and =touchpad=, e.g.:
+#+begin_src conf
+Section "InputClass"
+        Identifier "libinput touchpad catchall"
+        MatchIsPointer "on"
+        MatchDevicePath "/dev/input/event*"
+        Driver "libinput"
+        # 👋👇 yes hello this is new
+        Option "NaturalScrolling" "true"
+#+end_src
+
+After doing so, I also had to set the scrolling direction inside ~xfce4-settings-manager~ >
+=Mouse and Touchpad= separately for each mouse/touchpad device; then log out and back into
+XFCE. Only /then/ could I override the default scrolling direction (which was the wrong
+one).
