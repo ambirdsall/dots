@@ -1,4 +1,5 @@
 #+TITLE: Alex Birdsall's doom emacs config
+#+startup: overview
 #+PROPERTY: header-args :noweb yes
 
 This is my doom config. It's a literate config, so the code snippets are living documentation; they
