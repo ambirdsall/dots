@@ -2,18 +2,6 @@
 
 * linux
 ** distro-specific setup
-*** arch
-**** start by installing endeavourOS sway edition rather than vanilla arch
-This isn't a must-do, just a convenience. EOS has nice defaults, many of which I have
-adopted into these dotfiles, and is a much simpler installation process.
-
-**** TODO tweak settings in =/etc/pacman.conf=
-parallelism, etc
-
-**** run ~~/sbin/arch-install~
-
-**** don't forget ~systemctl reboot~
-
 *** fedora
 **** tweak dnf settings
 Add the following lines to =/etc/dnf/dnf.conf=:
@@ -54,6 +42,18 @@ sudo systemctl enable docker
 # verify:
 docker run hello-world
 #+end_src
+
+*** arch
+**** start by installing endeavourOS sway edition rather than vanilla arch
+This isn't a must-do, just a convenience. EOS has nice defaults, many of which I have
+adopted into these dotfiles, and is a much simpler installation process.
+
+**** TODO tweak settings in =/etc/pacman.conf=
+parallelism, etc
+
+**** run ~~/sbin/arch-install~
+
+**** don't forget ~systemctl reboot~
 
 * MacOS
 ** Install homebrew
