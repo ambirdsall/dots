@@ -3,15 +3,15 @@
 # Edit the files
 alias zrc="emv ~/.zshrc"
 alias zrl="emv ~/.zshrc.local.zsh"
+alias el="emv ~/.zshrc.local.zsh"
 alias rc="source ~/.zshrc"
 alias RC="VERBOSE_ZSH_CONFIG=t source ~/.zshrc"
 alias et="emv ~/.tmux.conf"
-ea () {
+ez () {
     local alias_file=$(find ~/.config/zsh/ -name '*.zsh' | fzf)
     [ -n "$alias_file" ] && emv $alias_file
 }
-alias ez=ea
-alias el="emv ~/.local-aliases.zsh"
+alias ea=ez
 
 # Reload the files
 sdf () {
