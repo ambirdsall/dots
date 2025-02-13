@@ -1895,10 +1895,11 @@ separator is deep, deep muscle memory. Why fight it?
   '("M" "default branch" amb/magit-checkout-default-branch))
 #+end_src
 
-** dotfiles
+** working with dotfiles
 I manage my dotfiles with a bare git repository; this takes a little extra effort to set
 up properly. With a hat tip to [[https://github.com/hylophile/.files/blob/d2d41871bd6a74e4b55fadf44d46613d0bcacb53/.config/doom/config.org#dotfiles][hylo]], from whom much of this is adapted.
 
+*** ~magit-status~
 The song-and-dance is a two-step:
 1) open ~magit-status~ for ~~/~ if no orthodox git repo can be found
 2) advise ~magit-process-environment~ to set up the correct, unmatched values for ~GIT_WORK_TREE~ and ~GIT_DIR~ if and only if we're getting the status for the ~~/~ repo.
@@ -1926,11 +1927,7 @@ The song-and-dance is a two-step:
 
 (advice-add 'magit-process-environment
             :filter-return #'amb/magit-process-environment)
-#+end_src
 
-This works for almost everything, but there's not yet a good way to stage new files in the
-dotfiles repo. So:
-#+begin_src elisp
 (defun amb/magit-stage-file ()
   (interactive)
   (if (magit-gitdir)
@@ -1943,11 +1940,13 @@ dotfiles repo. So:
 (map! :after magit :leader "g S" #'amb/magit-stage-file)
 #+end_src
 
-I also have to hide my dotfiles away from projectile to avoid caching /way/ too many files
-in ~~/~ (until magit can handle separate work trees) properly: Doom recognizes my home
-directory as a git dir, but it doesn't find any of its config whatsoever, which can cause
-projectile to act silly when it can't find an intermediate project root (either because of
-error or because I used the wrong muscle memory).
+*** ~projectile-find-file~
+Without this, running projectile commands (on purpose or by accident) triggers an insane
+cache-building odyssey in ~~/~; the fix is needed until magit can handle separate work trees
+properly.
+
+Doom recognizes my home directory as a git dir, but it doesn't find any of its config
+whatsoever, which can cause projectile to act silly.
 
 #+begin_src elisp :tangle no
 (after! projectile (setq projectile-project-root-files-bottom-up (remove ".git"
@@ -1961,6 +1960,9 @@ projectile-project-root-files-bottom-up)))
 
 (map! :leader "SPC" #'amb/projectile-find-file)
 #+end_src
+
+**** TODO filter candidate files to ~dots ls-files~
+
 ** nice git conflic resolution hydra
 Gold standard, yes, but not be all and end all. This defines a nice hydra for working with
 files containing git conflicts.
