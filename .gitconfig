@@ -25,3 +25,5 @@
 	rebase = true
 [advice]
 	skippedCherryPicks = false
+[include]
+	path = "~/.gitconfig.local"
