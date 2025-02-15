@@ -1,11 +1,7 @@
 bat
 emacs
+eza
 git
-fira-code-fonts
-iosevka-slab-fonts
-nerd-fonts
-overpass-fonts
-google-noto-sans-fonts
 kitty
 neovim
 wofi
@@ -13,7 +9,5 @@ zsh
 diff-so-fancy
 brightnessctl
 fzf
-gum
 nodejs-bash-language-server
 shfmt
-wezterm

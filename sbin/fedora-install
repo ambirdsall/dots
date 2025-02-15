@@ -1,37 +1,80 @@
 #!/bin/bash
 
 enable_copr_repos () {
-  for repo in $(cat ~/lib/copr-repos); do sudo dnf copr enable $repo; done
+  local state_file="$HOME/.local/state/dots-copr-repos.last-synced"
+  local busted_cache
+  if [ ! -f "$state_file" ]; then
+    busted_cache=true
+  elif [ "$(date -r ~/lib/copr-repos +%s)" -gt "$(date -f "$state_file" +%s)" ]; then
+    busted_cache=true
+  fi
+
+  if [ -n "$busted_cache" ]; then
+    while read -r repo; do
+      sudo dnf -y copr enable "$repo"
+    done < ~/lib/copr-repos
+    date > "$state_file"
+  fi
 }
 
 enable_third_party_rpm_repos () {
-  local state_file
-  state_file="$1"
-  sh ~/lib/rpm-repos.sh
-  date > $state_file
+  local state_file="$HOME/.local/state/dots-rpm-repos.last-synced"
+  local busted_cache
+  if [ ! -f "$state_file" ]; then
+    busted_cache=true
+  elif [ "$(date -r ~/lib/rpm-repos.sh +%s)" -gt "$(date -f "$state_file" +%s)" ]; then
+    busted_cache=true
+  fi
+
+  if [ -n "$busted_cache" ]; then
+    sh ~/lib/rpm-repos.sh
+    date > "$state_file"
+  fi
 }
 
 main () {
-  local rpm_repos_sync_state_file="$HOME/.local/state/dots-rpm-repos.last-synced"
   local args=("$@")
+  local should_install_copr=true
+  local should_install_third_party_rpms=true
+  local deps=()
+
+  # Add unconditional deps to array.
+  while read -r dep; do
+    deps+=("$dep")
+  done < ~/lib/fedora-deps
 
   for ((i=0; i<"${#args[@]}"; i++)); do
     local arg="${args[i]}"
 
-    case $1 in
-      --with-copr) enable_copr_repos ;;
-      --with-rpm-repos) enable_third_party_rpm_repos $rpm_repos_sync_state_file ;;
-      --all) enable_copr_repos; enable_third_party_rpm_repos $rpm_repos_sync_state_file ;;
+    case $arg in
+      --without-copr|--no-coprs|--no-copr)
+        unset should_install_copr
+        ;;
+      --without-rpm-repos|--no-rpm-repos|--no-rpms|--no-rpm)
+        unset should_install_third_party_rpms
+        ;;
     esac
   done
 
-  if [ ! -f $rpm_repos_sync_state_file ]; then
-    enable_third_party_rpm_repos $rpm_repos_sync_state_file
-  elif [ `date -r ~/lib/rpm-repos.sh +%s` -gt `date -f $rpm_repos_sync_state_file +%s` ]; then
-    enable_third_party_rpm_repos $rpm_repos_sync_state_file
+  # Add conditional deps to array. Maybe.
+  if [ -n "$should_install_copr" ]; then
+    enable_copr_repos
+
+    while read -r dep; do
+      deps+=("$dep")
+    done < ~/lib/copr-deps
   fi
 
-  sudo dnf install $(cat ~/lib/fedora-deps)
+  if [ -n "$should_install_third_party_rpms" ]; then
+    enable_third_party_rpm_repos
+
+    while read -r dep; do
+      deps+=("$dep")
+    done < ~/lib/rpm-deps
+  fi
+
+  # hold onto your butts
+  sudo dnf install "${deps[@]}"
 }
 
 main "$@"
