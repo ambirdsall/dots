@@ -4,18 +4,22 @@
 # this is an incomplete list; expect to revisit moderately often to add things like:
 # - pagers (and commands that frequently open them)
 # - aliases for editing key files
+# - interactive TUI programs and REPLs
 cmdignore=(
     bat
+    devcontainer
     dots
     e
     ea
     el
     e.
     emacs
+    fg
     g
     git
     htop
     less
+    magit
     ncdu
     nvim
     tmux
