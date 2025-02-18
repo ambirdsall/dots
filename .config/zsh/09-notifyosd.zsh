@@ -27,6 +27,7 @@ cmdignore=(
     v
     vim
     vimserv
+    z
     zellij
     zrc
 )

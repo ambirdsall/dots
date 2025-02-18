@@ -17,6 +17,7 @@ list_multiplexer_sessions () {
         fi
     fi
 }
+alias zls='zellij list-sessions'
 
 t () {
     if ! test -n "$(ps -e | grep -q tmux)"; then

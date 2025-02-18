@@ -1,0 +1,48 @@
+#!/bin/bash
+
+sessions=$(zellij list-sessions)
+
+case $# in
+  # if no args are given, interactively pick a (or create a new) session
+  0)
+    if [ -z "$sessions" ]; then
+      echo "No active Zellij sessions found."
+      if gum confirm "Would you like to create a new session?"; then
+        session_name=$(gum input --placeholder "Enter new session name")
+        if [ -n "$session_name" ]; then
+          exec zellij -s "$session_name"
+        else
+          exec zellij
+        fi
+      else
+        # don't do anything, but, like, be chill about it
+        exit 0
+      fi
+    fi
+    
+    # Display sessions in a styled box
+    echo "$sessions" | gum style --border normal --margin "1" --padding "1"
+    
+    session_count=$(echo "$sessions" | wc -l)
+    # along with all the options we want to display, `gum filter`` adds 1 line at the top
+    # for a prompt and another 2 on the bottom for instructions
+    height=$((session_count + 3))
+    
+    selected=$(echo "$sessions" | awk '{print $1}' | gum filter --placeholder "Select a session to attach" --height "$height")
+    
+    if [ -n "$selected" ]; then
+      exec zellij attach "$selected"
+    fi
+    ;;
+
+  # zellij's cli is based on subcommands which all require their own additional args; so
+  # we can be cute and special-case one single arg as a session name/prefix to attach to
+  1)
+    # TODO be even cuter: `zellij attach` if $1 matches a session name/prefix, `zellij -s` if not
+    zellij attach "$1"
+    ;;
+
+  # otherwise, we just pass the args to zellij verbatim
+  *) exec zellij "$@"
+    ;;
+esac
