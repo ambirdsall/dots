@@ -22,6 +22,7 @@ cmdignore=(
     magit
     ncdu
     nvim
+    ssh
     tmux
     top
     v
