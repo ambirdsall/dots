@@ -496,7 +496,7 @@ installation locations removed) reference version:
          "/Library/Apple/usr/share/man"))
 #+end_src
 
-** better terminal keycode handling
+** I didn't shell out, I bought in
 Leaving the untangled manual config in place for a bit so things work with my computers
 which aren't running a super up-to-date version of doom.
 
@@ -508,12 +508,14 @@ Relatedly, leaving this in =packages.el= so I can just dump the activation code 
 The naive config +(for why it's disabled see immediately below)+ it is now re-enabled but tbh I'm not sure if it will actually fix my minor grievances:
 #+begin_src elisp
 (use-package! kkp
+  :if (not (display-graphic-p))
   :config
   (global-kkp-mode +1)
   (define-key! local-function-key-map
     [M-return] (kbd "M-RET")
     [M-tab] (kbd "M-TAB")
     [M-backspace] (kbd "M-DEL")
+    (kbd "M-<backspace>") (kbd "M-DEL")
     [M-delete] (kbd "M-DEL")))
 #+end_src
 
@@ -524,6 +526,35 @@ presumably somehow is better optimized for doom's loading than the above.
   (defun +tty-init-kkp-h ()
     (global-kkp-mode +1)
     (kkp-enable-in-terminal)))
+#+end_src
+
+*** better terminal keycode handling with =kkp=
+
+*** use OSC52 for clipboard integration to avoid issues inside multiplexers
+#+begin_src elisp :tangle packages.el
+(package! clipetty)
+#+end_src
+
+#+begin_src elisp
+(use-package! clipetty
+  :if (not (display-graphic-p))
+  :hook (after-init . global-clipetty-mode))
+#+end_src
+** don't leave trash in other people's servers
+By default, TRAMP will happily litter remote servers/devcontainers/etc with lockfiles any
+time there are unsaved changes. 'Tis nobler to brave the slings and arrows of outrageous
+networks.
+#+begin_src elisp
+(setq remote-file-name-inhibit-locks t)
+#+end_src
+
+TRAMP also starts with a pretty bare-bones, generic executable path, which does not play
+well with even slightly sandboxed tooling--which means the following config is needed to
+connect with remote lsp servers if they were installed with one of quite a few
+language-specific package managers:
+#+begin_src elisp
+(after! tramp
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 #+end_src
 * text editing per se
 ** text manipulation utilities [0/1]
@@ -583,6 +614,17 @@ writing the english language!
 #+end_src
 
 ** an opinionated mix of the vim and emacs keybinding schemes [0/3]
+This largely relies on the following setting. In practice, this has only worked for me when it's set before loading doom, so it must be tangled into the start of =init.el=, rather than the default =config.el=:
+
+#+begin_src elisp :tangle no :noweb-ref init-preconfig
+(setq evil-disable-insert-state-bindings t)
+#+end_src
+
+With this set, the rest is mainly just tweaking which modes and keys are evilified;
+=evil-collection= et al do too much boilerplate legwork to not install, but occasionally
+clobber insert mode's emacs bindings in ways that compromise basic ergonomics. Got to make
+sure this yak's hair looks cute after all.
+
 *** TODO make the long-threatened PR adding a ~+hybrid~ flag to the evil module
 This was my first draft, which I think... mostly worked?
 #+begin_src diff :tangle no
@@ -1498,6 +1540,21 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
   :after lsp)
 #+end_src
 ** there are more languages under the sun than ~:lang~ can speak [0/3]
+*** ruby
+#+begin_src elisp
+(after! rbenv
+  (global-rbenv-mode +1))
+
+(after! lsp-mode
+  (add-to-list 'lsp-language-id-configuration '(ruby-mode . "ruby"))
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection (lambda () '("bundle" "exec" "standardrb" "--lsp")))
+                    :major-modes '(ruby-mode)
+                    :server-id 'standardrb-lsp)))
+
+(after! apheleia
+  (add-to-list 'apheleia-mode-alist '(ruby-mode . ruby-standard)))
+#+end_src
 *** python
 **** debugger support, at least in theory
 #+begin_src elisp
@@ -1777,7 +1834,6 @@ tree-sitter version requires a semi-manual setup step to install all the languag
 #+begin_src elisp
 (use-package! gptel)
 #+end_src
-
 * {ma,}git
 ** the skeleton ~(after! magit ...)~ form specific config can be nowebbed into
 :PROPERTIES:
@@ -1984,8 +2040,9 @@ If a region is active, link to the highlighted line(s)."
 
 * info-mode, or: RTFM
 #+begin_src elisp
-(add-to-list '+evil-collection-disabled-list 'info)
-(set-evil-initial-state! 'info-mode 'emacs)
+(after! (evil evil-collection)
+  (add-to-list '+evil-collection-disabled-list 'info)
+  (set-evil-initial-state! 'info-mode 'emacs))
 
 (map! :map 'info-mode-map
       "j" #'next-line
@@ -2001,11 +2058,77 @@ Notes must be at hand to be helpful, ideally on any of several computers:
 #+end_src
 
 ** make org-mode act nicer...
+*** default overrides and TODOs
 #+begin_src elisp
 (setq! org-log-into-drawer t
        org-hierarchical-todo-statistics nil
        org-refile-use-outline-path 'full-file-path
        org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
+#+end_src
+
+*** graphviz 📉_(ツ)_📈
+#+begin_src elisp :tangle packages.el
+(package! graphviz-dot-mode)
+#+end_src
+
+#+begin_src elisp
+(use-package! graphviz-dot-mode
+  :after org)
+#+end_src
+*** keybinding fixes
+I wonder if this is a kkp/CSIu thing? i.e. org expects to receive ~(kbd "TAB")~ but instead gets ~(kbd "<tab>")~.
+
+I also wonder if =kkp.el= or Henrik's adjustments atop it fix things for me?
+#+begin_src elisp
+(after! org
+  (map! :after org
+        :map 'org-mode-map
+        "<tab>" #'org-cycle
+        :nvie "C-M-S-RET" #'org-insert-todo-subheading
+        :nvie "C-M-S-<return>" #'org-insert-todo-subheading
+        :nvie "M-<return>" #'org-insert-heading)
+
+  (defun my-org-mode-backtick-replacement ()
+    "Replace a single backtick with = and triple backticks with a code block template."
+    (interactive)
+    (let ((context (buffer-substring-no-properties (max (point-min) (- (point) 2)) (point))))
+      (if (string= context "==")
+          (progn
+            (delete-char -2)
+            (insert "#+begin_src \n#+end_src\n")
+            (forward-line -1)
+            (move-beginning-of-line nil)
+            (backward-char))
+        (insert "="))))
+
+  (defun my-org-mode-key-remap ()
+    "Remap ` to custom function in org-mode."
+    (local-set-key (kbd "`") 'my-org-mode-backtick-replacement))
+
+  (add-hook 'org-mode-hook 'my-org-mode-key-remap))
+
+#+end_src
+
+*** export
+#+begin_src elisp :tangle packages.el
+(package! ox-gfm)
+#+end_src
+
+#+begin_src elisp
+(use-package! ox-gfm
+  :after org)
+
+#+end_src
+
+*** tangle
+**** no noweb? no: noweb.
+This snippet is taken directly from the org-mode info manual.
+#+begin_src elisp
+(after! org
+  (setq! org-babel-default-header-args
+        (cons '(:noweb . "yes")
+              (assq-delete-all :noweb org-babel-default-header-args))))
+
 #+end_src
 
 ** ...look nicer...
@@ -2081,40 +2204,6 @@ because ~setq~ is a macro) and everything went to heck.
 
 #+end_src
 
-** keybinding fixes
-I wonder if this is a kkp/CSIu thing? i.e. org expects to receive ~(kbd "TAB")~ but instead gets ~(kbd "<tab>")~.
-
-I also wonder if =kkp.el= or Henrik's adjustments atop it fix things for me?
-#+begin_src elisp
-(after! org
-  (map! :after org
-        :map 'org-mode-map
-        "<tab>" #'org-cycle
-        :nvie "C-M-S-RET" #'org-insert-todo-subheading
-        :nvie "C-M-S-<return>" #'org-insert-todo-subheading
-        :nvie "M-<return>" #'org-insert-heading)
-
-  (defun my-org-mode-backtick-replacement ()
-    "Replace a single backtick with = and triple backticks with a code block template."
-    (interactive)
-    (let ((context (buffer-substring-no-properties (max (point-min) (- (point) 2)) (point))))
-      (if (string= context "==")
-          (progn
-            (delete-char -2)
-            (insert "#+begin_src \n#+end_src\n")
-            (forward-line -1)
-            (move-beginning-of-line nil)
-            (backward-char))
-        (insert "="))))
-
-  (defun my-org-mode-key-remap ()
-    "Remap ` to custom function in org-mode."
-    (local-set-key (kbd "`") 'my-org-mode-backtick-replacement))
-
-  (add-hook 'org-mode-hook 'my-org-mode-key-remap))
-
-#+end_src
-
 ** outlines ✨ everywhere ✨with outshine
 #+begin_src elisp :tangle packages.el
 (package! outshine
@@ -2127,38 +2216,6 @@ I also wonder if =kkp.el= or Henrik's adjustments atop it fix things for me?
   :config
   (add-hook 'prog-mode-hook 'outshine-mode))
 #+end_src
-** graphviz 📉_(ツ)_📈
-#+begin_src elisp :tangle packages.el
-(package! graphviz-dot-mode)
-#+end_src
-
-#+begin_src elisp
-(use-package! graphviz-dot-mode
-  :after org)
-#+end_src
-** export backends
-#+begin_src elisp :tangle packages.el
-(package! ox-gfm)
-#+end_src
-
-#+begin_src elisp
-;; TODO: figure out doom's org exporter API
-;; (after! org
-;;   '(require 'ox-gfm nil t))
-(use-package! ox-gfm
-  :after org)
-
-#+end_src
-
-** no noweb? no: noweb.
-This snippet is taken directly from the org-mode info manual.
-#+begin_src elisp
-(setq org-babel-default-header-args
-      (cons '(:noweb . "yes")
-            (assq-delete-all :noweb org-babel-default-header-args)))
-
-#+end_src
-
 * emacs is so great, why have just one?
 #+begin_src elisp :tangle profiles.el
 (
@@ -2383,6 +2440,12 @@ it or you should be.
 ;; commentary: what the fuck
 
 #+end_src
+
+*** init.el
+#+begin_src elisp :tangle no :noweb-ref init-preamble
+;;; init.el -*- lexical-binding: t; -*-
+#+end_src
+
 ** The secrets I keep with myself, or: praise the Lord and pass the =.gitignore=
 In general, I would like my config to travel with me from computer to computer: this
 streamlines maintaining old but still functioning laptops, work-provided computers, etc.

@@ -73,18 +73,29 @@ the active region will be used."
        ns-function-modifier 'super)
 
 (use-package! kkp
+  :if (not (display-graphic-p))
   :config
   (global-kkp-mode +1)
   (define-key! local-function-key-map
     [M-return] (kbd "M-RET")
     [M-tab] (kbd "M-TAB")
     [M-backspace] (kbd "M-DEL")
+    (kbd "M-<backspace>") (kbd "M-DEL")
     [M-delete] (kbd "M-DEL")))
 
 (add-hook! 'tty-setup-hook :depth -90
   (defun +tty-init-kkp-h ()
     (global-kkp-mode +1)
     (kkp-enable-in-terminal)))
+
+(use-package! clipetty
+  :if (not (display-graphic-p))
+  :hook (after-init . global-clipetty-mode))
+
+(setq remote-file-name-inhibit-locks t)
+
+(after! tramp
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
 (defmacro cmds--on-string-or-region (fn)
   "Given a string-manipulation function FN, defines an interactive command which will apply that
@@ -306,12 +317,13 @@ projectile would recognize your root directory as a project."
 (remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-footer)
 
 (setq doom-font-increment 1
-      doom-font (font-spec :family "Fira Code" :size (if IS-MAC 13 16) :style "Retina" :weight 'semi-bold)
+      doom-font (font-spec :family "Victor Mono" :size (if IS-MAC 13 16) :weight 'semi-bold)
       ;; doom-font (font-spec :family "Iosevka Fixed Slab" :size 16 :weight 'medium)
-      doom-big-font (font-spec :family "Fira Code" :size (if IS-MAC 20 26))
+      doom-big-font (font-spec :family "Victor Mono" :size (if IS-MAC 20 26))
       doom-variable-pitch-font (font-spec :family "Overpass" :size (if IS-MAC 15 20))
       doom-serif-font (font-spec :family "Iosevka Slab" :size (if IS-MAC 13 16))
-      doom-unicode-font (font-spec :family "Iosevka" :size (if IS-MAC 13 16)))
+      ;; doom-unicode-font (font-spec :family "Iosevka" :size (if IS-MAC 13 16)))
+      doom-unicode-font (font-spec :family "Victor Mono" :size (if IS-MAC 13 16)))
 
 (defvar mixed-pitch-modes '(org-mode markdown-mode gfm-mode Info-mode text-mode)
   "Modes that `mixed-pitch-mode' should be enabled in, but only after UI initialisation.")
@@ -574,6 +586,19 @@ If the window occupies the entire frame, restore its original size."
 (use-package! lsp-tailwindcss
   :after lsp)
 
+(after! rbenv
+  (global-rbenv-mode +1))
+
+(after! lsp-mode
+  (add-to-list 'lsp-language-id-configuration '(ruby-mode . "ruby"))
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-stdio-connection (lambda () '("bundle" "exec" "standardrb" "--lsp")))
+                    :major-modes '(ruby-mode)
+                    :server-id 'standardrb-lsp)))
+
+(after! apheleia
+  (add-to-list 'apheleia-mode-alist '(ruby-mode . ruby-standard)))
+
 (after! dap-mode
   (setq dap-python-debugger 'debugpy))
 
@@ -833,8 +858,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
                                    (when smerge-mode
                                      (amb/smerge-hydra/body)))))
 
-(add-to-list '+evil-collection-disabled-list 'info)
-(set-evil-initial-state! 'info-mode 'emacs)
+(after! (evil evil-collection)
+  (add-to-list '+evil-collection-disabled-list 'info)
+  (set-evil-initial-state! 'info-mode 'emacs))
 
 (map! :map 'info-mode-map
       "j" #'next-line
@@ -848,6 +874,44 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
        org-hierarchical-todo-statistics nil
        org-refile-use-outline-path 'full-file-path
        org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
+
+(use-package! graphviz-dot-mode
+  :after org)
+
+(after! org
+  (map! :after org
+        :map 'org-mode-map
+        "<tab>" #'org-cycle
+        :nvie "C-M-S-RET" #'org-insert-todo-subheading
+        :nvie "C-M-S-<return>" #'org-insert-todo-subheading
+        :nvie "M-<return>" #'org-insert-heading)
+
+  (defun my-org-mode-backtick-replacement ()
+    "Replace a single backtick with = and triple backticks with a code block template."
+    (interactive)
+    (let ((context (buffer-substring-no-properties (max (point-min) (- (point) 2)) (point))))
+      (if (string= context "==")
+          (progn
+            (delete-char -2)
+            (insert "#+begin_src \n#+end_src\n")
+            (forward-line -1)
+            (move-beginning-of-line nil)
+            (backward-char))
+        (insert "="))))
+
+  (defun my-org-mode-key-remap ()
+    "Remap ` to custom function in org-mode."
+    (local-set-key (kbd "`") 'my-org-mode-backtick-replacement))
+
+  (add-hook 'org-mode-hook 'my-org-mode-key-remap))
+
+(use-package! ox-gfm
+  :after org)
+
+(after! org
+  (setq! org-babel-default-header-args
+        (cons '(:noweb . "yes")
+              (assq-delete-all :noweb org-babel-default-header-args))))
 
 (custom-set-faces!
   '(outline-1 :weight extra-bold :height 1.25)
@@ -898,50 +962,10 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (setq org-agenda-auto-exclude-function 'org-my-auto-exclude-fn)
 
-(after! org
-  (map! :after org
-        :map 'org-mode-map
-        "<tab>" #'org-cycle
-        :nvie "C-M-S-RET" #'org-insert-todo-subheading
-        :nvie "C-M-S-<return>" #'org-insert-todo-subheading
-        :nvie "M-<return>" #'org-insert-heading)
-
-  (defun my-org-mode-backtick-replacement ()
-    "Replace a single backtick with = and triple backticks with a code block template."
-    (interactive)
-    (let ((context (buffer-substring-no-properties (max (point-min) (- (point) 2)) (point))))
-      (if (string= context "==")
-          (progn
-            (delete-char -2)
-            (insert "#+begin_src \n#+end_src\n")
-            (forward-line -1)
-            (move-beginning-of-line nil)
-            (backward-char))
-        (insert "="))))
-
-  (defun my-org-mode-key-remap ()
-    "Remap ` to custom function in org-mode."
-    (local-set-key (kbd "`") 'my-org-mode-backtick-replacement))
-
-  (add-hook 'org-mode-hook 'my-org-mode-key-remap))
-
 (use-package! outshine
   :after org
   :config
   (add-hook 'prog-mode-hook 'outshine-mode))
-
-(use-package! graphviz-dot-mode
-  :after org)
-
-;; TODO: figure out doom's org exporter API
-;; (after! org
-;;   '(require 'ox-gfm nil t))
-(use-package! ox-gfm
-  :after org)
-
-(setq org-babel-default-header-args
-      (cons '(:noweb . "yes")
-            (assq-delete-all :noweb org-babel-default-header-args)))
 
 (defun amb/window-delete-popup-frame (&rest _)
   "Kill selected selected frame if it has parameter `amb-window-popup-frame'.
