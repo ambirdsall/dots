@@ -14,7 +14,7 @@
 keybinds clear-defaults=true {
 #+end_src
 
-** =Ctrl Space= :: normal functions behind a leader key
+** =Ctrl Space= :: take me to your leader key
 #+begin_src kdl :tangle config.kdl
     locked {
         bind "Ctrl Space" { SwitchToMode "normal"; }
@@ -23,13 +23,17 @@ keybinds clear-defaults=true {
         bind "esc" { SwitchToMode "locked"; }
     }
     shared_except "locked" {
-        bind "Ctrl g" { SwitchToMode "normal"; }
         bind "Ctrl q" { Quit; }
+    }
+    shared_except "locked" "normal" {
+        bind "Ctrl g" { SwitchToMode "normal"; }
     }
 #+end_src
 
+** normal mode is where the magic happens
 #+begin_src kdl :tangle config.kdl
     normal {
+        bind "Ctrl g" { SwitchToMode "locked"; }
         bind "." { SwitchToMode "move"; }
         bind "c" { NewTab; SwitchToMode "locked"; }
         bind "d" { Detach; }
@@ -84,15 +88,18 @@ keybinds clear-defaults=true {
         bind "Ctrl h" { Resize "Increase left"; }
         bind "Ctrl Shift left" { Resize "Decrease left"; }
         bind "Ctrl H" { Resize "Decrease left"; }
+        bind "Alt h" { GoToPreviousTab; }
+        bind "Ctrl Alt h" { MoveTab "left"; }
+        bind "Ctrl Alt left" { MoveTab "left"; }
 
         bind "down" { MoveFocus "down"; }
         bind "j" { MoveFocus "down"; }
         bind "shift down" { MovePane "down"; }
         bind "J" { MovePane "down"; }
-        bind "Ctrl right" { Resize "Increase right"; }
-        bind "Ctrl h" { Resize "Increase right"; }
-        bind "Ctrl Shift right" { Resize "Decrease right"; }
-        bind "Ctrl H" { Resize "Decrease right"; }
+        bind "Ctrl down" { Resize "Increase down"; }
+        bind "Ctrl j" { Resize "Increase down"; }
+        bind "Ctrl Shift down" { Resize "Decrease down"; }
+        bind "Ctrl J" { Resize "Decrease down"; }
 
         bind "up" { MoveFocus "up"; }
         bind "k" { MoveFocus "up"; }
@@ -111,6 +118,9 @@ keybinds clear-defaults=true {
         bind "Ctrl h" { Resize "Increase right"; }
         bind "Ctrl Shift right" { Resize "Decrease right"; }
         bind "Ctrl H" { Resize "Decrease right"; }
+        bind "Alt l" { GoToNextTab; }
+        bind "Ctrl Alt l" { MoveTab "right"; }
+        bind "Ctrl Alt right" { MoveTab "right"; }
 
         bind "n" { MovePane; }
         bind "N" { MovePaneBackwards; }
@@ -208,7 +218,9 @@ keybinds clear-defaults=true {
 
     scroll {
         bind "e" { EditScrollback; SwitchToMode "locked"; }
+        bind "Space" { EditScrollback; SwitchToMode "locked"; }
         bind "s" { SwitchToMode "entersearch"; SearchInput 0; }
+        bind "q" { SwitchToMode "locked"; }
     }
 
     entersearch {
@@ -295,7 +307,6 @@ keybinds clear-defaults=true {
         bind "p" { GoToPreviousTab; SwitchToMode "locked"; }
         bind "z" { ToggleFocusFullscreen; SwitchToMode "locked"; }
     }
-}
 #+end_src
 
 ** =Ctrl p= :: pane
@@ -303,14 +314,10 @@ keybinds clear-defaults=true {
     shared_except "locked" "pane" {
         bind "Ctrl p" { SwitchToMode "pane"; }
     }
-    shared_except "normal" "locked" "entersearch" {
-        bind "enter" { SwitchToMode "normal"; }
-    }
-    shared_among "pane" "tmux" {
-        bind "x" { CloseFocus; SwitchToMode "locked"; }
+    shared_except "locked" "entersearch" {
+        bind "enter" { SwitchToMode "locked"; }
     }
 #+end_src
-
 
 #+begin_src kdl :tangle config.kdl
     pane {
@@ -342,6 +349,14 @@ keybinds clear-defaults=true {
     }
 #+end_src
 
+*** TODO clean this redundant keybind up
+this is awfully hidden, so I explicitly defined it for normal mode; redundant as, mate.
+#+begin_src kdl :tangle config.kdl
+    shared_among "pane" "tmux" {
+        bind "x" { CloseFocus; SwitchToMode "locked"; }
+    }
+#+end_src
+
 ** renaming things
 #+begin_src kdl :tangle config.kdl
     shared_among "renametab" "renamepane" {
@@ -355,6 +370,10 @@ keybinds clear-defaults=true {
     }
 #+end_src
 
+** lastly, close the block
+#+begin_src kdl :tangle config.kdl
+}
+#+end_src
 * plugins
 Plugin aliases - can be used to change the implementation of Zellij
 changing these requires a restart to take effect
@@ -393,13 +412,15 @@ load_plugins {
 ** theme
 Choose the theme that is specified in the themes section.
 Default: default
-#+begin_src :tangle config.kdl
+
+this one looks nice but highlighting is fucking invisible
+#+begin_src kdl :tangle no
 theme "vesper"
 #+end_src
 
 ** Enable automatic copying (and clearing) of selection when releasing mouse
 Default: true
-#+begin_src :tangle config.kdl
+#+begin_src kdl :tangle config.kdl
 copy_on_select false
 #+end_src
 
