@@ -1,6 +1,8 @@
 [user]
 	name = Alex Birdsall
 	email = ambirdsall@gmail.com
+[help]
+	autocorrect = prompt
 [alias]
 	# Accepts an unquoted commit message if provided, otherwise opens editor
 	c = "!_f(){ [ $# -gt 0 ] && git commit -m \"$*\" || git commit -v; };_f"
@@ -15,15 +17,41 @@
 	latest = "!git reflog | grep checkout: | awk '{print $6}' | awk '!H[$0]++'"
 	# a safer force push
 	shove = push --force-with-lease
-[rerere]
-	enabled = true
 [github]
 	user = ambirdsall
 [init]
 	defaultBranch = main
+[fetch]
+	prune = true
+	pruneTage = true
+	all = true
 [pull]
 	rebase = true
+[push]
+	default = simple
+	autoSetupRemote = true
+	followTags = true
 [advice]
 	skippedCherryPicks = false
 [include]
 	path = "~/.gitconfig.local"
+[column]
+	ui = auto
+[branch]
+	sort = -committerdate
+[tag]
+	sort = version:refname
+[diff]
+	algorithm = histogram
+	colorMoved = plain
+	mnemonicPrefix = true
+	renames = true
+[core]
+	excludesfile = ~/.gitignore
+[rebase]
+	autoSquash = true
+	autoStash = true
+	updateRefs = true
+[rerere]
+	enabled = true
+	autoupdate = true
