@@ -19,3 +19,4 @@ window#whiskermenu-window treeview>* {
 VteTerminal, vte-terminal {
     padding: 13px;
 }
+@import 'colors.css';
