@@ -78,7 +78,11 @@ cob () {
 
 # ** diff
 d () {
-  git diff --diff-algorithm=minimal --color "$@" | diff-so-fancy | bat --plain
+  git diff --color "$@"
+}
+
+D () {
+  git diff --diff-algorithm=histogram --color "$@" | diff-so-fancy | bat --plain
 }
 alias gdc="d --cached"
 alias gdo="git diff \$(git rev-parse --abbrev-ref HEAD 2> /dev/null)..origin/\$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
