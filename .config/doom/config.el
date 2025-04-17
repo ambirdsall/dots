@@ -435,7 +435,12 @@ name as well to trigger updates"
 
 (use-package! golden-ratio
   :config
-  (map! :leader "wG" #'golden-ratio))
+  (dolist
+      (fn '(evil-window-left evil-window-down evil-window-up evil-window-right))
+    (add-to-list 'golden-ratio-extra-commands fn))
+  (map! :leader
+        "wG" #'golden-ratio
+        "wgg" #'golden-ratio-mode))
 
 (defvar amb--more-current-window-original-sizes (make-hash-table :test 'eq)
   "A hash table storing the original sizes of windows so they can be restored by `amb/more-current-window'.")

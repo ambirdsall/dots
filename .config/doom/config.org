@@ -1242,7 +1242,12 @@ It's automatic resizing behavior is overkill, but it's nice to be able to easily
 #+begin_src elisp
 (use-package! golden-ratio
   :config
-  (map! :leader "wG" #'golden-ratio))
+  (dolist
+      (fn '(evil-window-left evil-window-down evil-window-up evil-window-right))
+    (add-to-list 'golden-ratio-extra-commands fn))
+  (map! :leader
+        "wG" #'golden-ratio
+        "wgg" #'golden-ratio-mode))
 #+end_src
 
 So. Sometimes the current window just needs to be a little more. Let's make that situation nice and easy to handle:
