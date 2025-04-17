@@ -17,8 +17,8 @@ if [ -n "$BASH_VERSION" ]; then
 fi
 
 # a few barebones aliases, for muscle memory's sake
-if command -v vim > /dev/null; then
-    vi () {
+if command -v vim >/dev/null; then
+    vi() {
         if [[ $# -gt 0 ]]; then
             vim "$@"
         else
@@ -26,8 +26,8 @@ if command -v vim > /dev/null; then
         fi
     }
 fi
-if command -v emacs > /dev/null; then
-    em () {
+if command -v emacs >/dev/null; then
+    em() {
         emacsclient -nw --alternate-editor=vim ${@}
     }
 fi
