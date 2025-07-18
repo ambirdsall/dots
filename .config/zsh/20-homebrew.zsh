@@ -4,4 +4,6 @@
 
 if dots/at_hand /opt/homebrew/bin/brew; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
+elif dots/at_hand /home/linuxbrew/.linuxbrew/bin/brew; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
