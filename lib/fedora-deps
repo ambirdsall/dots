@@ -11,3 +11,4 @@ brightnessctl
 fzf
 nodejs-bash-language-server
 shfmt
+fd-find
