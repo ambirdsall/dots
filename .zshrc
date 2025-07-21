@@ -58,20 +58,16 @@ if command -v wezterm >/dev/null; then
     compdef _wez_the_term_completion wez-the-term
 fi
 
-again () {
+dots/reload() {
     clear && VERBOSE_ZSH_CONFIG=t zsh
 }
 
 list_multiplexer_sessions
 
-# TODO because most aliases got moved into ~/.config/zsh/**, with
-# ~/aliases.zsh serving as easy entry point for re-sourcing, most of these
-# are getting double-sourced (with the exception of ~/.local-aliases.zsh)
-[[ -a ~/aliases.zsh ]] && source ~/aliases.zsh
 [ -f ~/.local-aliases.zsh ] && source ~/.local-aliases.zsh
 
 # this should always go last, to allow local overrides of anything
-if [[ -a ~/.zshrc.local.zsh ]]; then
+if [[ -e ~/.zshrc.local.zsh ]]; then
     __zrc_log "sourcing ~/.zshrc.local.zsh... "
     source ~/.zshrc.local.zsh
     __zrc_logn "🔥"
