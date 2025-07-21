@@ -1,7 +1,7 @@
-__zrc_log () {
+__zrc_log() {
     [ -n "$VERBOSE_ZSH_CONFIG" ] && printf "$1" || true
 }
-__zrc_logn () {
+__zrc_logn() {
     # the "n" stands for "newline"
     __zrc_log "$1\n"
 }
@@ -30,29 +30,29 @@ fi
 # fi
 
 # TODO clean this up to its own file
-if command -v wezterm > /dev/null; then
-    wez-the-term () {
-    if [ $# -eq 0 ]; then
-        local workspace=$(find ~/.config/wezterm/workspaces -type f -exec basename {} \; | fzf)
-    else
-        local workspace=$1
-    fi
+if command -v wezterm >/dev/null; then
+    wez-the-term() {
+        if [ $# -eq 0 ]; then
+            local workspace=$(find ~/.config/wezterm/workspaces -type f -exec basename {} \; | fzf)
+        else
+            local workspace=$1
+        fi
 
-    if [ -z "$workspace" ]; then
-        return
-    elif [ ! -f ~/.config/wezterm/workspaces/$workspace ]; then
-        echo "Workspace $workspace not found" &>2
-        echo "Available workspaces:\n$(find ~/.config/wezterm/workspaces -type f -exec basename {} \;)" &>2
-        return 1
-    fi
+        if [ -z "$workspace" ]; then
+            return
+        elif [ ! -f ~/.config/wezterm/workspaces/$workspace ]; then
+            echo "Workspace $workspace not found" &>2
+            echo "Available workspaces:\n$(find ~/.config/wezterm/workspaces -type f -exec basename {} \;)" &>2
+            return 1
+        fi
 
-    wezterm start --workspace $workspace ~/.config/wezterm/workspaces/$workspace
+        wezterm start --workspace $workspace ~/.config/wezterm/workspaces/$workspace
     }
 
     _wez_the_term_completion() {
-    local -a workspaces
-    workspaces=($(find ~/.config/wezterm/workspaces -type f -exec basename {} \;))
-    _describe 'workspaces' workspaces
+        local -a workspaces
+        workspaces=($(find ~/.config/wezterm/workspaces -type f -exec basename {} \;))
+        _describe 'workspaces' workspaces
     }
 
     compdef _wez_the_term_completion wez-the-term
