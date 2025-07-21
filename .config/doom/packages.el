@@ -34,6 +34,9 @@
 
 (package! yaml-pro)
 
+(package! typst-mode)
+(package! ox-typst)
+
 (package! gptel)
 
 (package! graphviz-dot-mode)

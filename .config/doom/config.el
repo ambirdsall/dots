@@ -733,6 +733,24 @@ If the window occupies the entire frame, restore its original size."
   :hook (yaml-mode . yaml-pro-ts-mode)
   )
 
+;; Set up typst-mode to associate with .typ files
+(use-package! typst-mode
+  :mode ("\\.typ\\'" . typst-mode)
+  :init
+  ;; Optional: set your typst formatting command if you want to use it
+  (setq typst-format-command "typst fmt"))
+
+;; Load ox-typst for Org-mode export to Typst documents
+(use-package! ox-typst
+  :after org
+  :config
+  ;; Optional: any custom configuration for ox-typst here
+  )
+
+;; TODO add ox-typst to list of Org export backends
+
+(add-to-list 'auto-mode-alist '("\\.mdx\\'" . markdown-mode))
+
 (use-package! gptel)
 
 (after! magit

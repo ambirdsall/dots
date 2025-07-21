@@ -1839,6 +1839,34 @@ tree-sitter version requires a semi-manual setup step to install all the languag
 (use-package! yaml-pro
   :config (add-to-list 'auto-mode-alist '("\\.ya?ml'" . yaml-pro-mode)))
 #+end_src
+*** typst
+#+begin_src elisp :tangle packages.el
+(package! typst-mode)
+(package! ox-typst)
+#+end_src
+
+
+#+begin_src elisp
+;; Set up typst-mode to associate with .typ files
+(use-package! typst-mode
+  :mode ("\\.typ\\'" . typst-mode)
+  :init
+  ;; Optional: set your typst formatting command if you want to use it
+  (setq typst-format-command "typst fmt"))
+
+;; Load ox-typst for Org-mode export to Typst documents
+(use-package! ox-typst
+  :after org
+  :config
+  ;; Optional: any custom configuration for ox-typst here
+  )
+
+;; TODO add ox-typst to list of Org export backends
+#+end_src
+*** markdown and mdx
+#+begin_src elisp
+(add-to-list 'auto-mode-alist '("\\.mdx\\'" . markdown-mode))
+#+end_src
 ** "I hear lisp is good for AI"
 *** copilot
 #+begin_src elisp :tangle no :noweb-ref default-toggles
