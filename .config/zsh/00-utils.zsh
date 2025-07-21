@@ -27,6 +27,12 @@ dots/file() {
     fi
 }
 
+dots/source() {
+    if [ -f "$1" ]; then
+        source "$1"
+    fi
+}
+
 # Opposite of `unset`.
 # TODO accept multiple args, returning 0 if *all* are set
 dots/is_set() {

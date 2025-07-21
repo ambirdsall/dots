@@ -6,15 +6,21 @@
 # New directories are prepended, so the most recent additions take precedence. No effort
 # is taken to escape extended grep metacharacters, so if your directory name can't be used
 # verbatim to match itself, you're going to have to do that one the old-fashioned way.
-dots/add_to_path () {
+dots/add_to_path() {
     local BIN_DIR="$1"
     if [ -d "$BIN_DIR" -a ! $(echo $PATH | grep "$BIN_DIR(:|$)") ]; then
         export PATH="$BIN_DIR:$PATH"
     fi
 }
 
-dots/at_hand () {
-    command -v $1 > /dev/null
+dots/at_hand() {
+    command -v $1 >/dev/null
+}
+
+dots/source() {
+    if [ -f "$1" ]; then
+        source "$1"
+    fi
 }
 
 if dots/at_hand wezterm; then
@@ -36,7 +42,7 @@ dots/add_to_path "$HOME/bin"
 
 # a few barebones aliases, for muscle memory's sake
 if dots/at_hand vim; then
-    vi () {
+    vi() {
         if [[ $# -gt 0 ]]; then
             vim "$@"
         else
@@ -55,6 +61,4 @@ if [ -s "$HOME/.guix-profile" ]; then
     source "$GUIX_PROFILE/etc/profile"
 fi
 
-if [ -f "$HOME/.zshenv.local.zsh" ]; then
-  source "$HOME/.zshenv.local.zsh"
-fi
+dots/source "$HOME/.zshenv.local.zsh"
