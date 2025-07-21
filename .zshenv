@@ -62,3 +62,5 @@ if [ -s "$HOME/.guix-profile" ]; then
 fi
 
 dots/source "$HOME/.zshenv.local.zsh"
+
+dots/source "$HOME/.cargo/env"
