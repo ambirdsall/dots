@@ -6,7 +6,7 @@ alias cx='chmod +x'
 
 alias ls="ls -GF"
 alias la="ls -A"
-alias ll="ls -l"
+alias ll="ls -lh"
 
 # allow exiting with C-c
 alias sl="sl -e"
