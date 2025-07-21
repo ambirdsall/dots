@@ -16,7 +16,6 @@ compdef g=git
 
 # cf ./23-emacs-aliases.zsh for `magit` alias
 
-# * git operations
 # * ship shape
 # # TODO expand this into a proper little program
 # subcommands:
@@ -29,6 +28,7 @@ alias SHIPIT='ahoy && git push --force-with-lease -u origin $(git rev-parse --ab
 # who doesn't love a good typo
 alias SHIIT='ahoy && echo "      FUUCK"'
 
+# * standard git operations
 # ** clone
 # run `git clone` and `cdd` into dir
 # if no arguments are provided, assumes you have copied a repo url to your clipboard
@@ -203,7 +203,6 @@ print width')
   fi
 }
 
-command -v ruby &>/dev/null && eval "$(ruby -e '9.times do |i| puts %Q{alias l#{i+1}=l\\ -#{i+1}} end')"
 alias lg="git log --pretty=reference --decorate --graph --all"
 alias rl="git reflog"
 
@@ -232,7 +231,28 @@ alias b="git blame"
 alias stash="git stash save -u"
 alias pop="git stash pop"
 
-# * recent refs
+# * nonstandard git operations
+# ** open a "dirty" file in editor
+ge () {
+  local files
+  local file_to_edit
+  # store list of modified files in $files.
+  # QUESTION: would an array work better than a multiline string?
+  files=$(g | field 2)
+  # if there's only one file in $files, just open that
+  local file_count=$(echo $files | wc -l)
+  if [[ $file_count -eq 1 ]]; then
+    file_to_edit=$files
+  else
+    file_to_edit=$(echo $files | gum choose)
+  fi
+
+  if [ -n $file_to_edit ]; then
+    e $file_to_edit
+  fi
+}
+
+# ** list most recently visited refs
 unique () {
   perl -ne '$H{$_}++ or print'
 }

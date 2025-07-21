@@ -16,6 +16,7 @@ cmdignore=(
     emacs
     fg
     g
+    ge
     git
     htop
     less
