@@ -14,6 +14,8 @@ dots/at_hand() {
 dots/clear_name() {
     if alias | grep "$1=" >/dev/null; then
         unalias $1
+    elif type -w $1 | grep function >/dev/null; then
+        unset -f $1
     fi
 }
 
