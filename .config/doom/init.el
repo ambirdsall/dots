@@ -33,9 +33,9 @@
  snippets           ; my elves. They type so I don't have to
  
  :emacs
- (dired +dirvish +icons)               ; making dired pretty [functional]
  undo                ; persistent, smarter undo for your inevitable mistakes
  vc                  ; version-control and Emacs, sitting in a tree
+ (dired +dirvish +icons)               ; making dired pretty [functional]
  
  :term
  vterm             ; the best terminal emulation in Emacs

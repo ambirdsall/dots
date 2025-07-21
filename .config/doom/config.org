@@ -166,7 +166,6 @@ snippets           ; my elves. They type so I don't have to
 #+end_src
 
 #+begin_src elisp :tangle no :noweb-ref doom-modules-emacs
-(dired +dirvish +icons)               ; making dired pretty [functional]
 undo                ; persistent, smarter undo for your inevitable mistakes
 vc                  ; version-control and Emacs, sitting in a tree
 #+end_src
@@ -868,6 +867,23 @@ Navigate Windows (exit with RET, ESC, q, or C-g)
     :weight bold :height 2.5 :box (:line-width 10 :color "dark green"))))
 #+end_src
 ** files, both local and remote
+*** Wha's like us? Damn few and they're all =dired=
+There's a doom module for dired with some preconfigured niceties:
+#+begin_src elisp :tangle no :noweb-ref doom-modules-emacs
+(dired +dirvish +icons)               ; making dired pretty [functional]
+#+end_src
+
+While I do mostly like =dirvish= (my only beef is when I visit a directory in one window and
+that causes a different =dirvish=-enhanced =dired= buffer in a different window to /leave the
+fucking directory I left it in/), I do prefer more marginalia in my directory buffers than the doom
+default:
+#+begin_src elisp
+(after! dirvish
+  (setq! dirvish-attributes '(collapse git-msg file-size)))
+#+end_src
+
+note to self: doom sets this on line 93 of =~/.emacs.d/modules/emacs/dired/config.el=
+
 *** oops, I need to ~sudo~ edit this file
 #+begin_src elisp
 (defun sudo ()

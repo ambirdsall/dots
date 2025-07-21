@@ -266,6 +266,9 @@ Navigate Windows (exit with RET, ESC, q, or C-g)
     :foreground "white" :background "dark green"
     :weight bold :height 2.5 :box (:line-width 10 :color "dark green"))))
 
+(after! dirvish
+  (setq! dirvish-attributes '(collapse git-msg file-size)))
+
 (defun sudo ()
   "Use TRAMP to `sudo' the current buffer."
   (interactive)
