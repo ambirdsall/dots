@@ -8,12 +8,11 @@ get exported to specific init files.
 At present, this /almost/ only tangles to elisp files for doom emacs to load; it also builds ~/.guile
 
 
-* TODO items and reference
-** TODO [[https://github.com/thisisran/nova][nova]] :: stylish-compatible svg child frames
-** TODO [[https://github.com/abo-abo/auto-yasnippet][aya]] :: auto-yasnippet (installed by doom)
-** just need to learn and/or configure
-*** TODO [[https://github.com/oantolin/embark][embark]]
+* reference
 ** keybindings in doom
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
 This will define =SPC f b b= to invoke foo-bar-baz and =SPC f b q= to invoke foo-bar-qux.
 #+begin_src elisp :tangle no
 (map! :leader
@@ -23,6 +22,17 @@ This will define =SPC f b b= to invoke foo-bar-baz and =SPC f b q= to invoke foo
 		:desc "Baz" "b" #'foo-bar-baz
 		:desc "Qux" "q" #'foo-bar-qux)))
 #+end_src
+
+** emacs package wish/learning list
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+*** actually installed
+**** [[https://github.com/abo-abo/auto-yasnippet][aya]] :: auto-yasnippet (installed by doom)
+**** [[https://github.com/oantolin/embark][embark]]
+*** wishing and thinking
+**** [[https://github.com/thisisran/nova][nova]] :: stylish-compatible svg child frames
+
 * begin config files at the beginning
 #+begin_src elisp
 <<config-preamble>>
@@ -577,6 +587,10 @@ a command on region both.
 #+end_src
 
 *** manipulate numbers at point
+sooo these are built-in to either emacs or evil, i think?
+
+NIH, not my problem, fuck it
+
 #+begin_src elisp
 (defun decrement-number-at-point ()
   "Decrement the number at point by 1."
@@ -743,7 +757,7 @@ using it as a mnemonic binding for ~imenu~:
   + that "expand visual selection" package
   + ?
 
-** text objects
+*** evil text objects
 #+begin_src elisp
 ;; this macro was copied from someone who copied it from here: https://stackoverflow.com/a/22418983/4921402
 (after! evil
@@ -764,7 +778,7 @@ using it as a mnemonic binding for ~imenu~:
   (define-and-bind-quoted-text-object "tilda" "~" "~" "~")
   (define-and-bind-quoted-text-object "asterisk" "*" "*" "*"))
 #+end_src
-*** line text object
+**** line text object
 #+begin_src elisp :tangle packages.el
 (package! evil-textobj-line
   :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
