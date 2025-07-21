@@ -62,11 +62,24 @@ alias tetris='emacs -q --no-splash -f tetris'
 
 # oh, oh, it's ~magit~
 magit () {
+  local emacs_server_name
+
+  # if a `magit` emacs daemon is running, use that;
+  # 1st fallback is the `ttylated` emacs server;
+  # 2nd fallback is to suck it up and start a fresh `magit` daemon
+  if proctologist magit >/dev/null; then
+    emacs_server_name=magit
+  elif proctologist ttylated >/dev/null; then
+    emacs_server_name=ttylated
+  else
+    emacs_server_name=magit
+  fi
+
   emacsclient --socket=magit -nw -e "
 (progn
   (or (advice-member-p 'save-buffers-kill-terminal '+magit/quit)
       (advice-add '+magit/quit :before 'save-buffers-kill-terminal))
-  (magit-status))" || emacs --daemon=magit
+  (magit-status))" || emacs --daemon=$emacs_server_name
 }
 
 man () {
