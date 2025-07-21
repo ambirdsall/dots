@@ -15,6 +15,8 @@
 (package! evil-textobj-line
   :recipe (:host github :repo "emacsorphanage/evil-textobj-line"))
 
+(package! command-log-mode)
+
 (package! ace-window)
 
 (package! emojify)

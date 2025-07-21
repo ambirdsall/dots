@@ -199,6 +199,10 @@ used interactively."
 (use-package! evil-textobj-line
   :after evil)
 
+(setq! doom-snippets-enable-short-helpers 't)
+
+(use-package! command-log-mode)
+
 (defhydra amb/window-nav-hydra (:hint nil :exit nil)
   "
 Navigate Windows (exit with RET, ESC, q, or C-g)
@@ -992,6 +996,25 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after org
   :config
   (add-hook 'prog-mode-hook 'outshine-mode))
+
+;; should either of the following fns be wrapped in an `(after! org ...)` form?
+
+(defun amb/org-todo-stats ()
+  "Return statistics of TODO keywords in current buffer."
+  (let ((todo-count 0)
+        (done-count 0))
+    (org-map-entries
+     (lambda ()
+       (let ((state (org-get-todo-state)))
+         (when state
+           (if (member state org-done-keywords)
+               (cl-incf done-count)
+             (cl-incf todo-count)))))
+     t 'file)
+    (format "[%d/%d]" done-count (+ todo-count done-count))))
+
+(defun org-dblock-write:all-todo-stats (params)
+  (insert (amb/org-todo-stats)))
 
 (defun amb/window-delete-popup-frame (&rest _)
   "Kill selected selected frame if it has parameter `amb-window-popup-frame'.

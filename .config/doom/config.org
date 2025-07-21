@@ -787,7 +787,62 @@ using it as a mnemonic binding for ~imenu~:
 (use-package! evil-textobj-line
   :after evil)
 #+end_src
-* buffers, windows, frames, workspaces... all that emacs shit [0/5]
+
+** snippets
+*** doom has some tooling to make snippets nicer
+**** TODO tangle the line enabling the =snippets= module to =init.el= here
+**** enable the =doom-snippets= short helpers
+#+begin_src elisp
+(setq! doom-snippets-enable-short-helpers 't)
+#+end_src
+
+Quoth the readme,
+#+begin_src md :tangle no
+If this variable is non-nil, this package will define the following shortcut
+function aliases for your convenience:
+
++ `!%!` = `(doom-snippets-format "%n%s%n")`
++ `!%` = `(doom-snippets-format "%n%s")`
++ `%$` = `(doom-snippets-format "%>")`
++ `(%expand ...)` = `(doom-snippets-expand ...)`
++ `(%format ...)` = `(doom-snippets-format ...)`
++ `(%without-trigger ...)` = `(doom-snippets-without-trigger ...)`
+#+end_src
+*** my own personal snippets
+**** org-mode
+***** =<p!= :: a =package!= form inside the boilerplate literate config source block
+#+begin_src snippet :tangle snippets/org-mode/<p!
+# -*- mode: snippet -*-
+# name: doom literate package block
+# key: <p!
+# --
+,#+begin_src elisp :tangle packages.el
+(package! $1)
+,#+end_src
+$0
+#+end_src
+***** =<todos= :: a custom dynamic block to collect todo statistics from the whole document
+:PROPERTIES:
+:CUSTOM_ID: todos-snippet
+:END:
+#+begin_src snippet :tangle snippets/org-mode/<todos
+# -*- mode: snippet -*-
+# name: dynamic block for whole-doc statistics cookie
+# key: <todos
+# --
+,#+BEGIN: all-todo-stats
+,#+END
+#+end_src
+* emacs UI shit (buffers, windows, frames, workspaces, ...) [0/5]
+** =command-log-mode=, or: wait shit hold on what just happened
+#+begin_src elisp :tangle packages.el
+(package! command-log-mode)
+#+end_src
+
+#+begin_src elisp
+(use-package! command-log-mode)
+#+end_src
+
 ** window navigation
 *** hydra at =SPC W= / =SPC w.=
 #+begin_src elisp
@@ -2282,6 +2337,48 @@ because ~setq~ is a macro) and everything went to heck.
   :config
   (add-hook 'prog-mode-hook 'outshine-mode))
 #+end_src
+
+** one statistics cookie to rule them all
+Sometimes I want a bunch of independent top-level headings, but I also want a document-wide recursive todo statistics cookie. One way to achieve this is to define a named dynamic block, with a correspondingly-named function org uses to dynamically populate it when asked to (with =C-c C-c=, like most org actions).
+
+*Caveats:*
+- *nested checkboxes in todo headings break the count.* Very likely an org-mode bug.
+- *You must have your cursor on a =BEGIN:= or =END:= line, /not/ the inner line with the dynamic cookie*. Org tries to handle actions on that with the ordinary statistics cookie logic, i.e. by querying its (nonexistent) heading context, so it always resolves to =[0/0]=.
+
+With the following functions defined, org will know how to populate a block labeled like the following:
+#+begin_src org-mode :tangle no
+BEGIN: all-todo-stats
+END:
+#+end_src
+
+You can type this out manually, but please also cf. the =<todos= snippet defined [[#todos-snippet][in this heading]].
+
+*** implementation
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+#+begin_src elisp
+;; should either of the following fns be wrapped in an `(after! org ...)` form?
+
+(defun amb/org-todo-stats ()
+  "Return statistics of TODO keywords in current buffer."
+  (let ((todo-count 0)
+        (done-count 0))
+    (org-map-entries
+     (lambda ()
+       (let ((state (org-get-todo-state)))
+         (when state
+           (if (member state org-done-keywords)
+               (cl-incf done-count)
+             (cl-incf todo-count)))))
+     t 'file)
+    (format "[%d/%d]" done-count (+ todo-count done-count))))
+
+(defun org-dblock-write:all-todo-stats (params)
+  (insert (amb/org-todo-stats)))
+
+#+end_src
+
 * emacs is so great, why have just one?
 #+begin_src elisp :tangle profiles.el
 (
