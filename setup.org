@@ -1,8 +1,14 @@
 #+title: How to setup a computer on different operating systems
 
 * linux
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
 ** distro-specific setup
 *** fedora
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
 **** tweak dnf settings
 Add the following lines to =/etc/dnf/dnf.conf=:
 #+begin_src conf
@@ -44,6 +50,9 @@ docker run hello-world
 #+end_src
 
 *** arch
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
 **** start by installing endeavourOS sway edition rather than vanilla arch
 This isn't a must-do, just a convenience. EOS has nice defaults, many of which I have
 adopted into these dotfiles, and is a much simpler installation process.
@@ -54,14 +63,58 @@ parallelism, etc
 **** run ~~/sbin/arch-install~
 
 **** don't forget ~systemctl reboot~
+** make bluetooth play nicely with apple brand air buds
+*** make sure bluetooth conf is configured to try to connect via the right protocol
+(taken from [[https://community.frame.work/t/solved-fedora-37-wireless-earbuds-will-not-pair/25942/7][this]] framework discussion comment)
 
+For Airpods and likely other select earbuds (this guide assumes Gnome), in the terminal:
+
+#+begin_src shell
+sudo cp /etc/bluetooth/main.conf /etc/bluetooth/main.bak
+#+end_src
+
+then
+
+#+begin_src shell
+sudo vim /etc/bluetooth/main.conf
+#+end_src
+
+Search for ~ControllerMode~
+
+Make sure ~ControllerMode = dual~ is changed to ~ControllerMode = bredr~
+
+So we’re trying ~dual~ to ~bredr~.
+
+Save the file, then reboot. Now you'll be able to pair.
+
+*** before pairing the first time, hold the button on the airpods case until you see a white blinky light (≈5s)
+(taken from [[https://support.apple.com/guide/airpods/pair-airpods-with-a-non-apple-device-dev499c9718b/web][this]] Apple support user guide)
+
+#+begin_quote
+To set up your AirPods with an Android phone or other non-Apple device, follow these steps:
+1) On your non-Apple device, make sure that Bluetooth is on (on an Android device, go to Settings > Connections > Bluetooth).
+
+2) Do one of the following:
+
+  - AirPods (all generations) or AirPods Pro (all generations): With your AirPods in the charging case, open the lid, then press and hold the setup button on the back of the AirPods case for about five seconds, or until the status light flashes white.
+
+  - AirPods Max: Press and hold the noise control button for about five seconds, or until the status light flashes white.
+
+3) When your AirPods appear in the list of Bluetooth devices, select them.
+#+end_quote
 * MacOS
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
 ** Install homebrew
 ** run =~/sbin/macos-install= and =~/sbin/macos-write-defaults=
 Don't forget to run ~killall Dock~ after =~/sbin/macos-write-defaults=
 ** run ~make macos~
 
 * Securely migrating the contents of a home directory
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
 To create an encrypted tarball of the directory, run:
 #+begin_src shell
 # should probably run as root so you don't see a long-running job die on some random
