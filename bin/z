@@ -1,9 +1,65 @@
 #!/bin/bash
 
-sessions=$(zellij list-sessions)
+# stretch goal: rewrite this a real scripting language lol
+#   - okay tbh I just wish I had a nice guile `sh` fn and string utils so I can continue
+#     to delegate the UI to `gum` TUIs, e.g.
+#        (define (sessions (s-split "\n" (sh "zellij list-sessions")))
 
-case $# in
-  # if no args are given, interactively pick a (or create a new) session
+# `z` wraps the zellij CLI; calling it with the arglist of any valid `zellij` invocation
+# should do exactly the same thing. It also tries to add some common-sense DWIM affordances:
+# - calling `z` with no args at all triggers some interactive prompting of what to do
+# - `z <session>` does the expected thing based on context:
+#   + if there's no known session <session>, create one
+#   + if <session> is the current session, idk, say hi?
+#   + if <session> is active, `zellij attach <session>`
+#   + if <session> is exited, resurrect it
+#   + if <session> is "list-sessions", then whatever happens you did it to yourself (j/k)
+# - everything else is forwarded/delegated to `zellij "$@"`
+
+main() {
+  local sessions
+  sessions=$(zellij list-sessions)
+
+  # zellij's CLI is based on subcommands, almost all of which requires additional args of
+  # its own; therefore, we can almost safely assume that a single-arg call is providing a
+  # session name and trust that the useful zellij actions by and large remain unshadowed.
+  case $# in
+  1)
+    local listing is_current is_zombie
+    listing=$(echo "$sessions" | grep "$1")
+    is_current=$(echo "$listing" | grep -F '(current)')
+    is_zombie=$(echo "$listing" | grep EXITED)
+
+    # quick nonexhaustive scan for 1-arity actions and/or fancy aliases. If you want to
+    # add a new case here, it must:
+    # - ensure there's no naming conflict with a session; if there is, respect the session
+    #   over your new command/alias (if it's important you can rawdog `zellij`)
+    # - if that conditional passes and your case takes an action, you must `return`
+    #   immediately after you're done, to avoid unintended consequences
+    case "$1" in
+    ls | list-sessions)
+      if [ -z "$listing" ]; then
+        zellij list-sessions
+        return
+      fi
+      ;;
+    esac
+
+    if [ -z "$listing" ]; then
+      # unknown session? create it
+      zellij -s "$1"
+    elif [ -n "$is_current" ]; then
+      echo oh hey so uh you are already in the "\"$1\"" session
+    elif [ -z "$is_zombie" ]; then
+      zellij attach "$1"
+    else
+      # it's not unknown, it's not current, and it's not a zombie: by process of
+      # elimination, we were given a different active session name
+      zellij attach "$1"
+    fi
+    ;;
+
+  # if no args are given, interactively figure out what to do
   0)
     if [ -z "$sessions" ]; then
       echo "No active Zellij sessions found."
@@ -19,30 +75,27 @@ case $# in
         exit 0
       fi
     fi
-    
+
     # Display sessions in a styled box
     echo "$sessions" | gum style --border normal --margin "1" --padding "1"
-    
+
     session_count=$(echo "$sessions" | wc -l)
     # along with all the options we want to display, `gum filter`` adds 1 line at the top
     # for a prompt and another 2 on the bottom for instructions
     height=$((session_count + 3))
-    
+
     selected=$(echo "$sessions" | awk '{print $1}' | gum filter --placeholder "Select a session to attach" --height "$height")
-    
+
     if [ -n "$selected" ]; then
       exec zellij attach "$selected"
     fi
     ;;
 
-  # zellij's cli is based on subcommands which all require their own additional args; so
-  # we can be cute and special-case one single arg as a session name/prefix to attach to
-  1)
-    # TODO be even cuter: `zellij attach` if $1 matches a session name/prefix, `zellij -s` if not
-    zellij attach "$1"
-    ;;
-
   # otherwise, we just pass the args to zellij verbatim
-  *) exec zellij "$@"
+  *)
+    exec zellij "$@"
     ;;
-esac
+  esac
+}
+
+main "$@"
