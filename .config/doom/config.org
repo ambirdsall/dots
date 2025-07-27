@@ -5,9 +5,6 @@
 This is my doom config. It's a literate config, so the code snippets are living documentation; they
 get exported to specific init files.
 
-At present, this /almost/ only tangles to elisp files for doom emacs to load; it also builds ~/.guile
-
-
 * reference
 ** keybindings in doom
 :PROPERTIES:
@@ -1811,70 +1808,7 @@ remembering it.
 
 ")))
 #+end_src
-
-**** TODO move this to =~/.config/guile/config.org= :: pimp my +ride+ .guile
-This is my guile repl config. Let's frontload the potentially confusing bit: I would like to rely on the [[https://gitlab.com/NalaGinrut/guile-colorized][guile-colorized]] library, which
-is
-a) a lovely little quality-of-life improvement, and
-b) not packaged with the language
-
-This adds up to a bit of a hassle if one's aim is a config which can be dropped into
-different computers and operating systems. My path through the thicket (as of now) is to
-add an elisp snippet which shells out to guile to check whether the ~(ice-9 colorized)~
-module can be found in the load path; this lets me conditionally tangle the appropriate
-version of =~/.guile= accordingly.
-
-Most config is defined outside the conditional top-level src blocks in noweb cookies to
-keep things DRY and maintainable.
-
-***** augment load path
-#+name: guile-augment-load-path
-#+begin_src guile :tangle no
-(add-to-load-path (string-append (getenv "HOME") "/lib/scheme"))
-#+end_src
-
-***** shared modules
-The first line here has ugly indentation so the corresponding noweb cookie (or whatever
-the term is) in the source blocks that actually get tangled to =.guile= files can have
-pretty indentation.
-#+name: guile-shared-modules
-#+begin_src guile :tangle no
- (oop goops)
- (srfi srfi-1)
- (srfi srfi-26) ;; cut
- (ice-9 match)
- (ice-9 readline)
-#+end_src
-
-***** setup repl
-#+name: guile-setup-repl
-#+begin_src guile :tangle no
-(activate-readline)
-#+end_src
-
-***** conditional file templates
-#+begin_src guile :noweb yes :tangle (if (string-equal "exists" (shell-command-to-string "test -e `guile -c \"(display (string-append (car %load-path) \\\"/ice-9/colorized.scm\\\"))\"` && echo -n exists")) "~/.guile" "no")
-<<guile-augment-load-path>>
-
-(use-modules
- <<guile-shared-modules>>
- (ice-9 colorized))
-
- <guile-setup-repl>>
-(activate-colorized)
-#+end_src
-
-But installing a special guile lib and running its (rather manual) installation
-process is annoying; until I properly automate it in [[file:~/Makefile][my dotfiles' Makefile]], a
-hideously copy-pasted near-duplicate will have to do.
-#+begin_src guile :noweb yes :tangle (if (not (string-equal "exists" (shell-command-to-string "test -e `guile -c \"(display (string-append (car %load-path) \\\"/ice-9/colorized.scm\\\"))\"` && echo -n exists"))) "~/.guile" "no")
-<<guile-augment-load-path>>
-
-(use-modules
- <<guile-shared-modules>>)
-
-<<guile-setup-repl>>
-#+end_src
+**** TODO also define a fundamental-mode ~#!guile~ snippet for that shebang
 *** yaml
 #+begin_src elisp :tangle packages.el
 (package! yaml-pro)

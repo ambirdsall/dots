@@ -1,0 +1,1 @@
+export GUILE_LOAD_PATH="$HOME/lib/scheme:$GUILE_LOAD_PATH"
