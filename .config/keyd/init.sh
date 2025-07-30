@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 # * 1 :: install keyd
-if [ ! -d "~/c/keyd" ]; then
+if [ ! -d "$HOME/c/keyd" ]; then
     cd ~/c
     git clone https://github.com/rvaiya/keyd
     cd keyd

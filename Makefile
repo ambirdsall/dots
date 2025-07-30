@@ -9,7 +9,7 @@
 .SUFFIXES:
 .PHONY: brew-deps defaults-write
 
-install: .emacs.d .tmux/plugins/tpm
+install: .emacs.d .tmux/plugins/tpm c c/janet
 
 .emacs.d:
 	git clone --depth 1 git@github.com:doomemacs/doomemacs.git ~/.emacs.d
@@ -22,8 +22,14 @@ install: .emacs.d .tmux/plugins/tpm
 
 linux: c/keyd
 
+c:
+	mkdir ~/c
+
 c/keyd:
 	~/.config/keyd/init.sh
+
+c/janet:
+	~/.config/janet/init.sh
 
 macos: brew-deps defaults-write .hammerspoon
 
