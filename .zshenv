@@ -37,6 +37,9 @@ dots/add_to_path "$HOME/.yarn/bin"
 dots/add_to_path "$HOME/.cargo/bin"
 [ -s "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 dots/add_to_path "$HOME/.local/bin"
+# $PATH of last resort lol
+export PATH="$PATH:$HOME/looney-bin"
+
 # Make sure this one is added last!
 dots/add_to_path "$HOME/bin"
 

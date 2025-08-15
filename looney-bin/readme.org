@@ -1,0 +1,5 @@
+#+title: Welcome to the back of the line
+
+Here be no battle tested hacks, nor any tool that should get regular use. Here at the butt end of =$PATH= we specialize in experimental one-offs, weirdly-suffixed backups and alternate implementations, and "if I mangle this file like so, will it still run?".
+
+Let's get weird.
