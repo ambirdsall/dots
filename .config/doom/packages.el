@@ -39,6 +39,12 @@
 (package! typst-mode)
 (package! ox-typst)
 
+(package! janet-ts-mode
+  :recipe '(:host github :repo "sogaiu/janet-ts-mode" :files ("*.el")))
+
+(package! flycheck-janet
+  :recipe '(:host github :repo "sogaiu/flycheck-janet" :files ("*.el")))
+
 (package! gptel)
 
 (package! graphviz-dot-mode)

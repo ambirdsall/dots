@@ -542,6 +542,7 @@ If the window occupies the entire frame, restore its original size."
      (elisp "https://github.com/Wilfred/tree-sitter-elisp")
      (go "https://github.com/tree-sitter/tree-sitter-go")
      (html "https://github.com/tree-sitter/tree-sitter-html")
+     (janet-simple "https://github.com/sogaiu/tree-sitter-janet-simple")
      (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
      (json "https://github.com/tree-sitter/tree-sitter-json")
      (make "https://github.com/alemuller/tree-sitter-make")
@@ -754,6 +755,11 @@ If the window occupies the entire frame, restore its original size."
 ;; TODO add ox-typst to list of Org export backends
 
 (add-to-list 'auto-mode-alist '("\\.mdx\\'" . markdown-mode))
+
+(use-package! janet-ts-mode
+  :config (add-to-list 'auto-mode-alist '("\\.janet\\'" . janet-ts-mode)))
+
+(use-package! flycheck-janet)
 
 (use-package! gptel)
 

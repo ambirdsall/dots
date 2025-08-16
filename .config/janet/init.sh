@@ -11,4 +11,7 @@ if [ ! -d "$HOME/c/janet" ]; then
     sudo make install
     sudo make install-jpm-git
     sudo make install-spork-git
+
+    sudo jpm install sh
+    sudo jpm install cmd
 fi

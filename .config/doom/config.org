@@ -1452,6 +1452,7 @@ project). It's an idiosyncratic pattern, but it exactly fits what I want on work
      (elisp "https://github.com/Wilfred/tree-sitter-elisp")
      (go "https://github.com/tree-sitter/tree-sitter-go")
      (html "https://github.com/tree-sitter/tree-sitter-html")
+     (janet-simple "https://github.com/sogaiu/tree-sitter-janet-simple")
      (javascript "https://github.com/tree-sitter/tree-sitter-javascript" "master" "src")
      (json "https://github.com/tree-sitter/tree-sitter-json")
      (make "https://github.com/alemuller/tree-sitter-make")
@@ -1856,6 +1857,27 @@ tree-sitter version requires a semi-manual setup step to install all the languag
 #+begin_src elisp
 (add-to-list 'auto-mode-alist '("\\.mdx\\'" . markdown-mode))
 #+end_src
+*** janet
+syntax highlighting et al:
+#+begin_src elisp :tangle packages.el
+(package! janet-ts-mode
+  :recipe '(:host github :repo "sogaiu/janet-ts-mode" :files ("*.el")))
+#+end_src
+#+begin_src elisp
+(use-package! janet-ts-mode
+  :config (add-to-list 'auto-mode-alist '("\\.janet\\'" . janet-ts-mode)))
+#+end_src
+
+and similarly for games of flycheckers:
+#+begin_src elisp :tangle packages.el
+(package! flycheck-janet
+  :recipe '(:host github :repo "sogaiu/flycheck-janet" :files ("*.el")))
+#+end_src
+
+#+begin_src elisp
+(use-package! flycheck-janet)
+#+end_src
+
 ** "I hear lisp is good for AI"
 *** copilot
 #+begin_src elisp :tangle no :noweb-ref default-toggles
