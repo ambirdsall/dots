@@ -47,12 +47,22 @@
   (when-let [session ($<_ echo ,(to-lines (map |(first $) (sessions))) | fzf)]
     ($ zellij attach ,session)))
 
+(defn- session-exists? [session-name]
+  (->> ($<_ zellij list-sessions -s)
+       (string/split "\n")
+       (find |(= $ session-name))))
+
+(defn- attach-or-create-session [session-name]
+  (if (session-exists? session-name)
+    ($ zellij attach ,session-name)
+    ($ zellij -s ,session-name)))
+
 (defn main [& invocation]
   (match invocation
     ([_] (no-args? invocation)) (choose-interactively)
     [_ "resurrect"] (resurrect-all)
     [_ "ls" & flags] ($ zellij ls ;flags)
     [_ "list-sessions" & flags] ($ zellij ls ;flags)
-    ([_ session] (and (single-arg? invocation)
-                      (positional-arg? session))) ($ zellij attach ,session)
+    ([_ session] (and (single-arg? invocation) (positional-arg? session)))
+                 (attach-or-create-session session)
     [_ & args] ($ zellij ;args)))
