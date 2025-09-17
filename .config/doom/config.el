@@ -727,11 +727,19 @@ If the window occupies the entire frame, restore its original size."
   (interactive)
   (save-excursion
     (beginning-of-buffer)
-    (insert "#!/usr/local/bin/guile \\
+    (insert
+     (s-concat
+      "#!"
+      (or (executable-find
+           (if (boundp 'amb/guile-executable-name)
+               amb/guile-executable-name
+             "guile"))
+          "/usr/bin/guile")
+      " \\
 -e main -s
 !#
 
-")))
+"))))
 
 (use-package! yaml-pro
   :hook (yaml-mode . yaml-pro-mode)

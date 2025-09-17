@@ -1803,11 +1803,19 @@ remembering it.
   (interactive)
   (save-excursion
     (beginning-of-buffer)
-    (insert "#!/usr/local/bin/guile \\
+    (insert
+     (s-concat
+      "#!"
+      (or (executable-find
+           (if (boundp 'amb/guile-executable-name)
+               amb/guile-executable-name
+             "guile"))
+          "/usr/bin/guile")
+      " \\
 -e main -s
 !#
 
-")))
+"))))
 #+end_src
 **** TODO also define a fundamental-mode ~#!guile~ snippet for that shebang
 *** yaml
