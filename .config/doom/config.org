@@ -2235,6 +2235,28 @@ This snippet is taken directly from the org-mode info manual.
 (add-hook! (org-mode) (org-appear-mode 1))
 #+end_src
 
+*** optimize text presentation for reading and writing prose, not code
+Olivetti is an emacs package which centers the buffer contents within margins clamped at
+an appropriate width for reading, such that long, wrapped lines don't look like shit.
+#+begin_src elisp :tangle packages.el
+(package! olivetti)
+#+end_src
+
+Let's use =olivetti-mode= in all org buffers; and while I love line numbers in most cases,
+it looks /very/ clean without them, so let's set that too:
+#+begin_src elisp
+(use-package! olivetti)
+
+(after! (olivetti org)
+  (defun amb/make-text-buffer-pretty ()
+    (olivetti-mode 1)
+    (setq-local display-line-numbers nil))
+
+  (remove-hook 'text-mode-hook #'display-line-numbers-mode)
+  (add-hook 'text-mode-hook #'amb/make-text-buffer-pretty)
+  (add-hook 'org-mode-hook #'amb/make-text-buffer-pretty))
+#+end_src
+
 ** ...and, like the buffalo, roam
 First, I need a roam directory to serve as the "slipbox":
 #+begin_src elisp

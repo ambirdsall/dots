@@ -51,6 +51,8 @@
 
 (package! ox-gfm)
 
+(package! olivetti)
+
 (unpin! org-roam)
 (package! org-roam-ui)
 

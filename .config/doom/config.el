@@ -973,6 +973,17 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (add-hook! (org-mode) (org-appear-mode 1))
 
+(use-package! olivetti)
+
+(after! (olivetti org)
+  (defun amb/make-text-buffer-pretty ()
+    (olivetti-mode 1)
+    (setq-local display-line-numbers nil))
+
+  (remove-hook 'text-mode-hook #'display-line-numbers-mode)
+  (add-hook 'text-mode-hook #'amb/make-text-buffer-pretty)
+  (add-hook 'org-mode-hook #'amb/make-text-buffer-pretty))
+
 (setq org-roam-directory "~/Dropbox/roam/")
 
 (use-package! websocket
