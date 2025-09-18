@@ -10,7 +10,7 @@ edo() {
 }
 
 E() {
-  emacsclient -c --socket-name=interminable --alternate-editor="" "$@" &
+  emacsclient -c --alternate-editor="" "$@" &
   disown
 }
 
@@ -23,7 +23,7 @@ EE() {
 
 # No idea why the fuck the current session isn't starting properly?
 EEE() {
-  emacsclient -c --socket-name=interminable --alternate-editor="emacs --daemon=interminable --debug-init" "$@" &
+  emacsclient -c --alternate-editor="emacs --debug-init" "$@" &
   disown
 }
 
