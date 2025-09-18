@@ -304,14 +304,19 @@ projectile would recognize your root directory as a project."
                         (projectile-completing-read "Find file: " (projectile-project-files ,project-root)))
                        "/"))))
 
+  (defun file-jumper-for-dots ()
+    (interactive)
+    (find-file
+     (completing-read "Open dotfile: "
+                      (split-string (shell-command-to-string "dots ls-files ~") "\n"))))
+
   (map! :leader
-        :desc "Browse dotfiles" "f." (cmd! (find-file
-                                         (completing-read "Open dotfile: "
-                                                          (split-string (shell-command-to-string "dots ls-files ~") "\n"))))
+        :desc "Browse dotfiles" "f." #'file-jumper-for-dots
         :desc "Take me $HOME, country roads" "f~" (cmd! (+vertico/find-file-in "~/"))
         :prefix ("fj" . "Jump into specific projects")
         :desc "Browse ~/.config/" :ne "c" (file-jumper-for-project "~/.config/")
-        :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin/")))
+        :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin/")
+        :desc "Browse dotfiles" :ne "d" #'file-jumper-for-dots))
 
 (setq! doom-scratch-initial-major-mode 'org-mode)
 
