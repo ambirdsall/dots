@@ -24,8 +24,10 @@
 
 (defn- resurrect-all []
   (def zombies
-    (map |(match $ [name :zombie] name)
-         (filter |(has-value? $ :zombie) (sessions))))
+    (->>
+      (sessions)
+      (filter |(has-value? $ :zombie))
+      (map |(match $ [name :zombie] name))))
   (pp zombies)
   # resurrect and detach from each zombie session in turn. somehow. if that's possible.
   )
