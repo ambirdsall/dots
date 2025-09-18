@@ -769,6 +769,9 @@ If the window occupies the entire frame, restore its original size."
 
 (use-package! flycheck-janet)
 
+(use-package! kdl-mode
+  :mode ("\\.kdl\\'" . kdl-mode))
+
 (use-package! gptel)
 
 (after! magit

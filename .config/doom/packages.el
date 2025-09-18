@@ -45,6 +45,8 @@
 (package! flycheck-janet
   :recipe '(:host github :repo "sogaiu/flycheck-janet" :files ("*.el")))
 
+(package! kdl-mode)
+
 (package! gptel)
 
 (package! graphviz-dot-mode)

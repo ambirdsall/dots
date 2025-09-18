@@ -1885,6 +1885,15 @@ and similarly for games of flycheckers:
 #+begin_src elisp
 (use-package! flycheck-janet)
 #+end_src
+*** kdl config lang
+#+begin_src elisp :tangle packages.el
+(package! kdl-mode)
+#+end_src
+
+#+begin_src elisp
+(use-package! kdl-mode
+  :mode ("\\.kdl\\'" . kdl-mode))
+#+end_src
 
 ** "I hear lisp is good for AI"
 *** copilot
