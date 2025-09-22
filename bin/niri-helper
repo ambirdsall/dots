@@ -1,0 +1,26 @@
+#!/usr/bin/env janet
+
+(use sh)
+(import spork/json)
+
+(defn- choose-other-workspace! []
+  (let [other-workspaces (->> (json/decode ($<_ niri msg --json workspaces))
+                              (filter |(and (not (get $ "is_focused"))
+                                            (string? (get $ "name"))))
+                              (map |(get $ "name")))
+        choices (string/join (interpose "\n" other-workspaces))]
+    ($<_ echo ,choices | fuzzel --dmenu)))
+
+(defn- focus-workspace []
+  (let [selection (choose-other-workspace!)]
+    ($ niri msg action focus-workspace ,selection)))
+
+(defn- move-column-to-workspace []
+  (let [selection (choose-other-workspace!)]
+    ($ niri msg action move-column-to-workspace ,selection)))
+
+(defn main [& invocation]
+  (match invocation
+    [_ "move-column"] (move-column-to-workspace)
+    [_ "focus"] (focus-workspace)
+    [_] (error "I don't know what to do if you don't tell me what to do")))
