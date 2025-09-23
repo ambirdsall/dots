@@ -340,7 +340,7 @@ The path is formatted with =strftime(3)= to give you the screenshot date and tim
 You can also set this to null to disable saving screenshots to disk, e.g. =screenshot-path null=
 
 #+begin_src kdl :tangle config.kdl
-screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+screenshot-path "~/screenshots/%Y-%m-%d_%H-%M-%S_screenshot.png"
 
 #+end_src
 ** Animation settings.
