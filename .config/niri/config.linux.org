@@ -377,6 +377,7 @@ config-notification {
 #+end_src
 
 * named workspaces
+Here are the workspaces I always want to have around and named:
 
 #+begin_src kdl :tangle config.kdl
 workspace "home base"
@@ -388,13 +389,45 @@ workspace "chess"
 workspace "C.R.E.A.M."
 #+end_src
 
+Now let's make it nice to work with them.
+
 ** working with named workspaces
 #+begin_src kdl :tangle no :noweb-ref keybinds
 Mod+W hotkey-overlay-title="Focus named workspace" { spawn "~/bin/niri-helper" "focus"; }
 Mod+Ctrl+W hotkey-overlay-title="Move column to named workspace" { spawn "~/bin/niri-helper" "move-column"; }
 #+end_src
 
-** TODO display workspace name in each monitor (ideally, in top bar)
+#+begin_src janet-ts :tangle ~/bin/niri-helper :shebang "#!/usr/bin/env janet"
+(use sh)
+(import spork/json)
+
+(defn- choose-other-workspace! [title]
+  (let [other-workspaces (->> (json/decode ($<_ niri msg --json workspaces))
+                              (filter |(and (not (get $ "is_focused"))
+                                            (string? (get $ "name"))))
+                              (map |(get $ "name")))
+        choices (string/join (interpose "\n" other-workspaces))
+        prompt (string/join [title ": "])]
+    ($<_ echo ,choices | fuzzel --dmenu --use-bold --prompt-color ,"008853ff" --prompt ,prompt)))
+
+(defn- focus-workspace []
+  (let [selection (choose-other-workspace! "Go to workspace")]
+    ($ niri msg action focus-workspace ,selection)))
+
+(defn- move-column-to-workspace []
+  (let [selection (choose-other-workspace! "Move column to workspace")]
+    ($ niri msg action move-column-to-workspace ,selection)))
+
+(defn main [& invocation]
+  (match invocation
+    [_ "move-column"] (move-column-to-workspace)
+    [_ "focus"] (focus-workspace)
+    [_] (error "I don't know what the fuck to do if you don't fucking tell me what to do")))
+#+end_src
+
+** TODO display workspace names in the dms top bar workspaces lists
+For the time being, manually defining icons for all named workspaces in the DMS settings dashboard
+will have to do.
 
 * window rules
 Window rules let you adjust behavior for individual windows.
