@@ -253,7 +253,9 @@ When to center a column when changing focus, options are:
 - "on-overflow" :: focusing a column will center it if it doesn't fit
   together with the previously focused column.
 #+begin_src kdl :tangle no :noweb-ref layout
-center-focused-column "on-overflow"
+center-focused-column "never"
+// center-focused-column "always"
+// center-focused-column "on-overflow"
 
 // You can customize the widths that "switch-preset-column-width" (Mod+R) toggles between.
 preset-column-widths {
