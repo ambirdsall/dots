@@ -353,13 +353,25 @@ screenshot-path "~/screenshots/%Y-%m-%d_%H-%M-%S_screenshot.png"
 ** Animation settings.
 The wiki explains how to configure individual animations: https://yalter.github.io/niri/Configuration:-Animations
 
+I do like the animations, but Rocinante, my old 8GB RAM macbook, struggles with them; so
+we must mind system constraints when tangling this subsection. On linux, =/proc/meminfo=
+will return info including a =MemTotal= line listing how many 1024-byte blocks of memory are
+available; I'm hacking around a problem for a single, solitary old grey mare, whose total
+just clears 8 million of them: this leaves us with 8,888,888 as the smallest
+aesthetically-pleasing magic number to compare against.
+
+#+name: has-the-horsies
+#+begin_src sh :tangle no :results tangle
+if [ $(echo "$(awk '/MemTotal/ { print $2}' /proc/meminfo) > 8888888" | bc) -eq 1 ]; then
+    echo "// this computer has the horsies"
+else
+    echo off
+fi
+#+end_src
+
 #+begin_src kdl :tangle config.kdl
 animations {
-    // Uncomment to turn off all animations.
-    // off
-
-    // Slow down all animations by this factor. Values below 1 speed them up instead.
-    // slowdown 3.0
+    <<has-the-horsies()>>
 }
 
 #+end_src
