@@ -71,7 +71,7 @@ function notifyosd-precmd() {
 }
 
 # make sure this plays nicely with any existing precmd
-precmd_functions+=( notifyosd-precmd )
+# precmd_functions+=( notifyosd-precmd )
 
 # get command name and start the timer
 function notifyosd-preexec() {
@@ -81,4 +81,4 @@ function notifyosd-preexec() {
 }
 
 # make sure this plays nicely with any existing preexec
-preexec_functions+=( notifyosd-preexec )
+# preexec_functions+=( notifyosd-preexec )
