@@ -406,6 +406,7 @@ workspace "jorb"
 workspace "website and resume"
 workspace "computer project du jour"
 workspace "watching shit"
+workspace "reading shit"
 workspace "chess"
 workspace "C.R.E.A.M."
 #+end_src
