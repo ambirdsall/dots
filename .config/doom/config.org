@@ -987,8 +987,7 @@ projectile would recognize your root directory as a project."
         :prefix ("fj" . "Jump into specific projects")
         :desc "Browse ~/.config/" :ne "c" (file-jumper-for-project "~/.config/")
         :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin/")
-        :desc "Browse dotfiles" :ne "d" #'file-jumper-for-dots
-        ))
+        :desc "Browse dotfiles" :ne "d" #'file-jumper-for-dots))
 #+end_src
 ** scratch buffer
 If they're in org, that's good for notes and I can still write/exec code
