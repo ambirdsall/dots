@@ -101,6 +101,7 @@
  (yaml
    + lsp
    +tree-sitter)        ; JSON, but readable
+ (janet +tree-sitter)
  
  :config
  literate

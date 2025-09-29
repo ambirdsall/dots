@@ -1871,17 +1871,11 @@ tree-sitter version requires a semi-manual setup step to install all the languag
 (add-to-list 'auto-mode-alist '("\\.mdx\\'" . markdown-mode))
 #+end_src
 *** janet
-syntax highlighting et al:
-#+begin_src elisp :tangle packages.el
-(package! janet-ts-mode
-  :recipe '(:host github :repo "sogaiu/janet-ts-mode" :files ("*.el")))
-#+end_src
-#+begin_src elisp
-(use-package! janet-ts-mode
-  :config (add-to-list 'auto-mode-alist '("\\.janet\\'" . janet-ts-mode)))
+#+begin_src elisp :tangle no :noweb-ref doom-modules-lang
+(janet +tree-sitter)
 #+end_src
 
-and similarly for games of flycheckers:
+and should I feel like playing a game of flycheckers:
 #+begin_src elisp :tangle packages.el
 (package! flycheck-janet
   :recipe '(:host github :repo "sogaiu/flycheck-janet" :files ("*.el")))

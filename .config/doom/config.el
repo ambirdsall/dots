@@ -769,9 +769,6 @@ If the window occupies the entire frame, restore its original size."
 
 (add-to-list 'auto-mode-alist '("\\.mdx\\'" . markdown-mode))
 
-(use-package! janet-ts-mode
-  :config (add-to-list 'auto-mode-alist '("\\.janet\\'" . janet-ts-mode)))
-
 (use-package! flycheck-janet)
 
 (use-package! kdl-mode
