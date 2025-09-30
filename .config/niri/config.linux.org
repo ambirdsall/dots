@@ -398,17 +398,25 @@ config-notification {
 #+end_src
 
 * named workspaces
-Here are the workspaces I always want to have around and named:
+There is a base set of workspaces I always want to have around and named, but I
+would also like to support defining some computer-specific workspace names. So
+I'll support an optional file (let's call it =$HOME/.config/niri/local-workspaces=)
+whose contents will be appended to the list of named workspaces if it exists.
+
+#+NAME: local-workspaces
+#+begin_src sh :tangle no :results raw tangle
+[ -e local-workspaces ] && cat local-workspaces || echo ""
+#+end_src
 
 #+begin_src kdl :tangle config.kdl
 workspace "home base"
 workspace "jorb"
-workspace "website and resume"
 workspace "computer project du jour"
+workspace "dots"
 workspace "watching shit"
 workspace "reading shit"
-workspace "chess"
 workspace "C.R.E.A.M."
+<<local-workspaces()>>
 #+end_src
 
 Now let's make it nice to work with them.
