@@ -1,0 +1,33 @@
+#!/usr/bin/env janet
+
+(use sh)
+
+(defn print-osc1337-inline [file]
+  (def b64 ($<_ base64 ,file))
+  (print "\u001b]1337;File=inline=1:" b64 "\u0007"))
+
+(defn main [script-name & args]
+  (when (empty? args)
+      (eprint "Usage: " script-name " <filename> [<filename> ...]")
+      (os/exit 64))
+
+  (each file args
+    (cond
+      ## --- Kitty ---
+      (os/getenv "KITTY_WINDOW_ID") ($ kitty +kitten icat ,file)
+
+      ## --- WezTerm ---
+      (os/getenv "WEZTERM_EXECUTABLE") (print-osc1337-inline file)
+
+      ## --- iTerm2 ---
+      (os/getenv "ITERM_SESSION_ID") (print-osc1337-inline file)
+
+      ## --- Sixel ---
+      (comment
+        (string/find (os/getenv "TERM" "") "sixel")
+        ($ img2sixel ,file))
+
+      :else
+      (do
+        (eprint "Error: no supported terminal emulator detected")
+        (os/exit 1)))))
