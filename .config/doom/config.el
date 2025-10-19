@@ -175,6 +175,8 @@ used interactively."
 (setq! evil-ex-search-persistent-highlight nil
        +evil-want-o/O-to-continue-comments nil)
 
+(map! :leader ":" #'eval-expression)
+
 (map! :after consult "M-i" #'consult-imenu)
 
 ;; this macro was copied from someone who copied it from here: https://stackoverflow.com/a/22418983/4921402

@@ -725,12 +725,19 @@ keybinding scheme as well sometime.
   :config (global-evil-matchit-mode 1))
 #+end_src
 *** changing up some default settings
+**** evil defaults
 #+begin_src elisp
 (setq! evil-ex-search-persistent-highlight nil
        +evil-want-o/O-to-continue-comments nil)
 #+end_src
 
-You can have my ~evil-substitute~ when you pry it from my cold, dead fingers.
+**** doom defaults
+WHEREAS =M-x= works perfectly fine in all modes; and WHEREAS zellij's =kkp= implementation (as of v0.42.2) doesn't handle a few bindings correctly, notably including =M-:=; let's go ahead and switch those up.
+#+begin_src elisp
+(map! :leader ":" #'eval-expression)
+#+end_src
+
+And you can have my ~evil-substitute~ when you pry it from my cold, dead fingers.
 #+begin_src elisp :tangle packages.el
 (package! evil-snipe :disable t)
 #+end_src
