@@ -771,6 +771,17 @@ If the window occupies the entire frame, restore its original size."
 
 (use-package! flycheck-janet)
 
+(use-package! ajrepl
+  :after janet-ts-mode
+  :config
+  (add-hook 'janet-ts-mode-hook
+            #'ajrepl-interaction-mode)
+  (defun +janet/open-repl ()
+    (interactive)
+    (ajrepl)
+    (pop-to-buffer ajrepl-repl-buffer-name))
+  (set-repl-handler! 'janet-ts-mode #'+janet/open-repl))
+
 (use-package! kdl-mode
   :mode ("\\.kdl\\'" . kdl-mode))
 

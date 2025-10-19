@@ -42,6 +42,12 @@
 (package! flycheck-janet
   :recipe '(:host github :repo "sogaiu/flycheck-janet" :files ("*.el")))
 
+(package! ajrepl
+  :recipe (:host github
+           :repo "sogaiu/ajrepl"
+           :files (:defaults ("ajrepl/"
+                              "ajrepl/*"))))
+
 (package! kdl-mode)
 
 (package! gptel)

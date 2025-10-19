@@ -1879,10 +1879,27 @@ and should I feel like playing a game of flycheckers:
 #+begin_src elisp :tangle packages.el
 (package! flycheck-janet
   :recipe '(:host github :repo "sogaiu/flycheck-janet" :files ("*.el")))
+
+(package! ajrepl
+  :recipe (:host github
+           :repo "sogaiu/ajrepl"
+           :files (:defaults ("ajrepl/"
+                              "ajrepl/*"))))
 #+end_src
 
 #+begin_src elisp
 (use-package! flycheck-janet)
+
+(use-package! ajrepl
+  :after janet-ts-mode
+  :config
+  (add-hook 'janet-ts-mode-hook
+            #'ajrepl-interaction-mode)
+  (defun +janet/open-repl ()
+    (interactive)
+    (ajrepl)
+    (pop-to-buffer ajrepl-repl-buffer-name))
+  (set-repl-handler! 'janet-ts-mode #'+janet/open-repl))
 #+end_src
 *** kdl config lang
 #+begin_src elisp :tangle packages.el
