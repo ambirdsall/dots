@@ -28,9 +28,9 @@
       (sessions)
       (filter |(has-value? $ :zombie))
       (map |(match $ [name :zombie] name))))
-  (pp zombies)
-  # resurrect and detach from each zombie session in turn. somehow. if that's possible.
-  )
+  # TODO can `expect` automate manually typing `d` to detach from each session as it is resurrected?
+  # Given zombies ["foo" "bop" "pow"], constructs the shell string "z foo && z bop && z pow"
+  ($ sh -c (string/join (map |(string "z " $) zombies) " && ")))
 
 (defn- n-ary?? [n]
   "Define predicates for counting the args passed during script invocation"
