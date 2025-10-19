@@ -55,3 +55,5 @@
 [rerere]
 	enabled = true
 	autoupdate = true
+[safe]
+	directory = /home/amb/c/janet/build/spork
