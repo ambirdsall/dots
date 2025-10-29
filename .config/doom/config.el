@@ -104,7 +104,7 @@ function to either a string argument or to selected text, depending on context."
      (interactive
       (if (use-region-p)
           (list nil (region-beginning) (region-end))
-        (let ((bds (bounds-of-thing-at-point 'paragraph)))
+        (let ((bds (bounds-of-thing-at-point 'sexp)))
           (list nil (car bds) (cdr bds)))))
 
      (let* ((work-on-string? (if string t nil))
@@ -120,15 +120,17 @@ function to either a string argument or to selected text, depending on context."
            (goto-char from)
            (insert output-str))))))
 
-;; TODO use defalias instead of fset so docstrings can be set
-(defmacro def-text-transform (name fn)
+(defmacro def-text-transform (name fn &optional docstring)
   "Create a new interactive command bound to NAME using some
 string manipulation function FN. It will work given a string
 argument programmatically or by operating on selected text when
 used interactively."
-  `(fset ,name (cmds--on-string-or-region ,fn)))
+  `(defalias ,name (cmds--on-string-or-region ,fn) ,docstring))
 
-(def-text-transform 'kebab-case #'s-dashed-words)
+(def-text-transform 'kebab-case #'s-dashed-words
+                     "Make a string arg kebab case. If called interactively with a region active, replaces the selected text with its kebab case equivalent.
+
+For example, any of `(kebab-case \"foo bar\")', `(kebab-case \"foo_bar\")', or `(kebab-case \"fooBar\")' will return `\"foo-bar\"'.")
 (def-text-transform 'pascal-case #'s-upper-camel-case)
 (def-text-transform 'camel-case #'s-lower-camel-case)
 (def-text-transform 'snake-case #'s-snake-case)
