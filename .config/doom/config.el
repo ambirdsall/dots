@@ -514,6 +514,9 @@ If the window occupies the entire frame, restore its original size."
 
 (setq! projectile-project-search-path '("~/c/"))
 
+(after! projectile
+  (setq! projectile-switch-project-action #'projectile-find-file))
+
 (setq! find-file-existing-other-name nil
        find-file-visit-truename nil)
 

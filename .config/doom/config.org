@@ -1408,9 +1408,16 @@ If the window occupies the entire frame, restore its original size."
 (setq standard-indent 2)
 #+end_src
 
-** projectile
+** managing projects with projectile
+Set things up so projects are automatically discovered in my default code directory:
 #+begin_src elisp
 (setq! projectile-project-search-path '("~/c/"))
+#+end_src
+
+And undo the doom default that maps projects to workspaces:
+#+begin_src elisp
+(after! projectile
+  (setq! projectile-switch-project-action #'projectile-find-file))
 #+end_src
 
 *** every project has a =todo.org= and every =todo.org= can just be hardlinks of the same underlying file
