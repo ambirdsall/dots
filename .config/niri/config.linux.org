@@ -186,7 +186,7 @@ layout {
 *** gaps
 Gaps around windows are defined in logical pixels.
 #+begin_src kdl :tangle no :noweb-ref layout
-gaps 8
+gaps 5
 #+end_src
 
 *** focus ring
@@ -278,6 +278,14 @@ struts {
 
 #+begin_src kdl :tangle no :noweb-ref layout
 struts {}
+#+end_src
+*** tab indicator
+#+begin_src kdl :tangle no :noweb-ref layout
+tab-indicator {
+    width 5
+    length total-proportion=1.0
+    place-within-column
+}
 #+end_src
 ** tiling behavior :: ¿center? on focus, preset sizes, etc
 When to center a column when changing focus, options are:
@@ -455,7 +463,8 @@ Now let's make it nice to work with them.
 
 ** working with named workspaces
 #+begin_src kdl :tangle no :noweb-ref keybinds
-Mod+W hotkey-overlay-title="Focus named workspace" { spawn "~/bin/niri-helper" "focus"; }
+Mod+W hotkey-overlay-title="Display the focused workspace's name" { spawn "hydratic" "niri" "ws"; }
+Mod+Shift+W hotkey-overlay-title="Focus named workspace" { spawn "~/bin/niri-helper" "focus"; }
 Mod+Ctrl+W hotkey-overlay-title="Move column to named workspace" { spawn "~/bin/niri-helper" "move-column"; }
 #+end_src
 
@@ -838,12 +847,12 @@ Finer width adjustments. This command can also:
 Pixel sizes use logical, or scaled, pixels. I.e. on an output with scale 2.0,
 set-column-width "100" will make the column occupy 200 physical screen pixels.
 #+begin_src kdl :tangle no :noweb-ref keybinds
-Mod+Minus { set-column-width "-10%"; }
-Mod+Equal { set-column-width "+10%"; }
+Mod+Minus hotkey-overlay-title="decrease column width" { set-column-width "-10%"; }
+Mod+Equal hotkey-overlay-title="increase column width" { set-column-width "+10%"; }
 
 // Finer height adjustments when in column with other windows.
-Mod+Shift+Minus { set-window-height "-10%"; }
-Mod+Shift+Equal { set-window-height "+10%"; }
+Mod+Shift+Minus hotkey-overlay-title="decrease column height" { set-window-height "-10%"; }
+Mod+Shift+Equal hotkey-overlay-title="increase column height" { set-window-height "+10%"; }
 
 #+end_src
 
@@ -855,7 +864,9 @@ Mod+Alt+V { switch-focus-between-floating-and-tiling; }
 // Toggle tabbed column display mode.
 // Windows in this column will appear as vertical tabs,
 // rather than stacked on top of each other.
-Mod+Tab { toggle-column-tabbed-display; }
+Mod+Tab hotkey-overlay-title="Toggled tabbed display for column" {
+    toggle-column-tabbed-display;
+}
 
 // Actions to switch layouts.
 // Note: if you uncomment these, make sure you do NOT have
@@ -866,6 +877,7 @@ Mod+Tab { toggle-column-tabbed-display; }
 // Mod+Shift+Space { switch-layout "prev"; }
 
 Print { screenshot; }
+Mod+Shift+S hotkey-overlay-title="Take screenshot" { screenshot; }
 Ctrl+Print { screenshot-screen; }
 Alt+Print { screenshot-window; }
 
