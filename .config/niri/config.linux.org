@@ -132,7 +132,7 @@ Output "Dell Inc. DELL U2722D 3W06FH3" (DP-5)
 
 #+NAME: laptop-screen-width
 #+begin_src bash :tangle no :results tangle
-niri msg outputs | rg -A 5 eDP-1 | awk '/Logical size:/ { split($3,a,"x"); print a[1] }' | tr -d "\n"
+niri msg --json outputs | jq '."eDP-1".logical.width'
 #+end_src
 
 ** monitors
