@@ -167,7 +167,12 @@ output "Dell Inc. DELL U2722D 3W06FH3" {
 }
 #+end_src
 
-** TODO dynamic/portable calculations of laptop-screen-size-based ~y=~ values
+I can't decide if it's more exasperating or funny that this happens sometimes, but here we are:
+#+begin_src kdl :tangle no
+output "Unknown Unknown Unknown" {
+    position x=<<laptop-screen-width()>> y=-80
+}
+#+end_src
 
 * layout and UI
 Settings that influence how windows are positioned and sized.
