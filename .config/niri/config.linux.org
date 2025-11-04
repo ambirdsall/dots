@@ -1,6 +1,5 @@
 #+title: Niri config
 
-* intro and bookkeeping
 #+begin_src elisp :results none
 (org-babel-tangle-file (buffer-file-name))
 #+end_src
@@ -10,6 +9,7 @@
   (org-babel-tangle-file (buffer-file-name)))
 #+end_src
 
+* intro and bookkeeping
 Goddamn it, another tiling WM sucked me in lol.
 
 This time, though, I can (and enthusiastically do) delegate the whole "build a functioning
@@ -18,6 +18,22 @@ desktop environment around the window management" thing. Chapeau, [[https://gith
 - This config is in [[https://kdl.dev][the KDL format]]
 - =/-= comments out the following node.
 - c.f. [[https://yalter.github.io/niri/Configuration:-Introduction][niri's GH wiki]] for a full description of the configuration
+
+** okay wait but suppose I want/need to upgrade DankMaterialShell
+presumably it will improve with time/effort, you know?
+
+Anyway, you're going to need to rawdog a tty: you can't overwrite =/usr/local/bin/dms= while it's running. So:
+0) remember that you open a tty from GDM et al with shortcuts like e.g. =ctrl+alt+F3=
+1) log out
+2) grab you a tty and run this here CLI command:
+#+begin_src sh :tangle no :results silent
+~/sbin/update-dms
+#+end_src
+
+
+*** TODO define keybindings to kill/(re)start ~dms~
+
+*** TODO also update quickshell in =$HOME/sbin/update-dms=
 
 * Input device configuration.
 Find the full list of options on the wiki:
@@ -48,11 +64,11 @@ from =org.freedesktop.locale1=. You can control these using
     }
 #+end_src
 ** pointing devices
+    Next sections include =libinput= settings. Omitting settings disables them, or leaves them at their default values.
+
+    All commented-out settings here are examples, not defaults.
 #+begin_src kdl :tangle config.kdl
 
-    // Next sections include libinput settings.
-    // Omitting settings disables them, or leaves them at their default values.
-    // All commented-out settings here are examples, not defaults.
     touchpad {
         dwt
         click-method "clickfinger"
@@ -96,6 +112,9 @@ by running `niri msg outputs` while inside a niri instance.
 The built-in laptop monitor is usually called "eDP-1".
 Find more information on the wiki: https://yalter.github.io/niri/Configuration:-Outputs
 
+** dynamically fetch built-in screen size
+This way, each different laptop plays with the office monitors nicely.
+
 #+begin_src :tangle no
 ┌ ~ 🌗
 └➣ niri msg outputs | rg -S 'Output|Logical size|current'
@@ -116,26 +135,34 @@ Output "Dell Inc. DELL U2722D 3W06FH3" (DP-5)
 niri msg outputs | rg -A 5 eDP-1 | awk '/Logical size:/ { split($3,a,"x"); print a[1] }' | tr -d "\n"
 #+end_src
 
+** monitors
+*** Laptop stand, and therefore monitor, goes in the middle, i.e. origin.
 
+The y=300 bit is accounting for the lower height of the laptop stand vs the monitor stands.
+
+Logical size queried by evaluating the =laptop-screen-width()= block.
 #+begin_src kdl :tangle config.kdl
-// laptop monitor in the middle
-// i.e. at origin
-// the y=300 bit is accounting for the lower height of the laptop stand vs the monitor stands
 output "eDP-1" {
     position x=0 y=300
 }
 
-// acer monitor to the left
-// i.e. shifted its own width left of origin
-// Logical size: 1920x1080
-output "DP-6" {
+#+end_src
+
+*** Acer monitor to the left, i.e. shifted its own width left of origin.
+Logical size: 1920x1080
+
+#+begin_src kdl :tangle config.kdl
+output "Acer Technologies SB220Q 0x11102304" {
     position x=-1920 y=0
 }
 
-// dell monitor to the right
-// i.e. shifted the *laptop* monitor's width to the right
-// Logical size: 2560x1440
-output "DP-5" {
+#+end_src
+
+*** Dell monitor to the right, i.e. shifted the /laptop/ monitor's width to the right.
+Logical size: 2560x1440
+
+#+begin_src kdl :tangle config.kdl
+output "Dell Inc. DELL U2722D 3W06FH3" {
     position x=<<laptop-screen-width()>> y=-80
 }
 #+end_src
