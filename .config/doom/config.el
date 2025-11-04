@@ -781,8 +781,11 @@ If the window occupies the entire frame, restore its original size."
 (use-package! ajrepl
   :after janet-ts-mode
   :config
+  (setq ajrepl-start-cmd-line '("janet" "-s" "-d"))
+
   (add-hook 'janet-ts-mode-hook
             #'ajrepl-interaction-mode)
+
   (defun +janet/open-repl ()
     (interactive)
     (ajrepl)
