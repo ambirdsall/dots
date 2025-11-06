@@ -226,7 +226,7 @@ focus-ring {
     // You can use any CSS linear-gradient tool on the web to set these up.
     // Changing the color space is also supported, check the wiki for more info.
     //
-    active-gradient from="#80c8ff" to="#c7ff7f" angle=45
+    active-gradient from="#ba965377" to="#007a33ff" angle=-20 in="oklch shorter hue"
 
     // You can also color the gradient relative to the entire view
     // of the workspace, rather than relative to just the window itself.
@@ -538,11 +538,28 @@ window-rule {
 
 // Example: enable rounded corners for all windows.
 // (This example rule is commented out with a "/-" in front.)
-/-window-rule {
+window-rule {
     geometry-corner-radius 12
     clip-to-geometry true
 }
 
+// tbd lol
+prefer-no-csd
+
+window-rule {
+    match app-id="kitty"
+    
+    // While it is, regrettably, true that some rotten assholes use the number 88
+    // as a shiboleth-cum-homage to one of the most obviously evil dipshits in history, I
+    // like multiples of eleven and pianos too much to let them have it all to themselves.
+    opacity 0.88
+
+    // the `draw-border-with-background` setting below is commented out since it does
+    // nothing while `prefer-no-csd` is set; this comment is still here since I'm not yet
+    // sure that `prefer-no-csd` is going to work with no shitty deal-breaker edge cases
+
+    // draw-border-with-background false
+}
 #+end_src
 * keybinds
 Keys consist of modifiers separated by + signs, followed by an XKB key name
