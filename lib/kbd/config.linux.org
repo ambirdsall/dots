@@ -1,0 +1,104 @@
+#+title: keyboard backlights, what a concept
+
+#+begin_src elisp :results none
+(org-babel-tangle-file (buffer-file-name))
+#+end_src
+
+#+begin_src elisp :results none
+(add-hook! 'after-save-hook :local
+  (org-babel-tangle-file (buffer-file-name)))
+#+end_src
+
+* first we find the keyboard backlight device pseudofile
+#+name: kbd-backlight-device
+#+begin_src sh :tangle no :results raw tangle
+basename "$(find /sys/class/leds/ -name '*::kbd_backlight')" | tr -d '\n'
+#+end_src
+
+#+name: max-brightness
+#+begin_src sh :tangle no :results raw tangle
+cat /sys/class/leds/<<kbd-backlight-device()>>/max_brightness  | tr -d '\n'
+#+end_src
+
+* and then we can define =kbd-{on,off}= utilities
+Does it make sense to DRY this pair out, since they are inherently coupled? Yes. Will I? NOT TODAY
+
+(in point of fact, it makes sense to build one of these out until it swallows both the other and =~/bin/kbd= whole)
+
+#+begin_src janet-ts :tangle ~/sbin/kbd-light-on :shebang "#!/usr/bin/env janet"
+(use sh)
+
+(defn main [& invocation]
+  (def device-dir "/sys/class/leds/<<kbd-backlight-device()>>")
+  (def max-brightness <<max-brightness()>>)
+  (def current-brightness
+    (-> (string device-dir "/brightness")
+        (slurp)
+        (string/trim)
+        (scan-number)))
+  (def next-brightness
+    (let [step (/ max-brightness 20)]
+      (min max-brightness (+ current-brightness step))))
+
+  (if ($? command -v dbus-send)
+    ($ dbus-send --system --type=method_call  --dest=org.freedesktop.UPower "/org/freedesktop/UPower/KbdBacklight" "org.freedesktop.UPower.KbdBacklight.SetBrightness" ,(string "int32:" next-brightness))
+    ($ brightnessctl --device=<<kbd-backlight-device()>> set ,next-brightness)))
+#+end_src
+
+#+begin_src janet-ts :tangle ~/sbin/kbd-light-off :shebang "#!/usr/bin/env janet"
+(use sh)
+
+(defn main [& invocation]
+  (def device-dir "/sys/class/leds/<<kbd-backlight-device()>>")
+  (def max-brightness <<max-brightness()>>)
+  (def current-brightness
+    (-> (string device-dir "/brightness")
+        (slurp)
+        (string/trim)
+        (scan-number)))
+  (def next-brightness
+    (let [step (/ max-brightness 20)]
+      (max 0 (- current-brightness step))))
+
+  # TODO: handle GNOME more nicely in case I go back full-time, cf. below
+  # gdbus call --session --dest org.gnome.SettingsDaemon.Power --object-path /org/gnome/SettingsDaemon/Power --method org.gnome.SettingsDaemon.Power.Keyboard.StepDown
+  (if ($? command -v dbus-send)
+    ($ dbus-send --system --type=method_call  --dest=org.freedesktop.UPower "/org/freedesktop/UPower/KbdBacklight" "org.freedesktop.UPower.KbdBacklight.SetBrightness" ,(string "int32:" next-brightness))
+    ($ brightnessctl --device=<<kbd-backlight-device()>> set ,next-brightness)))
+#+end_src
+
+** TODO handle GNOME more nicely in case I go back full-time.
+*** TODO How to check if i'm inside a gnome session?
+pretty sure it's a pretty straightforward env var check, maybe =$DESKTOP_SESSION=?
+
+*** How to change brightness if ibid:
+#+begin_src janet-ts :tangle no
+($ gdbus call --session --dest org.gnome.SettingsDaemon.Power --object-path /org/gnome/SettingsDaemon/Power --method org.gnome.SettingsDaemon.Power.Keyboard.StepDown)
+#+end_src
+
+* and /then/ we can define a higher-level =kdb= program
+
+#+begin_src sh :tangle ~/bin/kbd :shebang "#!/bin/sh"
+
+main() {
+    case "$1" in
+    "on" | "up")
+        ~/sbin/kbd-light-on
+        exit
+        ;;
+    off | down)
+        ~/sbin/kbd-light-off
+        exit
+        ;;
+    *)
+        local SELECTION=$(printf "on\noff\n" | gum choose)
+        test -z $SELECTION && exit 1
+        ~/sbin/kbd-light-$SELECTION
+        ;;
+    esac
+}
+
+main "$@"
+#+end_src
+
+** TODO rewrite this in janet too

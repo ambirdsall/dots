@@ -1,1 +1,0 @@
-brightnessctl --device=tpacpi::kbd_backlight set 1

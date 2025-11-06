@@ -1,7 +1,0 @@
-#!/bin/bash
-
-if command -v dbus-send &>/dev/null; then
-  dbus-send --system --type=method_call  --dest="org.freedesktop.UPower" "/org/freedesktop/UPower/KbdBacklight" "org.freedesktop.UPower.KbdBacklight.SetBrightness" int32:$(kbd-next-brightness-up)
-else
-  kbd-light-on
-fi
