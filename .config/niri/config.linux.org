@@ -914,9 +914,9 @@ Ctrl+Alt+Delete { quit; }
 
 // Powers off the monitors. To turn them back on, do any input like
 // moving the mouse or pressing any other key.
-Mod+Alt+Shift+P { power-off-monitors; }
+Mod+Alt+Shift+P hotkey-overlay-title="Turn off displays" { power-off-monitors; }
 #+end_src
-* untangled example config
+* untangled example/reference configuration
 ** output config
 #+begin_src kdl :tangle no
 output "eDP-1" {
