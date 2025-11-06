@@ -577,6 +577,8 @@ block so the closing brace isn't dangling or forgotten.
 #+begin_src kdl :tangle config.kdl
 binds {
     <<keybinds>>
+
+    <<local-binds()>>
 }
 #+end_src
 
@@ -987,4 +989,26 @@ Mod+Ctrl+J     { move-window-down; }
 Mod+Ctrl+K     { move-window-up; }
 Mod+Ctrl+J     { move-window-down-or-to-workspace-down; }
 Mod+Ctrl+K     { move-window-up-or-to-workspace-up; }
+#+end_src
+* computer-specific overrides
+Once the next release of niri hits, there will be a mechanism for including other config files, at which point I can run =M-x raise-sexp= on the ~:tangle~ arg's ~(and (file-exists-p ...) ...)~ form, move the contents of =./local-binds.kdl= inside a ~binds { ... }~ in =laptop.kdl=, delete the =sh= block, and be on my merry way. For now, though, shout out to org-mode for making a workaround possible, I guess.
+
+#+begin_src dkl :tangle (or "no" (and (file-exists-p "laptop.kdl") "config.kdl"))
+
+include "laptop.kdl"
+#+end_src
+
+#+name: local-binds
+#+begin_src sh :tangle no :results raw tangle
+cat local-binds.kdl
+#+end_src
+
+#+name: local-overrides
+#+begin_src sh :tangle no :results raw tangle
+cat laptop.kdl
+#+end_src
+
+#+begin_src kdl :tangle config.kdl
+
+<<local-overrides()>>
 #+end_src
