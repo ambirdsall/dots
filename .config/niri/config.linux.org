@@ -599,7 +599,7 @@ Mod+N hotkey-overlay-title="Notification Center" {
 Mod+Shift+P hotkey-overlay-title="Settings" {
     spawn "dms" "ipc" "call" "settings" "toggle";
 }
-Mod+P hotkey-overlay-title="Notepad" {
+Mod+P {
     spawn "dms" "ipc" "call" "notepad" "toggle";
 }
 Super+Alt+L hotkey-overlay-title="Lock Screen" {
