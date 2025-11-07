@@ -63,6 +63,7 @@
  tty               ; improve the terminal Emacs experience
  
  :lang
+ (clojure +lsp +treesitter)           ; java with a lisp
  data              ; config/data formats
  (elixir +lsp)            ; erlang done right
  emacs-lisp        ; drown in parentheses
