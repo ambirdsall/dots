@@ -22,14 +22,43 @@
     (string/split "\n")
     (map |(peg/match session-pattern $))))
 
-(defn- resurrect-all []
-  (def zombies
+(def- zombies
+  "Returns a tuple of strings representing the names of all sessions with status :zombie"
     (->>
       (sessions)
       (filter |(has-value? $ :zombie))
       (map |(match $ [name :zombie] name))))
-  # TODO can `expect` automate manually typing `d` to detach from each session as it is resurrected?
-  # Given zombies ["foo" "bop" "pow"], constructs the shell string "z foo && z bop && z pow"
+
+# TODO can I shorten this timeout to under one second?
+# (start w/ 0.5 and iterate)
+# - [-] naively replacing `expect timeout` with `sleep 0.5` doesn't work
+# - [-] `set timeout 0` followed by both `expect timeout` + `sleep 0.5` might tho?
+(defn- orchestrate-resurrect-all []
+  (def expect-script
+    (string
+      ```
+set timeout 1
+spawn ~/bin/z resurrect-all
+
+```
+      (string/join (map (fn [&] ``
+expect timeout
+send d
+
+``) zombies))))
+  ($ expect -c ,expect-script)
+  # and print the session list again before exiting for a nice view of what I've wrought
+  ($ zellij ls))
+
+(defn- do-resurrect-all []
+  # Given zombie sessions ["foo" "bop" "pow"], this constructs and executes a shell string
+  # to sequentially re-attach:
+  #     z foo && z bop && z pow
+  #
+  # This is effective for triggering the resurrections per se, but it does require
+  # manually detaching from each by typing "d" in "command mode"—which, cOnVeNiEnTlY,
+  # zellij defaults to when attaching, configuration be damned. This can be automated with
+  # an `expect` script, for which cf. `orchestrate-resurrect-all` above. 
   ($ sh -c (string/join (map |(string "z " $) zombies) " && ")))
 
 (defn- n-ary?? [n]
@@ -44,11 +73,6 @@
   (unless (string/has-prefix? "-" arg)
     arg))
 
-(defn- choose-interactively []
-  (def to-lines |(string/join $ "\n"))
-  (when-let [session ($<_ echo ,(to-lines (map |(first $) (sessions))) | fzf)]
-    ($ zellij attach ,session)))
-
 (defn- session-exists? [session-name]
   (->> ($<_ zellij list-sessions -s)
        (string/split "\n")
@@ -59,12 +83,29 @@
     ($ zellij attach ,session-name)
     ($ zellij -s ,session-name)))
 
+# FIXME cf. ~/.zshrc.local.zsh
+# - stop hardcoding crazy /tmp/... filename
+#   - instead use something like `($<_ dots env-file NIRI_SOCKET)`
+#   - which is of course completely undefined as of yet
+# - move the niri/zellij config to conditionally-tangled zsh config
+(defn- attach! [session-name]
+  (when (= (os/getenv "DESKTOP_SESSION") "niri")
+    (with [f (file/open "/tmp/smuggled-env--NIRI_SOCKET" :w)]
+      (file/write f (os/getenv "NIRI_SOCKET"))))
+  (attach-or-create-session session-name))
+
+(defn- choose-interactively []
+  (def to-lines |(string/join $ "\n"))
+  (when-let [session ($<_ echo ,(to-lines (map |(first $) (sessions))) | fzf)]
+    (attach! session)))
+
 (defn main [& invocation]
   (match invocation
     ([_] (no-args? invocation)) (choose-interactively)
-    [_ "resurrect"] (resurrect-all)
+    [_ "resurrect"] (orchestrate-resurrect-all)
+    [_ "resurrect-all"] (do-resurrect-all)
     [_ "ls" & flags] ($ zellij ls ;flags)
     [_ "list-sessions" & flags] ($ zellij ls ;flags)
     ([_ session] (and (single-arg? invocation) (positional-arg? session)))
-                 (attach-or-create-session session)
+                 (attach! session)
     [_ & args] ($ zellij ;args)))
