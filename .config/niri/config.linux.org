@@ -438,10 +438,11 @@ config-notification {
 #+end_src
 
 * named workspaces
-There is a base set of workspaces I always want to have around and named, but I
-would also like to support defining some computer-specific workspace names. So
-I'll support an optional file (let's call it =$HOME/.config/niri/local-workspaces=)
-whose contents will be appended to the list of named workspaces if it exists.
+There is a base set of workspaces I always want to have around and named; there's a
+different set of ad hoc or computer-specific workspaces that should also be around and
+named but should /not/ be git-tracked. So if there's a file
+=$HOME/.config/niri/local-workspaces=, its contents will be appended to the list of named
+workspaces.
 
 #+NAME: local-workspaces
 #+begin_src sh :tangle no :results raw tangle
@@ -463,7 +464,7 @@ Now let's make it nice to work with them.
 
 ** working with named workspaces
 #+begin_src kdl :tangle no :noweb-ref keybinds
-Mod+W hotkey-overlay-title="Display the focused workspace's name" { spawn "hydratic" "niri" "ws"; }
+Mod+W hotkey-overlay-title="Display the focused workspace's name" { spawn "~/bin/niri-helper" "display"; }
 Mod+Shift+W hotkey-overlay-title="Focus named workspace" { spawn "~/bin/niri-helper" "focus"; }
 Mod+Ctrl+W hotkey-overlay-title="Move column to named workspace" { spawn "~/bin/niri-helper" "move-column"; }
 #+end_src
@@ -481,6 +482,11 @@ Mod+Ctrl+W hotkey-overlay-title="Move column to named workspace" { spawn "~/bin/
         prompt (string/join [title ": "])]
     ($<_ echo ,choices | fuzzel --dmenu --use-bold --prompt-color ,"008853ff" --prompt ,prompt)))
 
+(defn- display-workspace-name []
+  (let [workspaces (json/decode ($<_ niri msg --json workspaces))
+        active-space ((find |(get $ "is_focused") workspaces) "name")]
+    ($ hydratic timed-banner ,active-space)))
+
 (defn- focus-workspace []
   (let [selection (choose-other-workspace! "Go to workspace")]
     ($ niri msg action focus-workspace ,selection)))
@@ -491,12 +497,13 @@ Mod+Ctrl+W hotkey-overlay-title="Move column to named workspace" { spawn "~/bin/
 
 (defn main [& invocation]
   (match invocation
-    [_ "move-column"] (move-column-to-workspace)
+    [_ "display"] (display-workspace-name)
     [_ "focus"] (focus-workspace)
-    [_] (error "I don't know what the fuck to do if you don't fucking tell me what to do")))
+    [_ "move-column"] (move-column-to-workspace)
+    [_] (error "I don't know what to do if you don't tell me what to do")))
 #+end_src
 
-** TODO display workspace names in the dms top bar workspaces lists
+** TODO display workspace names in the UI some{how,where}
 For the time being, manually defining icons for all named workspaces in the DMS settings dashboard
 will have to do.
 
