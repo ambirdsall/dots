@@ -298,6 +298,7 @@ When to center a column when changing focus, options are:
 center-focused-column "never"
 // center-focused-column "always"
 // center-focused-column "on-overflow"
+always-center-single-column
 
 // You can customize the widths that "switch-preset-column-width" (Mod+R) toggles between.
 preset-column-widths {
