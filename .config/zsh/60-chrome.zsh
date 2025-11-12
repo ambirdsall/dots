@@ -1,4 +1,4 @@
-if [ $(uname) == 'Darwin' ]; then
+if [ $OS_TYPE == "macos" ]; then
     h () {
         local cols sep
         cols=$(( COLUMNS / 3 ))

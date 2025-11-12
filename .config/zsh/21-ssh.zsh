@@ -1,5 +1,5 @@
 # make it work on macOS, too
-if [[ $(uname) == "Darwin" ]]; then
+if [[ $OS_TYPE == "macos" ]]; then
     # never bunt
     export XDG_RUNTIME_DIR=$HOME/.run
     mkdir -p $XDG_RUNTIME_DIR
