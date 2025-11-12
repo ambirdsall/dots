@@ -25,9 +25,16 @@ dots/file() {
     fi
 }
 
+dots/error() {
+    echo "$@" >&2
+}
+
 dots/source() {
-    if [ -f "$1" ]; then
+    if dots/file "$1"; then
         source "$1"
+    else
+        dots/error "Could not source \"$1\": file not found"
+        return 1
     fi
 }
 
