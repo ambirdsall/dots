@@ -1,0 +1,1696 @@
+#+title: xe sells zsh shells by the C xor
+
+(Don't give me too much credit for cleverness on [[https://github.com/doomemacs/doomemacs/blob/ead254e15269bf8564625df4c8d2af6690a0df49/static/init.example.el#L175][that title]].)
+
+#+begin_src elisp :results none
+(org-babel-tangle-file (buffer-file-name))
+#+end_src
+
+#+begin_src elisp :results none
+(add-hook! 'after-save-hook :local
+  (org-babel-tangle-file (buffer-file-name)))
+#+end_src
+
+This is my personal =zsh= setup, being gradually migrated to a literate config
+This is the third approach I've taken to defining my zsh config, though structurally it's a waypoint along a larger migration:
+1) =~/.zshrc= as kitchen sink
+2) =~/.zshrc= as minimal entrypoint to a modular config, dynamically sourcing lexically-ordered =~/.config/zsh/*.zsh= files (h/t to [[https://github.com/timroes/dotfiles/blob/6190086c8068866d08c32ee3d0d87954e0a2b9ec/.zshrc#L20-L23][Tim Roes]])
+3) (/current/) =~/.config/zsh/config.org= as modular config, dynamically generating lexically-ordered =~/.config/zsh/*.zsh= files
+4) (/upcoming/) =~/.config/zsh/config.org= as modular config, dynamically generating kitchen sink =~/.zshrc= along with =~/.zshenv= et al
+
+Everything new is old; ourobouros can have a little ourobouros (as a treat).
+
+* personal configuration utility functions
+#+begin_src zsh :tangle ./00-utils.zsh
+dots/add_to_path() {
+    local BIN_DIR="$1"
+    if [ -d "$BIN_DIR" -a ! $(echo $PATH | grep "$BIN_DIR(:|$)") ]; then
+        export PATH="$BIN_DIR:$PATH"
+    fi
+}
+
+dots/at_hand() {
+    command -v $1 >/dev/null
+}
+
+dots/clear_name() {
+    if alias | grep "$1=" >/dev/null; then
+        unalias $1
+    elif type -w $1 | grep function >/dev/null; then
+        unset -f $1
+    fi
+}
+
+dots/file() {
+    if [ -f "$1" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+dots/error() {
+    echo "$@" >&2
+}
+
+dots/source() {
+    if dots/file "$1"; then
+        source "$1"
+    else
+        dots/error "Could not source \"$1\": file not found"
+        return 1
+    fi
+}
+
+# Opposite of `unset`.
+# TODO accept multiple args, returning 0 if *all* are set
+dots/is_set() {
+    if [ -n "$1" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# inside a session
+dots/ssh() {
+    if dots/is_set "$SSH_CLIENT" || dots/is_set "$SSH_TTY"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+case $(uname) in
+Darwin)
+    export IS_MAC=t
+    export OS_TYPE=macos
+    export OS=🍎
+    ;;
+Linux)
+    export IS_LINUX=t
+    export OS_TYPE=linux
+    export OS=🐧
+    ;;
+,*)
+    export OS_TYPE=wtf
+    export OS=👾
+    ;;
+esac
+#+end_src
+
+* =zsh=-specific shell setup
+** set =setopt= options
+#+begin_src zsh :tangle ./01-opts.zsh
+setopt autocd extendedglob notify
+unsetopt beep nomatch
+setopt auto_cd PROMPT_SUBST
+#+end_src
+
+** shell history
+#+begin_src zsh :tangle ./02-history.zsh
+export HISTFILE=~/.histfile
+export HISTSIZE=10000
+export SAVEHIST=100000
+export HISTCONTROL=ignorespace
+
+if dots/at_hand fzf; then
+  r () {
+    $(fc -l -n 1 | tail -r | fzf)
+  }
+fi
+#+end_src
+
+** completion
+#+begin_src zsh :tangle ./03-completion.zsh
+zstyle ':completion:*' completer _expand _complete _ignored
+
+autoload -Uz compinit && compinit
+
+# load personal completion scripts
+for file in $(ls ~/lib/zsh/*-comp.zsh); do
+    source $file
+done
+#+end_src
+
+** text editing: =$EDITOR= and =zle= config
+#+begin_src zsh :tangle ./04-text-editing.zsh
+export PATH=$PATH:$HOME/.emacs.d/bin/
+# how on earth am I supposed to use a url bar I can't jump around with emacs shortcuts
+if [ ! $IS_MAC ]; then
+    dots/at_hand gsettings && gsettings set org.gnome.desktop.interface gtk-key-theme "Emacs"
+fi
+
+# use vim mode, but with the standard set of emacs-style keychords defined in insert mode
+bindkey -v
+EDITOR='qed'
+
+# VI MODE KEYBINDINGS (ins mode)
+bindkey -M viins '^a'    beginning-of-line
+bindkey -M viins '^b'    backward-char
+bindkey -M viins '^d'    delete-char
+bindkey -M viins '^e'    end-of-line
+bindkey -M viins '^f'    forward-char
+bindkey -M viins '^h'    backward-delete-char
+bindkey -M viins '^k'    kill-line
+bindkey -M viins '^n'    down-line-or-history
+bindkey -M viins '^p'    up-line-or-history
+bindkey -M viins '^r'    history-incremental-pattern-search-backward
+bindkey -M viins '^s'    history-incremental-pattern-search-forward
+bindkey -M viins '^t'    transpose-chars
+bindkey -M viins '^u'    backward-kill-line
+bindkey -M viins '^w'    backward-kill-word
+bindkey -M viins '^y'    yank
+bindkey -M viins '^?'    backward-delete-char
+bindkey -M viins '^_'    undo
+bindkey -M viins '^x^r'  redisplay
+bindkey -M viins '\eOH'  beginning-of-line # Home
+bindkey -M viins '\eOF'  end-of-line       # End
+bindkey -M viins '\e[2~' overwrite-mode    # Insert
+bindkey -M viins '\ef'   forward-word      # Alt-f
+bindkey -M viins '\eb'   backward-word     # Alt-b
+bindkey -M viins '\ed'   kill-word         # Alt-d
+bindkey -M viins '\et'   transpose-words
+
+
+# VI MODE KEYBINDINGS (cmd mode)
+bindkey -M vicmd '^a'    beginning-of-line
+bindkey -M vicmd '^e'    end-of-line
+bindkey -M vicmd '^r'    history-incremental-pattern-search-backward
+bindkey -M vicmd '^s'    history-incremental-pattern-search-forward
+bindkey -M vicmd '^p'    up-line-or-history
+bindkey -M vicmd '^n'    down-line-or-history
+bindkey -M vicmd '^y'    yank
+bindkey -M vicmd '^w'    backward-kill-word
+bindkey -M vicmd '^u'    backward-kill-line
+bindkey -M vicmd '/'     vi-history-search-forward
+bindkey -M vicmd '?'     vi-history-search-backward
+bindkey -M vicmd '^_'    undo
+bindkey -M vicmd '\ef'   forward-word                      # Alt-f
+bindkey -M vicmd '\eb'   backward-word                     # Alt-b
+bindkey -M vicmd '\ed'   kill-word                         # Alt-d
+bindkey -M vicmd '\e[5~' history-beginning-search-backward # PageUp
+bindkey -M vicmd '\e[6~' history-beginning-search-forward  # PageDown
+
+function zle-line-init zle-keymap-select {
+    NORMAL_MODE_PROMPT="%{$fg_bold[yellow]%} [% NORMAL]%  %{$reset_color%}"
+    RPS1="${${KEYMAP/vicmd/$NORMAL_MODE_PROMPT}/(main|viins)/} $EPS1"
+    zle reset-prompt
+}
+
+zle -N zle-line-init
+zle -N zle-keymap-select
+#+end_src
+
+** prompt
+#+begin_src zsh :tangle ./05-prompt.zsh
+# git-prompt.zsh -- a lightweight git prompt for zsh.
+# Copyright © 2023 Wolfgang Popp
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+# DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+# OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+autoload -U colors && colors
+
+# Settings
+: "${ZSH_GIT_PROMPT_SHOW_UPSTREAM=""}"
+: "${ZSH_GIT_PROMPT_SHOW_STASH=""}"
+: "${ZSH_GIT_PROMPT_ENABLE_SECONDARY=""}"
+: "${ZSH_GIT_PROMPT_NO_ASYNC=""}"
+: "${ZSH_GIT_PROMPT_FORCE_BLANK=""}"
+: "${ZSH_GIT_PROMPT_AWK_CMD=""}"
+
+# Theming
+: "${ZSH_THEME_GIT_PROMPT_PREFIX="["}"
+: "${ZSH_THEME_GIT_PROMPT_SUFFIX="] "}"
+: "${ZSH_THEME_GIT_PROMPT_SEPARATOR="|"}"
+: "${ZSH_THEME_GIT_PROMPT_DETACHED="%{$fg_bold[cyan]%}:"}"
+: "${ZSH_THEME_GIT_PROMPT_BRANCH="%{$fg_bold[magenta]%}"}"
+: "${ZSH_THEME_GIT_PROMPT_UPSTREAM_SYMBOL="%{$fg_bold[yellow]%}⟳ "}"
+: "${ZSH_THEME_GIT_PROMPT_UPSTREAM_NO_TRACKING=""}"
+: "${ZSH_THEME_GIT_PROMPT_UPSTREAM_PREFIX="%{$fg[red]%}(%{$fg[yellow]%}"}"
+: "${ZSH_THEME_GIT_PROMPT_UPSTREAM_SUFFIX="%{$fg[red]%})"}"
+: "${ZSH_THEME_GIT_PROMPT_BEHIND="↓"}"
+: "${ZSH_THEME_GIT_PROMPT_AHEAD="↑"}"
+: "${ZSH_THEME_GIT_PROMPT_UNMERGED="%{$fg[red]%}✖"}"
+: "${ZSH_THEME_GIT_PROMPT_STAGED="%{$fg[green]%}●"}"
+: "${ZSH_THEME_GIT_PROMPT_UNSTAGED="%{$fg[red]%}✚"}"
+: "${ZSH_THEME_GIT_PROMPT_UNTRACKED="…"}"
+: "${ZSH_THEME_GIT_PROMPT_STASHED="%{$fg[blue]%}⚑"}"
+: "${ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_bold[green]%}✔"}"
+: "${ZSH_THEME_GIT_PROMPT_SECONDARY_PREFIX=""}"
+: "${ZSH_THEME_GIT_PROMPT_SECONDARY_SUFFIX=""}"
+: "${ZSH_THEME_GIT_PROMPT_TAGS_SEPARATOR=", "}"
+: "${ZSH_THEME_GIT_PROMPT_TAGS_PREFIX="🏷 "}"
+: "${ZSH_THEME_GIT_PROMPT_TAGS_SUFFIX=""}"
+: "${ZSH_THEME_GIT_PROMPT_TAG="%{$fg_bold[magenta]%}"}"
+
+# Disable promptinit if it is loaded
+(( $+functions[promptinit] )) && {promptinit; prompt off}
+
+# Allow parameter and command substitution in the prompt
+setopt PROMPT_SUBST
+
+# Override PROMPT if it does not use the gitprompt function
+[[ "$PROMPT" != *gitprompt* && "$RPROMPT" != *gitprompt* ]] \
+    && PROMPT='%B%40<..<%~ %b$(gitprompt)' \
+    && PROMPT+='%(?.%(!.%F{white}❯%F{yellow}❯%F{red}.%F{blue}❯%F{cyan}❯%F{green})❯.%F{red}❯❯❯)%f '
+
+# Find an awk implementation
+# Prefer nawk over mawk and mawk over awk
+(( $+commands[mawk] ))  &&  : "${ZSH_GIT_PROMPT_AWK_CMD:=mawk}"
+(( $+commands[nawk] ))  &&  : "${ZSH_GIT_PROMPT_AWK_CMD:=nawk}"
+                            : "${ZSH_GIT_PROMPT_AWK_CMD:=awk}"
+
+function _zsh_git_prompt_git_status() {
+    emulate -L zsh
+    {
+        [[ -n "$ZSH_GIT_PROMPT_SHOW_STASH" ]] && (
+            c=$(command git rev-list --walk-reflogs --count refs/stash 2> /dev/null)
+            [[ -n "$c" ]] && echo "# stash.count $c"
+        )
+        GIT_OPTIONAL_LOCKS=0 command git status --branch --porcelain=v2 2>&1 \
+            || echo "fatal: git command failed"
+    } | $ZSH_GIT_PROMPT_AWK_CMD \
+        -v PREFIX="$ZSH_THEME_GIT_PROMPT_PREFIX" \
+        -v SUFFIX="$ZSH_THEME_GIT_PROMPT_SUFFIX" \
+        -v SEPARATOR="$ZSH_THEME_GIT_PROMPT_SEPARATOR" \
+        -v DETACHED="$ZSH_THEME_GIT_PROMPT_DETACHED" \
+        -v BRANCH="$ZSH_THEME_GIT_PROMPT_BRANCH" \
+        -v UPSTREAM_TYPE="$ZSH_GIT_PROMPT_SHOW_UPSTREAM" \
+        -v UPSTREAM_SYMBOL="$ZSH_THEME_GIT_PROMPT_UPSTREAM_SYMBOL" \
+        -v UPSTREAM_NO_TRACKING="$ZSH_THEME_GIT_PROMPT_UPSTREAM_NO_TRACKING" \
+        -v UPSTREAM_PREFIX="$ZSH_THEME_GIT_PROMPT_UPSTREAM_PREFIX" \
+        -v UPSTREAM_SUFFIX="$ZSH_THEME_GIT_PROMPT_UPSTREAM_SUFFIX" \
+        -v BEHIND="$ZSH_THEME_GIT_PROMPT_BEHIND" \
+        -v AHEAD="$ZSH_THEME_GIT_PROMPT_AHEAD" \
+        -v UNMERGED="$ZSH_THEME_GIT_PROMPT_UNMERGED" \
+        -v STAGED="$ZSH_THEME_GIT_PROMPT_STAGED" \
+        -v UNSTAGED="$ZSH_THEME_GIT_PROMPT_UNSTAGED" \
+        -v UNTRACKED="$ZSH_THEME_GIT_PROMPT_UNTRACKED" \
+        -v STASHED="$ZSH_THEME_GIT_PROMPT_STASHED" \
+        -v CLEAN="$ZSH_THEME_GIT_PROMPT_CLEAN" \
+        -v RC="%{$reset_color%}" \
+        '
+            BEGIN {
+                ORS = "";
+
+                fatal = 0;
+                oid = "";
+                head = "";
+                upstream = "";
+                ahead = 0;
+                behind = 0;
+                untracked = 0;
+                unmerged = 0;
+                staged = 0;
+                unstaged = 0;
+                stashed = 0;
+            }
+
+            $1 == "fatal:" {
+                fatal = 1;
+            }
+
+            $2 == "branch.oid" {
+                oid = $3;
+            }
+
+            $2 == "branch.head" {
+                head = $3;
+            }
+
+            $2 == "branch.upstream" {
+                upstream = $3;
+            }
+
+            $2 == "branch.ab" {
+                ahead = $3;
+                behind = $4;
+            }
+
+            $1 == "?" {
+                ++untracked;
+            }
+
+            $1 == "u" {
+                ++unmerged;
+            }
+
+            $1 == "1" || $1 == "2" {
+                split($2, arr, "");
+                if (arr[1] != ".") {
+                    ++staged;
+                }
+                if (arr[2] != ".") {
+                    ++unstaged;
+                }
+            }
+
+            $2 == "stash.count" {
+                stashed = $3;
+            }
+
+            END {
+                if (fatal == 1) {
+                    exit(1);
+                }
+
+                print PREFIX;
+                print RC;
+
+                if (head == "(detached)") {
+                    print DETACHED;
+                    print substr(oid, 0, 7);
+                } else {
+                    print BRANCH;
+                    gsub("%", "%%", head);
+                    print head;
+                }
+                print RC;
+
+                if (upstream == "") {
+                    print UPSTREAM_NO_TRACKING;
+                } else if (UPSTREAM_TYPE == "symbol") {
+                    print UPSTREAM_SYMBOL;
+                } else if (UPSTREAM_TYPE == "full") {
+                    print UPSTREAM_PREFIX;
+                    gsub("%", "%%", upstream);
+                    print upstream;
+                    print UPSTREAM_SUFFIX;
+                }
+
+                print RC;
+
+                if (behind < 0) {
+                    print BEHIND;
+                    printf "%d", behind * -1;
+                    print RC;
+                }
+
+                if (ahead > 0) {
+                    print AHEAD;
+                    printf "%d", ahead;
+                    print RC;
+                }
+
+                print SEPARATOR;
+
+                if (unmerged > 0) {
+                    print UNMERGED;
+                    print unmerged;
+                    print RC;
+                }
+
+                if (staged > 0) {
+                    print STAGED;
+                    print staged;
+                    print RC;
+                }
+
+                if (unstaged > 0) {
+                    print UNSTAGED;
+                    print unstaged;
+                    print RC;
+                }
+
+                if (untracked > 0) {
+                    print UNTRACKED;
+                    print untracked;
+                    print RC;
+                }
+
+                if (stashed > 0) {
+                    print STASHED;
+                    print stashed;
+                    print RC;
+                }
+
+                if (unmerged == 0 && staged == 0 && unstaged == 0 && untracked == 0) {
+                    print CLEAN;
+                    print RC;
+                }
+
+                print SUFFIX;
+                print RC;
+            }
+        '
+}
+
+function _zsh_git_prompt_git_status_secondary() {
+    tags=$(command git tag --points-at=HEAD 2> /dev/null)
+
+    [[ -z "$tags" ]] && return
+
+    echo -n ${ZSH_THEME_GIT_PROMPT_SECONDARY_PREFIX}
+    echo -n ${ZSH_THEME_GIT_PROMPT_TAGS_PREFIX}
+
+    echo "$tags" | $ZSH_GIT_PROMPT_AWK_CMD \
+        -v SEPARATOR="$ZSH_THEME_GIT_PROMPT_TAGS_SEPARATOR" \
+        -v TAG="$ZSH_THEME_GIT_PROMPT_TAG" \
+        -v RC="%{$reset_color%}" \
+        '
+            BEGIN {
+                ORS = "";
+            }
+            {
+                if (NR != 1) {
+                    print SEPARATOR;
+                    print RC;
+                }
+                print TAG;
+                print $0;
+                print RC;
+            }
+        '
+
+    echo -n ${ZSH_THEME_GIT_PROMPT_TAGS_SUFFIX}
+    echo -n ${ZSH_THEME_GIT_PROMPT_SECONDARY_SUFFIX}
+}
+
+
+# The async code is taken from
+# https://github.com/zsh-users/zsh-autosuggestions/blob/master/src/async.zsh
+
+zmodload zsh/system
+
+function _zsh_git_prompt_async_request() {
+    typeset -g _ZSH_GIT_PROMPT_ASYNC_FD _ZSH_GIT_PROMPT_ASYNC_PID
+
+    # If we've got a pending request, cancel it
+    if [[ -n "$_ZSH_GIT_PROMPT_ASYNC_FD" ]] && { true <&$_ZSH_GIT_PROMPT_ASYNC_FD } 2>/dev/null;
+    then
+
+        # Close the file descriptor and remove the handler
+        exec {_ZSH_GIT_PROMPT_ASYNC_FD}<&-
+        zle -F $_ZSH_GIT_PROMPT_ASYNC_FD
+
+        # Zsh will make a new process group for the child process only if job
+        # control is enabled (MONITOR option)
+        if [[ -o MONITOR ]]; then
+            # Send the signal to the process group to kill any processes that may
+            # have been forked by the suggestion strategy
+            kill -TERM -$_ZSH_GIT_PROMPT_ASYNC_PID 2>/dev/null
+        else
+            # Kill just the child process since it wasn't placed in a new process
+            # group. If the suggestion strategy forked any child processes they may
+            # be orphaned and left behind.
+            kill -TERM $_ZSH_GIT_PROMPT_ASYNC_PID 2>/dev/null
+        fi
+    fi
+
+    # Fork a process to fetch the git status and open a pipe to read from it
+    exec {_ZSH_GIT_PROMPT_ASYNC_FD}< <(
+        # Tell parent process our pid
+        builtin echo $sysparams[pid]
+
+        _zsh_git_prompt_git_status
+        [[ -n "$ZSH_GIT_PROMPT_ENABLE_SECONDARY" ]] \
+            && builtin echo -n "##secondary##" \
+            && _zsh_git_prompt_git_status_secondary
+    )
+
+    # There's a weird bug here where ^C stops working unless we force a fork
+    # See https://github.com/zsh-users/zsh-autosuggestions/issues/364
+    command true
+
+    # Read the pid from the child process
+    read _ZSH_GIT_PROMPT_ASYNC_PID <&$_ZSH_GIT_PROMPT_ASYNC_FD
+
+    # When the fd is readable, call the response handler
+    zle -F "$_ZSH_GIT_PROMPT_ASYNC_FD" _zsh_git_prompt_callback
+}
+
+# Called when new data is ready to be read from the pipe
+# First arg will be fd ready for reading
+# Second arg will be passed in case of error
+_ZSH_GIT_PROMPT_STATUS_OUTPUT=""
+_ZSH_GIT_PROMPT_STATUS_SECONDARY_OUTPUT=""
+function _zsh_git_prompt_callback() {
+    emulate -L zsh
+    local old_primary="$_ZSH_GIT_PROMPT_STATUS_OUTPUT"
+    local old_secondary="$_ZSH_GIT_PROMPT_STATUS_SECONDARY_OUTPUT"
+    local fd_data
+    local -a output
+
+    if [[ -z "$2" || "$2" == "hup" ]]; then
+        # Read output from fd
+        fd_data="$(cat <&$1)"
+        output=( ${(s:##secondary##:)fd_data} )
+        _ZSH_GIT_PROMPT_STATUS_OUTPUT="${output[1]}"
+        _ZSH_GIT_PROMPT_STATUS_SECONDARY_OUTPUT="${output[2]}"
+
+        if [[ "$old_primary" != "$_ZSH_GIT_PROMPT_STATUS_OUTPUT" ]] \
+            || [[ "$old_secondary" != "$_ZSH_GIT_PROMPT_STATUS_SECONDARY_OUTPUT" ]] ; then
+            zle reset-prompt
+            zle -R
+        fi
+
+        # Close the fd
+        exec {1}<&-
+    fi
+
+    # Always remove the handler
+    zle -F "$1"
+
+    # Unset global FD variable to prevent closing user created FDs in the precmd hook
+    unset _ZSH_GIT_PROMPT_ASYNC_FD
+}
+
+function _zsh_git_prompt_precmd_hook() {
+    if [[ -n "$ZSH_GIT_PROMPT_FORCE_BLANK" ]]; then
+        _ZSH_GIT_PROMPT_STATUS_OUTPUT=""
+        _ZSH_GIT_PROMPT_STATUS_SECONDARY_OUTPUT=""
+    fi
+    _zsh_git_prompt_async_request
+}
+
+if (( $+commands[git] )); then
+    if [[ -z "$ZSH_GIT_PROMPT_NO_ASYNC" ]]; then
+        autoload -U add-zsh-hook \
+            && add-zsh-hook precmd _zsh_git_prompt_precmd_hook
+
+        function gitprompt() {
+            echo -n "$_ZSH_GIT_PROMPT_STATUS_OUTPUT"
+        }
+
+        function gitprompt_secondary() {
+            echo -n "$_ZSH_GIT_PROMPT_STATUS_SECONDARY_OUTPUT"
+        }
+    else
+        function gitprompt() {
+            _zsh_git_prompt_git_status
+        }
+
+        function gitprompt_secondary() {
+            [[ -n "$ZSH_GIT_PROMPT_ENABLE_SECONDARY" ]] \
+                && _zsh_git_prompt_git_status_secondary
+        }
+    fi
+else
+    function gitprompt() { }
+    function gitprompt_secondary() { }
+fi
+
+# PERSONAL PROMPT STARTS HERE
+# n.b. `RPS1` is defined in 04-text-editing.zsh
+reverse_dir_stack() {
+    dirs | awk '{ for (i=NF; i>1; i--) printf("%s %%F{238}᎒%%f", $i) }'
+}
+
+ssh_session_heading() {
+    if dots/ssh; then
+        printf "\n%%F{2}$(whoami)%%F{242}@$(hostname)%%f"
+    fi
+}
+
+PROMPT='$(ssh_session_heading)
+%F{239}┌ %f$(reverse_dir_stack)%F{cyan}%~%f $(git rev-parse --is-inside-work-tree &>/dev/null && echo "$(gitprompt)%F{yellow}$(git rev-parse --short HEAD)%f " || echo -e "\b ")$(~/bin/moon-phase)
+%F{239}└%f%(?.%F{239}.%F{196})➣%f '
+#+end_src
+
+** =zmv=
+#+begin_src zsh :tangle ./06-zmv.zsh
+autoload -U zmv
+
+alias mmv='noglob zmv -W'
+#+end_src
+
+** command hooks to notify when long-running commands complete
+#+begin_src zsh :tangle ./09-notifyosd.zsh
+# commands to ignore
+# this is an incomplete list; expect to revisit moderately often to add things like:
+# - pagers (and commands that frequently open them)
+# - aliases for editing key files
+# - interactive TUI programs and REPLs
+cmdignore=(
+    bat
+    devcontainer
+    dots
+    e
+    ea
+    el
+    e.
+    emacs
+    fg
+    g
+    ge
+    git
+    htop
+    less
+    magit
+    ncdu
+    nvim
+    ssh
+    tmux
+    top
+    v
+    vim
+    vimserv
+    z
+    zellij
+    zrc
+)
+
+# set gt 0 to enable GNU units for time results
+gnuunits=0
+
+# end and compare timer, notify if needed
+function notifyosd-precmd() {
+    retval=$?
+    if [[ ${cmdignore[(r)$cmd_basename]} == $cmd_basename ]]; then
+        return
+    else
+        if [ ! -z "$cmd" ]; then
+            cmd_end=`date +%s`
+            ((cmd_secs=$cmd_end - $cmd_start))
+        fi
+        if [ $retval -gt 0 ]; then
+            cmdstat="with warning"
+        else
+            cmdstat="successfully"
+        fi
+        if [ ! -z "$cmd" -a $cmd_secs -gt 10 ]; then
+            if [ $gnuunits -gt 0 ]; then
+                cmd_time=$(units "$cmd_secs seconds" "centuries;years;months;weeks;days;hours;minutes;seconds" | \
+                sed -e 's/\ +/\,/g' -e s'/\t//')
+            else
+                cmd_time="$cmd_secs seconds"
+            fi
+
+            if [[ "$OSTYPE" == darwin* ]]; then
+                terminal-notifier -message "'$cmd' took $cmd_time" -subtitle "$cmd_basename completed $cmdstat"
+            else
+                notify-send -i utilities-terminal --hint=int:transient:1 "$cmd_basename completed $cmdstat" "\"$cmd\" took $cmd_time"
+            fi
+        fi
+        unset cmd
+    fi
+}
+
+# make sure this plays nicely with any existing precmd
+# precmd_functions+=( notifyosd-precmd )
+
+# get command name and start the timer
+function notifyosd-preexec() {
+    cmd=$1
+    cmd_basename=${${cmd:s/sudo //}[(ws: :)1]}
+    cmd_start=`date +%s`
+}
+
+# make sure this plays nicely with any existing preexec
+# preexec_functions+=( notifyosd-preexec )
+#+end_src
+
+*** TODO change from opt-out to opt-in
+There are too many ways to invoke interactive TUIs, and I only care to receive notifications about long-running batch jobs I have filed out of sight.
+
+* general POSIX shell setup
+** setup tty with =stty=
+#+begin_src zsh :tangle ./10-tty.zsh
+stty -ixon
+
+alias sane='stty sane'
+#+end_src
+
+** pagers
+#+begin_src zsh :tangle ./11-pagers.zsh
+if dots/at_hand bat; then
+    export PAGER='bat --plain'
+    export MANPAGER="bat -l man -p"
+fi
+
+if dots/at_hand doom; then
+    emacsman () {
+        emacsclient -nw -e "
+        (let ((Man-notify-method 'bully))
+          (add-transient-hook! 'quit-window-hook (delete-frame))
+          (man \"$1\"))"
+    }
+    # alias man=emacsman
+fi
+#+end_src
+
+** working with =$PATH= and =which=
+#+begin_src zsh :tangle ./12-path-utils.zsh
+# mac uses BSD which, which acts nicely enough on its own and uses different
+# options than the GNU coreutils one
+if test -z "$IS_MAC"; then
+    # For some reason this doesn't always override fedora's system alias—even though
+    # manually running the underlying `unalias which` _does_ work. idk.
+    #
+    # Anyway, if fedora is yelling about a parse error downstream of a naming collision
+    # here, try editing (using `sudo`) the file /etc/profile.d/which2.sh
+    # emacs shortcut: /sudo:root@localhost:/etc/profile.d/which2.sh
+    dots/clear_name which
+    which() {
+        (
+            alias
+            declare -f
+        ) | command which --tty-only --read-alias --read-functions --show-tilde --show-dot $@
+    }
+fi
+#+end_src
+
+* POSIX-standard and otherwise "load-bearing" userland CLI commands
+** =cd=
+#+begin_src zsh :tangle ./20-cd.zsh
+alias 'cd-'="cd -"
+alias ..="cdd .."
+alias ...="cdd ../.."
+alias ....="cdd ../../.."
+alias .....="cdd ../../../.."
+alias ......="cdd ../../../../.."
+alias .......="cdd ../../../../../.."
+alias ........="cdd ../../../../../../.."
+alias .........="cdd ../../../../../../../.."
+
+mcd () {
+    mkdir $1
+    cd $1
+}
+
+cdd () {
+    cd $1
+    ls -GF
+}
+#+end_src
+
+** =brew=
+#+begin_src zsh :tangle ./20-homebrew.zsh
+# This file gets such a low prefix number for two reasons:
+# 1) although homebrew is in nobody's POSIX spec, package management is pretty fundamental
+# 2) sourcing it after language-specific tooling (nv,rbenv,pyenv,asdf,etc) causes Problems
+
+if dots/at_hand /opt/homebrew/bin/brew; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif dots/at_hand /home/linuxbrew/.linuxbrew/bin/brew; then
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+#+end_src
+
+** =ssh=
+#+begin_src zsh :tangle ./21-ssh.zsh
+# make it work on macOS, too
+if [[ $OS_TYPE == "macos" ]]; then
+    # never bunt
+    export XDG_RUNTIME_DIR=$HOME/.run
+    mkdir -p $XDG_RUNTIME_DIR
+fi
+
+# get ssh-agent running all the dang time
+if ! pgrep -u "$USER" ssh-agent > /dev/null; then
+    ssh-agent > "$XDG_RUNTIME_DIR/ssh-agent.env"
+fi
+if [[ ! -f "$SSH_AUTH_SOCK" ]]; then
+    [[ -f "$XDG_RUNTIME_DIR/ssh-agent.env" ]] && source "$XDG_RUNTIME_DIR/ssh-agent.env" >/dev/null
+fi
+
+# TODO automatically run `ssh-add` if and only if it hasn't yet been run this session
+# i.e. only enter my ssh key passphrase once, and that only on demand
+# possibly via an ssh wrapper script?
+
+# fun output when logging into a computer of mine
+if [[ -n $SSH_CONNECTION ]]; then
+    if command -v neofetch &>/dev/null; then
+        if command -v lolcat &>/dev/null; then
+            neofetch | lolcat -S 10 -F 0.05
+        else
+            neofetch
+        fi
+    fi
+fi
+#+end_src
+
+** =git=
+#+begin_src zsh :tangle ./22-git.zsh
+# * porcelain
+# ** g is for git, that's good enough for me
+# No arguments: `git status`
+# With arguments: acts like `git`
+g () {
+  if [[ $# -gt 0 ]]; then
+    git "$@"
+  else
+    git status -s
+  fi
+}
+# Complete g like git
+compdef g=git
+
+# cf ./23-emacs-aliases.zsh for `magit` alias
+
+# * ship shape
+# # TODO expand this into a proper little program
+# subcommands:
+#   ship it :: push current branch to its counterpart at origin
+#   ship in :: pull --rebase
+#   ship up :: rebase current branch on the repo's default branch at origin
+#   ship out :: set upstream
+alias shipit='ahoy && git push -u origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
+alias SHIPIT='ahoy && git push --force-with-lease -u origin $(git rev-parse --abbrev-ref HEAD 2> /dev/null)'
+# who doesn't love a good typo
+alias SHIIT='ahoy && echo "      FUUCK"'
+
+# * standard git operations
+# ** clone
+# run `git clone` and `cdd` into dir
+# if no arguments are provided, assumes you have copied a repo url to your clipboard
+gc () {
+  if [[ $# -eq 0 ]]; then
+    repo=$(pbpaste)
+  else
+    repo=$@
+  fi
+
+  repo_dir_with_trailing_git=${repo##*/}
+  repo_dir=${repo_dir_with_trailing_git%.git}
+  git clone $repo
+  echo ""
+  cdd $repo_dir
+}
+
+# ** checkout
+co () {
+  if [[ $# -gt 0 ]]; then
+    git checkout "$@"
+  else
+    local BRANCH_OR_REF=$(git recent | fzf --preview 'git show heads/{} | diff-so-fancy')
+    if [ ! -z $BRANCH_OR_REF ]; then
+        git checkout $BRANCH_OR_REF
+    fi
+  fi
+}
+alias co-="git checkout -"
+
+cor () {
+    local BRANCH_OR_REF=$(git recent "$@" | fzf --preview 'git show heads/{} | diff-so-fancy')
+    if [ ! -z $BRANCH_OR_REF ]; then
+        git checkout $BRANCH_OR_REF
+    fi
+}
+
+com () {
+    local big_kahuna_branch=$(git rev-parse --abbrev-ref origin/HEAD | cut -c8-)
+
+    g co $big_kahuna_branch && g pull --rebase
+}
+
+cob () {
+  git checkout -b "`echo $* | tr ' ' -`"
+}
+
+# ** diff
+d () {
+  git diff --color "$@"
+}
+
+D () {
+  git diff --diff-algorithm=histogram --color "$@" | diff-so-fancy | bat --plain
+}
+alias gdc="d --cached"
+alias gdo="git diff \$(git rev-parse --abbrev-ref HEAD 2> /dev/null)..origin/\$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
+
+# ** add
+alias p="git add -p"
+
+# ** commit
+c () {
+  if [[ $# -gt 0 ]]; then
+    git commit -m "$*"
+  else
+    git commit -v
+  fi
+}
+alias a="git commit --amend"
+alias arh="git commit --amend --reuse-message=HEAD"
+
+# ** fetch/pull
+alias f="git fetch"
+
+alias gp="git pull"
+GP () {
+  git branch --set-upstream-to=origin/$(git rev-parse --abbrev-ref HEAD) $(git rev-parse --abbrev-ref HEAD) && git pull "$@"
+}
+
+alias gpr="git pull --rebase"
+alias GPR="GP --rebase"
+alias gpf="git pull --ff-only"
+alias GPF="GP --ff-only"
+
+# ** rebase
+# TODO checkout, pull, and rebase all have a common ingredient: nacho code. Tug on that
+# thread a little.
+alias gr="git rebase"
+alias gr-="git rebase -"
+dots/clear_name grm
+grm () {
+  local big_kahuna_branch=$(git rev-parse --abbrev-ref origin/HEAD | cut -c8-)
+  g fetch origin $big_kahuna_branch:$big_kahuna_branch
+  g rebase $big_kahuna_branch
+}
+alias gri="g ri" # home-cooked git-ri, which simplifies syntax of `git rebase -i`
+
+# ** branch
+alias gb="git branch"
+alias gbl="git branch -l"
+
+# ** log
+l () {
+  # no args
+  if [[ $# -eq 0 ]]; then
+    git log --oneline -8
+  # one arg which is an integer
+  elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
+    git log --oneline -$1
+  # hopefully anything else is a valid set of additional git log args
+  else
+    git log --oneline "$@"
+  fi
+}
+L () {
+  # no args
+  if [[ $# -eq 0 ]]; then
+    git log --oneline --date=format:'%Y-%m-%d' --format='%C(yellow)%h%Creset [%C(blue)%cd%Creset] %s' -8
+  # one arg which is an integer
+  elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
+    git log --oneline --date=format:'%Y-%m-%d' --format='%C(yellow)%h%Creset [%C(blue)%cd%Creset] %s' -$1
+  # hopefully anything else is a valid set of additional git log args
+  else
+    git log --oneline --date=format:'%Y-%m-%d' --format='%C(yellow)%h%Creset [%C(blue)%cd%Creset] %s' "$@"
+  fi
+}
+
+LL () {
+  # First we calculate how much space we have for the commit summary lines so we can
+  # format the output nicely; this lets us easily scan the dates at the end of each line.
+  # To do so, we measure the terminal width with `tput cols` and subtract the known length of
+  # the prefix and suffix data, using the result unless it's shorter than a minimum
+  # readable summary width: the sha, author, and date are only useful if we know which
+  # commit they are associated with, after all.
+  #
+  # Why does prefix_length = 21?
+  #   10 (length of commit short hash)
+  # + 10 (space allotted for author name, truncating as needed)
+  # + 2  (brackets around author name)
+  # + 2  (one space after each datum)
+  #
+  # Why does suffix_length = 11?
+  #   10 (length of YYYY-MM-DD)
+  # + 1  (space)
+  local summary_width=$(ruby -e '
+term_width = `tput cols`.to_i
+min = 40
+max = 80
+prefix_length = 26
+suffix_length = 11
+available_cols = term_width - prefix_length - suffix_length
+
+width = if (available_cols > min and available_cols <= max)
+          available_cols
+        elsif available_cols > min
+          max
+        else
+          min
+        end
+
+print width')
+
+  # no args
+  if [[ $# -eq 0 ]]; then
+    git log --pretty="format:%C(auto)%h %C(auto)%<(12,trunc)[%an] %<($summary_width,trunc)%s %C(auto)%as" -8
+  # one arg which is an integer
+  elif [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
+    git log --pretty="format:%C(auto)%h %C(auto)%<(12,trunc)[%an] %<($summary_width,trunc)%s %C(auto)%as" -$1
+  else
+    git log --pretty="format:%C(auto)%h %C(auto)%<(12,trunc)[%an] %<($summary_width,trunc)%s %C(auto)%as" "$@"
+  fi
+}
+
+alias lg="git log --pretty=reference --decorate --graph --all"
+alias rl="git reflog"
+
+describe-commits () {
+  if [[ $# -eq 1 ]] && [[ "$1" = <-> ]]; then
+    # 1) list the sha and subject line for the latest ARG commits
+    # 2) pipe that to an awk script which formats each as "- $SHA :: $SUBJECT_LINE\n"
+    # 3) pipe that to tac to reverse the order, listing commits from first to latest
+    # then copy-paste that into your pull request description, editing the subject lines into nice
+    # descriptions as needed
+    git log --oneline -$1 --no-decorate \
+      | awk '{printf "- " $1 " :: "; for (i=2; i<=NF; i++) printf $i FS; print ""}' \
+      | tac
+  else
+    echo "Usage: describe-commits [number of commits]" >&2
+  fi
+}
+
+# ** grep
+alias gg="git grep"
+
+# ** blame
+alias b="git blame"
+
+# ** stash
+alias stash="git stash save -u"
+alias pop="git stash pop"
+
+# * nonstandard git operations
+# ** open a "dirty" file in editor
+ge () {
+  local files
+  local file_to_edit
+  # store list of modified files in $files.
+  # QUESTION: would an array work better than a multiline string?
+  files=$(g | field 2)
+  # if there's only one file in $files, just open that
+  local file_count=$(echo $files | wc -l)
+  if [[ $file_count -eq 1 ]]; then
+    file_to_edit=$files
+  else
+    file_to_edit=$(echo $files | gum choose)
+  fi
+
+  if [ -n $file_to_edit ]; then
+    e $file_to_edit
+  fi
+}
+
+# ** list most recently visited refs
+unique () {
+  perl -ne '$H{$_}++ or print'
+}
+git-recent () {
+  # lists unique git refs you have checked out, in order of how recently you checked them out
+  git reflog | grep checkout: | awk '{print $6}' | unique
+}
+#+end_src
+
+** =emacs -nw=, my problematic fave
+#+begin_src zsh :tangle ./23-emacs-aliases.zsh
+# alias e="qed"
+e() {
+  emacsclient -nw --socket-name=ttylated --alternate-editor="" "$@"
+}
+
+edo() {
+  emacsclient -nw --socket-name=ttylated --eval "$@"
+}
+
+E() {
+  emacsclient -c --alternate-editor="" "$@" &
+  disown
+}
+
+# Don't want to mess with the existing session?
+alias ee="emacs -nw"
+EE() {
+  emacs "$@" &
+  disown
+}
+
+# No idea why the fuck the current session isn't starting properly?
+EEE() {
+  emacsclient -c --alternate-editor="emacs --debug-init" "$@" &
+  disown
+}
+
+# sometimes in life, you don't have emacs installed on a new computer yet.
+# These also tend to be times when you open config files a lot! And even when
+# you do have emacs installed, cracking open a config/alias/whatever file is
+# a scenario where falling back to vim is preferable to a slow-booting editor.
+emv() {
+  if command -v emacs >/dev/null; then
+    emacsclient -nw --socket-name=ttylated --alternate-editor="vim" $@
+  else
+    vim $@
+  fi
+}
+
+em() {
+  local file_to_edit=$(um)
+  [[ -n $file_to_edit ]] && e $file_to_edit
+}
+
+rem() {
+  e . -eval "(require 'projectile)(dired (directile-project-root))"
+}
+
+todos() {
+  e --quiet -eval "(require 'org-projectile) (call-interactively 'org-projectile/get-todos)"
+}
+
+slay() {
+  # TODO:clean up long filepaths from output
+  local pid=$(ps $(pgrep Emacs) | awk 'NR>1' | fzf | awk '{print $1}')
+  if [[ -n $pid ]]; then
+    echo Killing process ${pid}...
+    kill ${pid}
+  fi
+}
+
+alias tetris='emacs -q --no-splash -f tetris'
+
+# oh, oh, it's ~magit~
+magit() {
+  local emacs_server_name
+
+  # if a `magit` emacs daemon is running, use that;
+  # 1st fallback is the `ttylated` emacs server;
+  # 2nd fallback is to suck it up and start a fresh `magit` daemon
+  if proctologist magit >/dev/null; then
+    emacs_server_name=magit
+  elif proctologist ttylated >/dev/null; then
+    emacs_server_name=ttylated
+  else
+    emacs_server_name=magit
+  fi
+
+  emacsclient --socket=magit -nw -e "
+(progn
+  (or (advice-member-p 'save-buffers-kill-terminal '+magit/quit)
+      (advice-add '+magit/quit :before 'save-buffers-kill-terminal))
+  (magit-status))" || emacs --daemon=$emacs_server_name
+}
+
+man() {
+  emacsclient -nw --socket-name=ttylated --eval "
+(progn
+  (man \"$@\")
+  (or
+    (functionp 'amb/man-clean-up-after-yourself)
+    (defun amb/man-clean-up-after-yourself ()
+      (remove-hook 'kill-buffer-hook 'amb/man-clean-up-after-yourself)
+      (delete-frame)))
+  (if (string-prefix-p \"*Man\" (buffer-name))
+    (doom/window-maximize-buffer)
+   (run-with-timer 0.3 nil (fn! (doom/window-maximize-buffer))))
+  (add-hook 'kill-buffer-hook #'amb/man-clean-up-after-yourself))"
+}
+
+unicode() {
+  emacsclient -nw --socket-name=ttylated --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
+  echo "Copied $(pbpaste) to the clipboard"
+}
+#+end_src
+
+** working with the system clipboard
+#+begin_src zsh :tangle ./24-copy-paste.zsh
+# it's just a better clipboard API, tbh; plus muscle memory
+if [ $OS_TYPE != "macos" ]; then
+  alias pbcopy='clipboard-copy'
+  alias pbpaste='clipboard-paste'
+fi
+#+end_src
+
+** POSIX miscellany
+#+begin_src zsh :tangle ./25-posix-grab-bag.zsh
+alias awkcsv='awk -F "\"*,\"*"'
+
+alias cx='chmod +x'
+
+alias ls="ls -GF"
+alias la="ls -A"
+alias ll="ls -lh"
+
+if dots/at_hand sl; then
+    # allow exiting with C-c
+    alias sl="sl -e"
+fi
+
+alias mkdir="mkdir -pv"
+
+alias please=sudo
+#+end_src
+
+** background processes
+#+begin_src zsh :tangle ./26-jobs.zsh
+alias j=jobs
+# Typing the percent sign gets annoying fast when you run `kill` all the time with `%n`-style arguments on suspended `jobs`
+k () {
+    kill %"$1"
+}
+#+end_src
+
+** =vim=, my port in a storm
+#+begin_src zsh :tangle ./28-vim.zsh
+if ! [[ $(type vi) =~ 'function' ]]; then
+    vi () {
+        if [[ $# -gt 0 ]]; then
+            vim "$@"
+        else
+            vim .
+        fi
+    }
+fi
+alias ci=vi
+#+end_src
+
+* CLI tools whose absence won't cause an identity crisis
+** =direnv=
+#+begin_src zsh :tangle ./30-direnv.zsh
+if command -v direnv &>/dev/null; then
+    eval "$(direnv hook zsh)"
+fi
+#+end_src
+
+** =fzf=
+#+begin_src zsh :tangle ./31-fzf.zsh
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+if dots/at_hand fzf; then
+  alias um="find . -type f | grep -vE '\.tmp-*|\.git|node_modules|bower_components' | fzf --multi --preview 'bat --color=always {}'"
+  cdf() {
+    pushd $(dirname $(find . -type f | grep -vE '.tmp-*|.git|node_modules|bower_components|DS_Store' | fzf --preview 'bat --color=always {}'))
+  }
+
+  if dots/at_hand fzf-tmux; then
+    alias fzf=fzf-tmux
+  fi
+
+  source <(fzf --zsh)
+fi
+#+end_src
+
+** multiplexing with =tmux= and =zellij=
+I love =tmux=, but until it supports =kkp= input handling, =zellij= offers just too much of an improvement to terminal emacs usage.
+#+begin_src zsh :tangle ./32-multiplexing.zsh
+list_multiplexer_sessions () {
+    local zellij_sessions
+
+    if [[ -n $TMUX ]]; then
+        echo "Tmux sessions:"
+        tmux list-sessions
+        printf "\n"
+    fi
+
+    if dots/at_hand zellij; then
+        if [ -z "$(env | grep -i zellij)" ]; then
+            echo "Zellij sessions:"
+            zellij list-sessions
+            printf "\n"
+        fi
+    fi
+}
+alias zls='zellij list-sessions'
+
+t () {
+    if ! test -n "$(ps -e | grep -q tmux)"; then
+        t.up
+    elif [[ $# -eq 0 ]]; then
+        local session=$(tmux list-sessions | cut -d : -f 1 | fzf)
+        [[ -n $session ]] && tmux attach -t $session
+    else
+        tmux "$@"
+    fi
+}
+alias ta="tmux attach -t"
+alias tt="tmux attach -t"
+alias tk="tmux kill-session -t"
+
+tn () {
+    if [[ $# -gt 0 ]]; then
+        tmux new -s $1; cd; clear
+    else
+        tmux new -s $(basename $(pwd)); cd; clear
+    fi
+}
+# When the tmux session shrinks some and fills the margin with periods, it
+# thinks there's another instance of the session in a smaller terminal. F that.
+alias tda="tmux detach -a"
+alias tls="tmux list-sessions"
+#+end_src
+
+
+#+begin_src zsh :tangle ./33-zellij.zsh
+# So. These are yoinked from the output of running zellij's zsh autocomplete++ command
+# (`zellij setup --generate-completion zsh`); although I do rather want that autocomplete
+# functionality, it is currently throwing syntax errors. So:
+# TODO regenerate the autocompletion definitions after updating zellij
+if dots/at_hand zellij; then
+  function zr () { zellij run --name "$*" -- zsh -ic "$*";}
+  function zrf () { zellij run --name "$*" --floating -- zsh -ic "$*";}
+  function zri () { zellij run --name "$*" --in-place -- zsh -ic "$*";}
+  function ze () { zellij edit "$*";}
+  function zef () { zellij edit --floating "$*";}
+  function zei () { zellij edit --in-place "$*";}
+  function zpipe () {
+  if [ -z "$1" ]; then
+    zellij pipe;
+  else
+    zellij pipe -p $1;
+  fi
+  }
+fi
+#+end_src
+
+** =tree=
+#+begin_src zsh :tangle ./34-tree.zsh
+alias tree='tree -I node_modules'
+#+end_src
+
+* programming languages
+** tools for managing parallel versions of multiple languages
+*** =asdf= (not the lisp one, the one that manages versioned installs of multiple languages)
+#+begin_src zsh :tangle ./40-asdf.zsh
+if [ -d /opt/asdf-vm ]; then
+  source /opt/asdf-vm/asdf.sh
+  source /opt/asdf-vm/completions/asdf.bash
+fi
+#+end_src
+*** TODO =mise=
+
+** ruby
+#+begin_src zsh :tangle ./41-ruby.zsh
+if dots/at_hand rbenv; then
+    [ $IS_MAC ] && export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl@1.1)"
+    eval "$(rbenv init -)"
+fi
+
+alias be="bundle exec"
+
+bo () {
+    emv $(bundle show "$1")
+}
+#+end_src
+
+** js
+*** =nvm= and =package.json= interactions
+#+begin_src zsh :tangle ./42-javascript.zsh
+check_node_version() {
+	# When a .nvmrc file in the current directory exists ..
+	if [[ "$IGNORE_NODE_VERSION" != "1" && -f ".nvmrc" ]]; then
+		nvmrc=`cat .nvmrc`
+		# .. check whether the current node version is the required one
+		if [ ! -x "$(command -v node)" ] || [ `node -v` != `nvm version $nvmrc` ]; then
+			# If not use nvm to set the version to the one from .node-version
+			echo -e "$fg_bold[yellow][.nvmrc] Switching to $nvmrc$reset_color"
+			nvm ls "$nvmrc" &> /dev/null
+			if [ $? -eq 0 ]; then
+				nvm use "$nvmrc"
+			else
+				nvm install "$nvmrc"
+			fi
+			if [ $? -eq 0 ]; then
+				echo -e "$fg_bold[green]Done!$reset_color"
+			else
+				echo -e "$fg_bold[red]Failed!$reset_color"
+			fi
+		fi
+	fi
+}
+
+if [ -f "/usr/share/nvm/init-nvm.sh" ]; then
+	source /usr/share/nvm/init-nvm.sh
+	[ -f /usr/share/nvm/bash_completion ] && source /usr/share/nvm/init-nvm.sh
+	add-zsh-hook precmd check_node_version
+elif [ -f "$HOME/.nvm/nvm.sh" ]; then
+	source "$HOME/.nvm/nvm.sh"
+
+	if [ -f "$HOME/.nvm/bash_completion" ]; then
+	 source "$HOME/.nvm/bash_completion"
+	elif [ -f "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ]; then
+		source "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
+	fi
+	add-zsh-hook precmd check_node_version
+elif [ -s "/opt/homebrew/opt/nvm/nvm.sh" ]; then
+	export NVM_DIR="$HOME/.nvm"
+	source "/opt/homebrew/opt/nvm/nvm.sh"
+	source "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
+fi
+alias scripts='jq .scripts < package.json'
+alias s=scripts
+run-npm-script () {
+  local run=$(if test -f pnpm-lock.yaml; then echo pnpm; else echo npm run; fi)
+
+  # using separate sed invocations instead of something simpler like `tr -d` to
+  # avoid mangling script keys containing colons
+  local chosen_script=$(scripts | grep -Eo '".+": ' | sed 's/"//' | sed 's/": //' | fzf)
+
+  test -n $chosen_script && $run $chosen_script
+}
+alias S=run-npm-script
+#+end_src
+
+*** =pnpm=
+#+begin_src zsh :tangle ./43-pnpm.zsh
+export PNPM_HOME="/home/amb/.local/share/pnpm"
+
+if [ -d $PNPM_HOME ]; then
+  case ":$PATH:" in
+    *":$PNPM_HOME:"*) ;;
+    *) export PATH="$PNPM_HOME:$PATH" ;;
+  esac
+fi
+#+end_src
+
+*** =deno=
+#+begin_src zsh :tangle ./44-deno.zsh
+if [ -d ~/.deno ]; then
+ export DENO_INSTALL="~/.deno"
+ export PATH="$DENO_INSTALL/bin:$PATH"
+fi
+#+end_src
+
+** =devcontainer=
+#+begin_src zsh :tangle ./45-devcontainers.zsh
+devc () {
+  if ! dots/at_hand devcontainer; then
+    echo "you have to install the devcontainer CLI to use this wrapper command" >&2
+    exit 1
+  fi
+  # DWIM search for project directory:
+  # - try git root dir
+  # - else $PWD
+  # It would be better to recursively search for the devcontainer config dir (ideally in a
+  # way that's aware of user-provided overrides of the default name); odds are very good
+  # that YAGNI is once again the way, tho
+  local project_dir
+  project_dir=$(git rev-parse --show-toplevel 2>&/dev/null)
+  if [ -z "$project_dir" ]; then
+    project_dir="$PWD"
+  fi
+
+  devcontainer --workspace-folder "$project_dir" "$@"
+}
+#+end_src
+
+** =rust=
+#+begin_src zsh :tangle ./46-rust.zsh
+if dots/file ~/.cargo/env; then
+    source ~/.cargo/env
+fi
+#+end_src
+
+** =guile=
+#+begin_src zsh :tangle ./47-guile.zsh
+export GUILE_LOAD_PATH="$HOME/lib/scheme:$GUILE_LOAD_PATH"
+#+end_src
+
+* some frequently-used directories and files deserve special handling
+** GOTO coding projects or config from anywhere
+#+begin_src zsh :tangle ./51-common-directories.zsh
+cdc () {
+  if [[ $# -gt 0 ]]; then
+    cdd ~/c/${@}
+  else
+    cdd ~/c
+  fi
+}
+compdef '_files -W ~/c' cdc
+tnc () {
+  cdd ~/c/${@} && tn
+}
+compdef '_files -W ~/c' tnc
+
+
+cd. () {
+  if [[ $# -gt 0 ]]; then
+    cdd ~/.config/${@}
+  else
+    cdd ~/.config
+  fi
+}
+compdef '_files -W ~/.config' cd.
+
+e. () {
+  if [[ $# -gt 0 ]]; then
+    e ~/.config/${@}
+  else
+    e ~/.config
+  fi
+}
+compdef '_files -W ~/.config' e.
+#+end_src
+
+** quickly edit/source key config files
+#+begin_src zsh :tangle ./52-edit-config-file-aliases.zsh
+# Edit the files
+alias zrc="emv ~/.config/zsh/config.org"
+alias zrl="emv ~/.zshrc.local.zsh"
+alias ez="emv ~/.config/zsh/config.org"
+alias el="emv ~/.zshrc.local.zsh"
+alias rc="source ~/.zshrc"
+alias RC="VERBOSE_ZSH_CONFIG=t source ~/.zshrc"
+alias et="emv ~/.tmux.conf"
+
+# Reload the files
+sdf () {
+  local VERBOSE=t
+  local grepper
+  local files_with_aliases
+
+  case $1 in
+      -q|--quiet)
+          shift
+          unset VERBOSE
+          ;;
+  esac
+
+
+  if command -v rg >/dev/null; then
+    grepper=rg;
+  else
+    grepper=grep;
+  fi
+
+  files_with_aliases=($($grepper -l alias ~/.config/zsh/**/* | $grepper -v README) ~/.local-aliases.zsh)
+
+  for file in $files_with_aliases; do
+    [ -f $file ] && source $file
+    [ -n "$VERBOSE" -a -f $file ] && echo sourced $file
+  done
+
+  [ -f ~/.local-aliases.zsh ] && source ~/.local-aliases.zsh || true
+}
+
+alias SDF="tmux-send-all sdf -q"
+#+end_src
+
+** =showme= the source of that script in =$PATH=
+#+begin_src zsh :tangle ./53-showme.zsh
+if dots/at_hand bat; then
+  showme () {
+    bat $(which $1)
+  }
+else
+  showme () {
+    cat $(which $1)
+  }
+fi
+#+end_src
+
+** searchable chrome history ()
+This is macOS-only for now; as of writing, I've been daily-driving linux for a minute, so it's plausible it's broken.
+#+begin_src zsh :tangle ./60-chrome.zsh
+if [ $OS_TYPE == "macos" ]; then
+    h () {
+        local cols sep
+        cols=$(( COLUMNS / 3 ))
+        sep='{::}'
+
+        # TODO: find chrome history's location on linux
+        cp -f ~/Library/Application\ Support/Google/Chrome/Default/History /tmp/h
+
+        sqlite3 -separator $sep /tmp/h \
+                "select substr(title, 1, $cols), url
+     from urls order by last_visit_time desc" |
+            awk -F $sep '{printf "%-'$cols's  \x1b[36m%s\x1b[m\n", $1, $2}' |
+            fzf --ansi --multi | sed 's#.*\(https*://\)#\1#' | xargs open
+    }
+fi
+#+end_src
+
+* TODO reorganize :: grab bag of aliases, shortcuts, and side-effects
+** aliases
+#+begin_src zsh :tangle ./80-aliases.zsh
+alias fuck="rm -rf"
+if dots/at_hand xdg-open; then
+    if ! dots/at_hand open; then
+        alias open=xdg-open
+    fi
+fi
+
+# This should always be last, so anything above can be overwritten
+[ -f ~/.local-aliases.zsh ] && source ~/.local-aliases.zsh || true
+#+end_src
+
+** TODO prevent expanding longer words that end in some abbrev :: self-expanding abbrevs
+#+begin_src zsh :tangle ./81-self-expanding-abbrevs.zsh
+typeset -Ag abbreviations
+abbreviations=(
+"A"     "| awk '{print $2 }'"
+"B"     "| bc"
+"GROFF" "| groff -s -p -t -e -Tlatin1 -mandoc"
+"F"     "| fzf"
+"G"     "| rg -S"
+"H"     "| head"
+"J"     "| jq"
+"L"     "| less"
+"T"     "| tail -f"
+"W"     "| wc -l"
+"X"     "| xargs"
+)
+
+magic-abbrev-expand () {
+  local MATCH
+  LBUFFER=${LBUFFER%%(#m)[_a-zA-Z0-9]#}
+  LBUFFER+=${abbreviations[$MATCH]:-$MATCH}
+  zle self-insert
+}
+
+no-magic-abbrev-expand () {
+  LBUFFER+=' '
+}
+
+zle -N magic-abbrev-expand
+zle -N no-magic-abbrev-expand
+bindkey " " magic-abbrev-expand
+bindkey "^x " no-magic-abbrev-expand
+bindkey -M isearch " " self-insert
+#+end_src
+
+** today in history! iff available, anyway (BSD-based only (i.e. macOS), IIUC)
+#+begin_src zsh :tangle ./82-print-calendar-entry.zsh
+if [[ -f /usr/share/calendar/calendar.history ]]; then
+    echo "Today in history:"
+    grep $(date +'%m/%d') < /usr/share/calendar/calendar.history | shuf | head -n 1
+    printf "\n"
+fi
+#+end_src
+
+** clean up old macOS screenshots
+#+begin_src zsh :tangle ./83-clean-up-screenshots.zsh
+&>/dev/null rm ~/Desktop/Screenshot*.png
+#+end_src
+
+*** TODO also clean up video screen captures
+
+** copy fun unicode emoticons
+#+begin_src zsh :tangle ./84-unicodes.zsh
+alias idk="echo -n '¯\_(ツ)_/¯' | pbcopy && echo 'Copied \"¯\_(ツ)_/¯\" to clipboard'"
+# Backslashes and underscores must be doubly escaped if the text will be parsed as markdown
+alias idke="echo -n '¯\\\\\\_(ツ)\_/¯' | pbcopy && echo 'Copied \"¯\\\\\_(ツ)\_/¯\" to clipboard'"
+alias om="echo -n '¯\_( ˘͡ ˘̯)_/¯' | pbcopy && echo 'Copied \"¯\_( ˘͡ ˘̯)_/¯\" to clipboard'"
+alias tableflip="echo -n '(╯°□°）╯︵ ┻━┻' | pbcopy && echo 'Copied \"(╯°□°）╯︵ ┻━┻\" to clipboard'"
+alias muscles="echo -n 'ᕙ(⇀‸↼‶)ᕗ' | pbcopy && echo 'Copied \"ᕙ(⇀‸↼‶)ᕗ\" to clipboard'"
+alias heyo="echo -n '(╭☞'ω')╭☞' | pbcopy && echo 'Copied \"(╭☞'ω')╭☞¯\" to clipboard'"
+alias thanks="echo -n '(´▽\`ʃƪ)' | pbcopy && echo 'Copied \"(´▽\`ʃƪ)\" to clipboard'"
+#+end_src
+
+
