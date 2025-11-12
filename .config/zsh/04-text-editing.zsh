@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 export PATH=$PATH:$HOME/.emacs.d/bin/
 # how on earth am I supposed to use a url bar I can't jump around with emacs shortcuts
 if [ ! $IS_MAC ]; then

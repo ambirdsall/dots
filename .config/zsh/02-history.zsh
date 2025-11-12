@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 export HISTFILE=~/.histfile
 export HISTSIZE=10000
 export SAVEHIST=100000

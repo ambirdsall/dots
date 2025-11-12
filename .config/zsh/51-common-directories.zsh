@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 cdc () {
   if [[ $# -gt 0 ]]; then
     cdd ~/c/${@}

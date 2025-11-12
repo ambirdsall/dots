@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 # alias e="qed"
 e() {
   emacsclient -nw --socket-name=ttylated --alternate-editor="" "$@"

@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 # * porcelain
 # ** g is for git, that's good enough for me
 # No arguments: `git status`

@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 dots/add_to_path() {
     local BIN_DIR="$1"
     if [ -d "$BIN_DIR" -a ! $(echo $PATH | grep "$BIN_DIR(:|$)") ]; then

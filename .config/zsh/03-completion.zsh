@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 zstyle ':completion:*' completer _expand _complete _ignored
 
 autoload -Uz compinit && compinit

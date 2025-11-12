@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 # commands to ignore
 # this is an incomplete list; expect to revisit moderately often to add things like:
 # - pagers (and commands that frequently open them)

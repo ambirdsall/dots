@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 # make it work on macOS, too
 if [[ $(uname) == "Darwin" ]]; then
     # never bunt

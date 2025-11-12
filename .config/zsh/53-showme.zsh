@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 if dots/at_hand bat; then
   showme () {
     bat $(which $1)

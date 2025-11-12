@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 typeset -Ag abbreviations
 abbreviations=(
 "A"     "| awk '{print $2 }'"

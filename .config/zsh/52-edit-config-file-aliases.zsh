@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 # Edit the files
 alias zrc="emv ~/.zshrc"
 alias zrl="emv ~/.zshrc.local.zsh"

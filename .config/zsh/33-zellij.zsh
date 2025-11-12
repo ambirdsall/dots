@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 # So. These are yoinked from the output of running zellij's zsh autocomplete++ command
 # (`zellij setup --generate-completion zsh`); although I do rather want that autocomplete
 # functionality, it is currently throwing syntax errors. So:

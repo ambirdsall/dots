@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 if [ $(uname) == 'Darwin' ]; then
     h () {
         local cols sep

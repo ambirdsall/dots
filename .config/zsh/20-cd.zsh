@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 alias 'cd-'="cd -"
 alias ..="cdd .."
 alias ...="cdd ../.."

@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 alias awkcsv='awk -F "\"*,\"*"'
 
 alias cx='chmod +x'

@@ -1,5 +1,3 @@
-#!/usr/bin/env zsh
-
 list_multiplexer_sessions () {
     local zellij_sessions
 
