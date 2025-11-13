@@ -30,6 +30,27 @@ Anyway, you're going to need to rawdog a tty: you can't overwrite =/usr/local/bi
 ~/sbin/update-dms
 #+end_src
 
+#+begin_src sh :tangle ~/sbin/update-dms :shebang "#!/usr/bin/env bash"
+main() {
+  local dms_dir="$HOME/.config/quickshell/dms"
+  if ! [ -d "$dms_dir" ]; then
+    echo "Could not find a dms installation in '$dms_dir', aborting" >&2
+    exit 1
+  else
+    # shellcheck disable=SC2164
+    cd "$dms_dir"
+    git pull
+    dms kill
+    sudo sh -c "curl -L https://github.com/AvengeMedia/danklinux/releases/latest/download/dms-amd64.gz | gunzip | tee /usr/local/bin/dms > /dev/null && chmod +x /usr/local/bin/dms"
+    sudo dnf up quickshell-git
+    sleep 0.5
+    dms run &
+    disown
+  fi
+}
+
+main "$@"
+#+end_src
 
 *** TODO define keybindings to kill/(re)start ~dms~
 
