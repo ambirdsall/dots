@@ -247,7 +247,7 @@ focus-ring {
     // You can use any CSS linear-gradient tool on the web to set these up.
     // Changing the color space is also supported, check the wiki for more info.
     //
-    active-gradient from="#ba965377" to="#007a33ff" angle=-20 in="oklch shorter hue"
+    active-gradient from="#007a33dd" to="#0c2340dd" angle=160 in="oklch shorter hue"
 
     // You can also color the gradient relative to the entire view
     // of the workspace, rather than relative to just the window itself.
