@@ -30,7 +30,8 @@ Anyway, you're going to need to rawdog a tty: you can't overwrite =/usr/local/bi
 ~/sbin/update-dms
 #+end_src
 
-#+begin_src sh :tangle ~/sbin/update-dms :shebang "#!/usr/bin/env bash"
+I had this nonsense, but now they have a proper COPR, so I just use =dnf= instead:
+#+begin_src sh :tangle (or "no" "~/sbin/update-dms") :shebang "#!/usr/bin/env bash"
 main() {
   local dms_dir="$HOME/.config/quickshell/dms"
   if ! [ -d "$dms_dir" ]; then
@@ -54,7 +55,6 @@ main "$@"
 
 *** TODO define keybindings to kill/(re)start ~dms~
 
-*** TODO also update quickshell in =$HOME/sbin/update-dms=
 
 * Input device configuration.
 Find the full list of options on the wiki:
