@@ -1502,6 +1502,11 @@ fi
 export GUILE_LOAD_PATH="$HOME/lib/scheme:$GUILE_LOAD_PATH"
 #+end_src
 
+** =janet=
+#+begin_src zsh :tangle ./48-janet.zsh
+dots/add_to_path /usr/local/lib/janet/bin
+#+end_src
+
 * some frequently-used directories and files deserve special handling
 ** GOTO coding projects or config from anywhere
 #+begin_src zsh :tangle ./51-common-directories.zsh
