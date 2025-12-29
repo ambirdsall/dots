@@ -486,8 +486,8 @@ Now let's make it nice to work with them.
 
 ** working with named workspaces
 #+begin_src kdl :tangle no :noweb-ref keybinds
-Mod+W hotkey-overlay-title="Display the focused workspace's name" { spawn "~/bin/niri-helper" "display"; }
-Mod+Shift+W hotkey-overlay-title="Focus named workspace" { spawn "~/bin/niri-helper" "focus"; }
+Mod+W hotkey-overlay-title="Focus named workspace" { spawn "~/bin/niri-helper" "focus"; }
+Mod+Shift+W hotkey-overlay-title="Display the focused workspace's name" { spawn "~/bin/niri-helper" "display"; }
 Mod+Ctrl+W hotkey-overlay-title="Move column to named workspace" { spawn "~/bin/niri-helper" "move-column"; }
 #+end_src
 
@@ -502,7 +502,7 @@ Mod+Ctrl+W hotkey-overlay-title="Move column to named workspace" { spawn "~/bin/
                               (map |(get $ "name")))
         choices (string/join (interpose "\n" other-workspaces))
         prompt (string/join [title ": "])]
-    ($<_ echo ,choices | fuzzel --dmenu --use-bold --prompt-color ,"008853ff" --prompt ,prompt)))
+    ($<_ echo ,choices | fuzzel --dmenu --use-bold --gamma-correct --prompt-color ,"008853ff" --prompt ,prompt)))
 
 (defn- display-workspace-name []
   (let [workspaces (json/decode ($<_ niri msg --json workspaces))
@@ -510,7 +510,9 @@ Mod+Ctrl+W hotkey-overlay-title="Move column to named workspace" { spawn "~/bin/
     ($ hydratic timed-banner ,active-space)))
 
 (defn- focus-workspace []
-  (let [selection (choose-other-workspace! "Go to workspace")]
+  (let [workspaces (json/decode ($<_ niri msg --json workspaces))
+        active-space ((find |(get $ "is_focused") workspaces) "name")
+        selection (choose-other-workspace! (string "Go from " active-space " to"))]
     ($ niri msg action focus-workspace ,selection)))
 
 (defn- move-column-to-workspace []
