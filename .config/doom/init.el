@@ -94,7 +94,7 @@
  (scheme +guile)   ; a fully conniving family of lisps
  
  (sh
-   +lsp
+   ;; +lsp
    +tree-sitter)        ; she sells {ba,z,fi}sh shells on the C xor
  (web
    +lsp
