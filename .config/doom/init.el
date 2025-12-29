@@ -68,9 +68,6 @@
  (elixir +lsp)            ; erlang done right
  emacs-lisp        ; drown in parentheses
  (json +lsp)              ; At least it ain't XML
- (javascript
-   +lsp
-   +tree-sitter)        ; all(hope(abandon(ye(who(enter(here))))))
  (lua
    +fennel
    +lsp)                 ; one-based indices? one-based indices
@@ -102,6 +99,9 @@
  (yaml
    + lsp
    +tree-sitter)        ; JSON, but readable
+ (javascript
+   +lsp
+   +tree-sitter)        ; all(hope(abandon(ye(who(enter(here))))))
  (janet +tree-sitter)
  
  :config

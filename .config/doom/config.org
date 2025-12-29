@@ -266,9 +266,6 @@ data              ; config/data formats
 (elixir +lsp)            ; erlang done right
 emacs-lisp        ; drown in parentheses
 (json +lsp)              ; At least it ain't XML
-(javascript
-  +lsp
-  +tree-sitter)        ; all(hope(abandon(ye(who(enter(here))))))
 (lua
   +fennel
   +lsp)                 ; one-based indices? one-based indices
@@ -1566,59 +1563,19 @@ I'm not sure about the keybindings. Maybe an extra top-level normal mode command
 | ⋆waves hands vaguely⋆ code actions | ~lsp-execute-code-action~    | a   |
 **** TODO how do I make a hydra again
 
-** the four most frustrating words in the english language: web development in emacs [0/1]
-First two sections largely +yoinked from+ courtesy of https://codeberg.org/ckruse/doom.d/src/commit/c6c7163e79a0fecdda6df9e81e60dc246170213a/config.el
-*** {t,j}s
-#+begin_src elisp :tangle (and "packages.el" "no")
-(package! tsi :recipe (:type git :host github :repo "orzechowskid/tsi.el"))
-(package! tsx-mode :recipe (:type git :host github :repo "orzechowskid/tsx-mode.el"))
+** the four most frustrating words in the english language: web development in emacs [0/2]
+First of all:
+#+begin_src elisp :tangle no :noweb-ref doom-modules-lang
+(javascript
+  +lsp
+  +tree-sitter)        ; all(hope(abandon(ye(who(enter(here))))))
 #+end_src
 
-#+begin_src elisp :tangle no
-(setq typescript-indent-level 2
-      js-indent-level 2)
+*** just a =nodejs-repl= girl / livin' in a =tsx= world...
+Okay, so repl-driven development is the bee's fucking knees; and while =node= is great for basic commonjs stuff, =tsx= is just nicer for node.
 
-(use-package! tsx-mode
-  :mode (("\\.tsx\\'" . tsx-mode))
-  :hook (tsx-mode . lsp!)
-  :hook (tsx-mode . rainbow-delimiters-mode)
-  :hook (tsx-mode . add-node-modules-path)
-  :custom (tsx-mode-tsx-auto-tags  t)
-  :defer t
-  :init
-  (after! flycheck
-    (flycheck-add-mode 'javascript-eslint 'tsx-mode))
 
-  (add-hook! 'tsx-mode-hook
-    (defun ck/tsx-setup ()
-      (flycheck-select-checker 'javascript-eslint)
-      (flycheck-add-next-checker 'javascript-eslint 'lsp)
-      (pushnew! flycheck-disabled-checkers
-                'javascript-jshint
-                'tsx-tide
-                'jsx-tide)))
-#+end_src
-
-*** prettier et al with apheleia (disabled for testing now that elken's module has dropped)
-#+begin_src elisp :tangle (or "no" "packages.el")
-(package! apheleia)
-#+end_src
-
-#+begin_src elisp :tangle no
-(use-package! apheleia
-  :hook ((tsx-mode . apheleia-mode)
-         (typescript-mode . apheleia-mode)
-         (typescript-tsx-mode . apheleia-mode)
-         (js-mode . apheleia-mode)
-         (json-mode . apheleia-mode)
-         (css-mode . apheleia-mode)
-         (scss-mode . apheleia-mode))
-  :defer t
-  :config
-  (push '(tsx-mode . prettier) apheleia-mode-alist)
-  (push '(scss-mode . prettier) apheleia-mode-alist)
-  (push '(css-mode . prettier) apheleia-mode-alist))
-#+end_src
+**** TODO write fn to return (ideally local) path to =tsx= binary if in a typscript mode and said binary is available
 
 *** web-mode
 #+begin_src elisp
@@ -1651,6 +1608,7 @@ Meanwhile, this little sucker is just _sitting_ in =custom.el=, hideous. This mu
 (use-package! lsp-tailwindcss
   :after lsp)
 #+end_src
+
 ** there are more languages under the sun than ~:lang~ can speak [0/3]
 *** ruby
 #+begin_src elisp
