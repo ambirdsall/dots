@@ -1,0 +1,2518 @@
+#+title: Transient User and Developer Manual
+#+author: Jonas Bernoulli
+#+but_also: by an LLM drivfen by Trevoke from the doom discord
+cf. [[https://github.com/Trevoke/alternate-transient-docs/blob/main/docs/transient-alternate.org][the github source]]
+
+#+texinfo_dir_category: Emacs misc features
+#+texinfo_dir_title: Transient: (transient).
+#+texinfo_dir_desc: Transient Commands
+#+subtitle: for version 0.12.0
+
+#+setupfile: .orgconfig
+#+PROPERTY: header-args    :results silent
+
+This manual teaches you to use and create transient menus — the keyboard-driven
+popup interfaces used in Magit and other Emacs packages.
+
+#+texinfo: @insertcopying
+
+* Part I: Using Transient Menus
+
+** What Are These Popup Menus?
+
+You're using an Emacs package — maybe Magit for Git, or Forge for GitHub — and
+you press a key. A panel appears at the bottom of your screen showing available
+commands, each with a key binding. You press another key, something happens.
+What just happened?
+
+You used a *transient menu*.
+
+*** The Problem
+
+Emacs commands can grow complex. Consider the shell command =ls=: it now has
+over fifty options. Some are boolean flags (=-l=). Some take values
+(=--sort=time=). Some only make sense together (=-lh=). How do you discover
+and use all these options?
+
+The traditional Emacs answer is prefix arguments (=C-u=). But =C-u= doesn't
+scale. What does =C-u C-u= mean for this particular command? You have to read
+the documentation to find out — and remember it.
+
+*** The Solution
+
+Transient menus solve this by showing you what's available. When you invoke a
+transient command, a popup displays:
+
+- Available *actions* (commands you can run)
+- Available *options* (settings you can toggle or configure)
+- Current state (which options are active)
+
+Instead of memorizing what =C-u= does for fifty different commands, you see
+your choices laid out. Press a key to toggle an option. Press another to
+execute. The menu guides you.
+
+*** Who This Manual Is For
+
+- *Part I* is for anyone using packages with transient menus (Magit, Forge,
+  Consult, and many others). You'll learn to navigate menus, set options, and
+  customize your experience.
+
+- *Part II* is for package authors who want to create transient menus in their
+  own packages.
+
+You don't need to read Part II to use transients effectively. But Part I is
+essential background for Part II — you should understand using menus before
+creating them.
+
+** Try It Now
+
+Let's see a transient menu in action. Evaluate this code:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-first-transient ()
+  "A simple transient example."
+  ["Actions"
+   ("h" "Say hello" (lambda () (interactive) (message "Hello!")))
+   ("g" "Say goodbye" (lambda () (interactive) (message "Goodbye!")))]
+  ["Options"
+   ("-v" "Verbose" "--verbose")])
+#+end_src
+
+Now run it:
+
+: M-x my-first-transient
+
+A menu appears. Try these:
+
+1. Press {{{kbd(h)}}} — you'll see "Hello!" in the echo area
+2. Run it again: {{{kbd(M-x my-first-transient)}}}
+3. Press {{{kbd(-v)}}} — notice the option toggles on
+4. Press {{{kbd(g)}}} — you'll see "Goodbye!"
+
+That's it. You just used a transient menu:
+
+- You saw available commands grouped by purpose
+- You toggled an option (it stayed in the menu)
+- You executed an action (it closed the menu)
+
+The rest of Part I explains what you just experienced.
+
+** Reading a Menu
+
+When a transient menu appears, you see a structured display of available
+commands. Understanding this display helps you work efficiently — you'll
+know what you can do, what state things are in, and what will happen when
+you press a key. Let's break down what you're looking at.
+
+*** Groups
+
+Commands are organized into *groups* — visual sections with headers. In our
+example from the previous section, we had two groups: "Actions" and "Options".
+
+Groups help you find what you need quickly. Rather than scanning a long list,
+you jump to the relevant section. A complex menu might have groups like:
+
+- "Arguments" — settings that affect behavior
+- "Actions" — things you can do
+- "Navigation" — ways to move around
+
+The group header tells you the category. Commands within a group share a
+common purpose, so once you know what you want to do, you know where to look.
+
+*** Keys and Descriptions
+
+Each command in a menu shows at least two things: what to press, and what it
+does. Options often show a third element — their argument form:
+
+: -v  Verbose  --verbose
+:  ^     ^         ^
+:  |     |         |
+: key  description  argument (if applicable)
+
+- The *key* is what you press (=-v= in this case)
+- The *description* is human-readable ("Verbose")
+- The *argument* shows what value gets set (=--verbose=)
+
+For actions (commands that do things rather than set things), you typically
+see just the key and description:
+
+: h  Say hello
+
+The description tells you what pressing {{{kbd(h)}}} will do. No argument
+appears because actions perform operations rather than setting values.
+
+*** Options vs Actions: Visual Differences
+
+How do you know if pressing a key will toggle a setting or execute a command?
+With practice, you'll recognize the patterns:
+
+*Options* (settings you toggle or configure):
+- Often have argument-style keys: =-v=, =-f=, =--=
+- Show their current value or state
+- Stay in the menu after you press them
+
+*Actions* (commands you execute):
+- Often have simple letter keys: =h=, =g=, =c=
+- Don't show values (they do things, not set things)
+- Usually close the menu when pressed
+
+Remember from the example: pressing {{{kbd(-v)}}} toggled the option but kept
+the menu open. Pressing {{{kbd(h)}}} or {{{kbd(g)}}} executed an action and
+closed the menu. This distinction lets you configure multiple options before
+triggering an action.
+
+*** Semantic Coloring
+
+If =transient-semantic-coloring= is enabled (the default), keys are colored
+to indicate what happens when you press them:
+
+- *Blue* keys stay in the menu (options, toggles)
+- *Red* keys exit the menu (actions that do something)
+- *Gray* keys are currently unavailable
+
+This gives you instant visual feedback: blue means "safe to explore" — you
+can press it and the menu stays open. Red means "this will do something and
+close the menu." Gray means you can't use this command right now, perhaps
+because a required option isn't set.
+
+*** Reading Argument State
+
+Options show their current state, so you always know what's active:
+
+: -v Verbose (--verbose)
+
+When the option is *off*, you see just the description. When it's *on*, you
+see the argument value highlighted or with added formatting. This visual
+change confirms that your toggle worked.
+
+For options that take values rather than just on/off:
+
+: -f File (--file="example.txt")
+
+The current value appears in the display. You can see at a glance what file
+is selected, what branch is targeted, or what format is chosen.
+
+*** Multi-Key Sequences
+
+Some commands require multiple keys. You'll see them displayed with spaces
+between the keys:
+
+: c c  Commit
+
+This means: press {{{kbd(c)}}}, then press {{{kbd(c)}}} again. After the first
+key, the menu updates to show only commands starting with that prefix. This
+is how menus organize many commands without running out of single keys.
+
+To cancel a partial sequence and return to the full menu, press {{{kbd(C-g)}}}.
+This is useful when you start a sequence but change your mind.
+
+** Options vs Actions
+
+Every command in a transient menu is one of two things:
+
+- An *option* — changes a setting, stays in the menu
+- An *action* — does something, usually exits the menu
+
+Understanding this distinction is key to using transients effectively.
+
+*** Options: Configure Before You Act
+
+Options let you build up your configuration before doing anything. Think of
+ordering at a restaurant:
+
+- "No onions" — that's an option (a switch)
+- "Medium rare" — that's an option (a choice)
+- "Add bacon" — that's an option (a toggle)
+- "Place order" — that's the action
+
+In a transient menu, you toggle options to configure what you want. The menu
+stays open, showing your current choices. Only when you're ready do you press
+an action key.
+
+*** Actions: Execute with Current Options
+
+When you press an action key, three things happen:
+
+1. The transient collects all your current option values
+2. The action command receives those values
+3. The menu closes (usually)
+
+The action can then use your options. In Magit, for example, you might:
+
+1. Toggle =-a= to stage all files
+2. Toggle =-s= to sign the commit
+3. Press {{{kbd(c)}}} to create the commit
+
+The commit action receives both options and acts accordingly.
+
+*** The Mental Model: Accumulate, Then Consume
+
+Think of a transient as a two-phase process:
+
+#+begin_example
+ACCUMULATE                    CONSUME
+    │                            │
+    ▼                            ▼
+┌─────────┐ toggle  ┌─────────┐  press  ┌──────────┐
+│ Options │ ──────► │ Options │ ──────► │  Action  │
+│ (none)  │         │ (-v -f) │         │ (runs!)  │
+└─────────┘         └─────────┘         └──────────┘
+#+end_example
+
+Options accumulate. You can toggle them on and off, change values, experiment.
+Nothing happens until you press an action.
+
+Actions consume. They take the current options and do something with them.
+
+*** How to Tell Them Apart
+
+Beyond semantic coloring, you can tell options from actions by:
+
+1. *Key style*: Options often use =-x= or =--= style keys
+2. *Behavior*: Press it — did the menu close? That was an action
+3. *Display*: Options show their current value; actions don't
+
+When in doubt, press {{{kbd(C-h)}}} followed by the key to see documentation
+for that command.
+
+*** Options That Act Like Actions
+
+Some options have immediate effects (like setting a variable) but still keep
+the menu open. These blur the line, but the key distinction remains: did the
+menu close? If not, you can still change your mind.
+
+** Setting Values
+
+Options come in different flavors. Some are simple on/off switches. Others
+prompt you for a value. All of them remember what you've entered before.
+
+*** Switches: On or Off
+
+The simplest options are switches — boolean flags that are either on or off.
+
+: -v Verbose --verbose
+
+Press the key once to turn it on. The display changes to show it's active:
+
+: -v Verbose (--verbose)
+
+Press again to turn it off. Switches toggle.
+
+*** Options with Values
+
+Some options need more than on/off — they take a value:
+
+: -f File --file=
+
+When you press the key, you're prompted in the minibuffer:
+
+: File: █
+
+Type a value and press {{{kbd(RET)}}}. The option now shows your value:
+
+: -f File (--file="notes.txt")
+
+To change the value, press the key again. To clear it, press the key and
+enter an empty value.
+
+*** Choices: Selecting from a List
+
+Some options offer predefined choices:
+
+: -s Sort --sort=
+
+When you press the key, you see a completion list:
+
+: Sort (name, date, size): █
+
+Select one. The option updates to show your choice:
+
+: -s Sort (--sort=date)
+
+*** History: Your Previous Values
+
+Transient remembers what you've entered. When prompted for a value, press
+{{{kbd(M-p)}}} to cycle through previous inputs:
+
+: File: █
+: [M-p]
+: File: notes.txt█
+: [M-p]
+: File: README.md█
+
+This works per-option. Your file history is separate from your sort history.
+
+History persists across sessions. Values you entered last week are still
+available.
+
+*** Saving Values: The Default Next Time
+
+After configuring options, you might want those to be the defaults next time.
+Transient offers several levels of persistence:
+
+**** Set for This Session
+
+Press {{{kbd(C-x s)}}} to set the current values for this Emacs session. Next
+time you invoke this transient (before restarting Emacs), these values will
+be pre-selected.
+
+**** Save Permanently
+
+Press {{{kbd(C-x C-s)}}} to save values to disk. These become the new defaults,
+surviving Emacs restarts.
+
+Saved values are stored in =~/.config/emacs/transient/values.el= (or your
+equivalent =user-emacs-directory=).
+
+**** Reset to Defaults
+
+Press {{{kbd(C-x C-k)}}} to clear your saved values and return to the package
+author's defaults.
+
+*** The Value Lifecycle
+
+Understanding how values flow helps avoid confusion:
+
+1. *Package defaults* — what the author set
+2. *Saved values* — what you saved with {{{kbd(C-x C-s)}}}
+3. *Set values* — what you set this session with {{{kbd(C-x s)}}}
+4. *Current values* — what you've toggled right now
+
+When you invoke a transient, it loads values in that order: saved values
+override defaults, set values override saved, and then you modify current.
+
+When you exit the transient (without saving), current values are discarded.
+Set values persist until you restart Emacs. Saved values persist forever.
+
+*** Prefix Arguments Still Work
+
+You can still use {{{kbd(C-u)}}} with transient commands. The prefix argument
+applies to the next key you press. This is an advanced feature, but it means
+transients don't break existing Emacs conventions — they extend them.
+
+** Customizing Your Experience
+
+Transient menus can be customized in two ways: changing which commands appear,
+and changing how menus behave.
+
+*** Showing and Hiding Commands: Levels
+
+Not everyone needs every command. Transient uses a *levels* system to control
+visibility:
+
+- Each command has a level from 1 to 7
+- You have a personal level threshold (default: 4)
+- Commands at or below your level are visible
+- Commands above your level are hidden
+
+This means beginners see a simpler interface, while experts can reveal
+everything.
+
+**** Setting Your Level
+
+To change your level for all transients:
+
+#+begin_src emacs-lisp
+(setq transient-default-level 5)  ; Show more commands
+#+end_src
+
+Levels roughly mean:
+
+| Level | Intended Audience           |
+|-------+-----------------------------|
+| 1     | Essential commands only     |
+| 2-3   | Beginner                    |
+| 4     | Normal user (default)       |
+| 5     | Advanced user               |
+| 6-7   | Expert / debugging          |
+
+**** Setting Levels Per-Command
+
+You can also show/hide individual commands:
+
+1. Invoke the transient
+2. Press {{{kbd(C-x l)}}} to enter level-setting mode
+3. Press a command's key
+4. Enter the new level (1-7), or 0 to always hide
+
+This is saved to =~/.config/emacs/transient/levels.el=.
+
+**** Temporarily Showing Everything
+
+Press {{{kbd(C-u)}}} before invoking a transient to temporarily show all
+commands, regardless of level. Useful for finding hidden options.
+
+*** Where Menus Appear
+
+By default, transient menus appear in a window at the bottom of the frame.
+You can change this:
+
+#+begin_src emacs-lisp
+;; Show on the right side instead
+(setq transient-display-buffer-action
+      '(display-buffer-in-side-window (side . right)))
+
+;; Use a regular popup (not a side window)
+(setq transient-display-buffer-action
+      '(display-buffer-below-selected))
+#+end_src
+
+*** When Menus Appear
+
+Some people find the immediate popup distracting. You can delay it:
+
+#+begin_src emacs-lisp
+;; Show menu after 0.5 seconds
+(setq transient-show-menu 0.5)
+
+;; Only show menu when requested (press ? or C-h)
+(setq transient-show-menu nil)
+#+end_src
+
+Even with =transient-show-menu= set to =nil=, key bindings still work — you
+just don't see the menu until you ask.
+
+*** Mouse and Navigation
+
+By default, you can navigate the menu with the mouse and arrow keys:
+
+#+begin_src emacs-lisp
+;; Disable menu navigation entirely (keyboard only)
+(setq transient-enable-menu-navigation nil)
+
+;; Enable navigation with verbose help
+(setq transient-enable-menu-navigation 'verbose)
+
+;; Enable navigation with click-to-execute
+(setq transient-enable-menu-navigation 'mouse)
+#+end_src
+
+*** Common Customization Variables
+
+| Variable                          | Default     | Purpose                          |
+|-----------------------------------+-------------+----------------------------------|
+| =transient-default-level=         | 4           | Show commands at or below level  |
+| =transient-show-menu=             | t           | When to display menu             |
+| =transient-display-buffer-action= | (bottom)    | Where menu window appears        |
+| =transient-semantic-coloring=     | t           | Color keys by behavior           |
+| =transient-enable-menu-navigation=| ='verbose=  | Mouse/arrow key navigation       |
+| =transient-save-history=          | t           | Remember input history           |
+
+*** Appearance
+
+#+begin_src emacs-lisp
+;; Don't use colors for keys
+(setq transient-semantic-coloring nil)
+
+;; Customize faces for better visibility
+(custom-set-faces
+ '(transient-key ((t :foreground "deep sky blue")))
+ '(transient-argument ((t :foreground "orange"))))
+#+end_src
+
+*** Accessibility
+
+Transient includes options for screen reader users and those who prefer less
+visual complexity:
+
+#+begin_src emacs-lisp
+;; Simpler display for screen readers
+(setq transient-enable-menu-navigation nil)
+(setq transient-show-menu t)
+(setq transient-semantic-coloring nil)
+#+end_src
+
+See the variable =transient-navigate-to-group-descriptions= for additional
+accessibility options.
+
+** Modifying Existing Menus
+
+You've been using Magit's commit menu and wish it had a shortcut to your
+favorite option. Or you want to remove a command you never use. Transient
+lets you modify any menu — adding commands, removing them, or replacing them
+entirely.
+
+This differs from the levels system in the previous chapter. Levels show or
+hide commands that already exist. Here, you're adding entirely new commands
+or removing ones the package author included.
+
+*** Adding a Command
+
+Use =transient-append-suffix= to add a command to an existing menu:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'magit
+  (transient-append-suffix 'magit-commit "-S"
+    '("-R" "Reuse message" "--reuse-message=HEAD")))
+#+end_src
+
+This adds a new option =-R= after the existing =-S= option in Magit's commit
+transient.
+
+The syntax is:
+
+: (transient-append-suffix PREFIX LOCATION SUFFIX)
+
+Where:
+- =PREFIX= is the transient command symbol (e.g., ='magit-commit=)
+- =LOCATION= is where to insert (a key like ="-S"= or an index like =0=)
+- =SUFFIX= is the new command specification
+
+*** Suffix Specifications
+
+The suffix you add is a list describing the new command. For actions (commands
+that do something):
+
+: (KEY DESCRIPTION COMMAND)
+
+For example, =("k" "Kill buffer" kill-buffer)= creates an action bound to
+{{{kbd(k)}}} that runs =kill-buffer=.
+
+For options (arguments that get passed along):
+
+: (KEY DESCRIPTION ARGUMENT)
+
+For example, =("-v" "Verbose" "--verbose")= creates a toggle for the
+=--verbose= flag.
+
+You can also specify additional properties:
+
+#+begin_src emacs-lisp
+'("k" "Kill buffer" kill-buffer :transient nil)
+#+end_src
+
+The =:transient nil= means pressing this key will exit the menu. Use
+=:transient t= if you want the menu to stay open after the command runs.
+
+*** Inserting Before or Replacing
+
+To insert *before* a location instead of after:
+
+#+begin_src emacs-lisp
+(transient-insert-suffix 'magit-commit "-S"
+  '("-R" "Reuse message" "--reuse-message=HEAD"))
+#+end_src
+
+To *replace* an existing suffix:
+
+#+begin_src emacs-lisp
+(transient-replace-suffix 'magit-commit "-S"
+  '("-S" "Sign (different key)" "--gpg-sign="))
+#+end_src
+
+*** Removing a Command
+
+To remove a command you don't use:
+
+#+begin_src emacs-lisp
+(transient-remove-suffix 'magit-commit "-S")
+#+end_src
+
+This is useful for decluttering menus. If you never sign commits, removing
+the GPG option simplifies the interface.
+
+*** Where to Put This Code
+
+Add these modifications to your Emacs init file (=~/.emacs.d/init.el= or
+similar). The key is timing: the transient must be defined before you can
+modify it.
+
+Use =with-eval-after-load= to ensure the transient exists before you modify it:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'magit
+  ;; Your magit transient modifications here
+  )
+#+end_src
+
+This waits until Magit loads, then applies your modifications. Without this
+wrapper, Emacs would try to modify a transient that doesn't exist yet.
+
+For transients defined in =transient.el= itself (rare), you can modify them
+directly after transient loads:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'transient
+  ;; Modifications to built-in transients
+  )
+#+end_src
+
+*** Adding to Groups
+
+When a transient has multiple groups, you might want to add your command to
+a specific one. Use a group coordinate instead of a key:
+
+#+begin_src emacs-lisp
+(transient-append-suffix 'magit-commit '(0 -1)
+  '("-R" "Reuse message" "--reuse-message=HEAD"))
+#+end_src
+
+The ='(0 -1)= is a coordinate: group 0 (the first group), position =-1=
+(the end). Negative numbers count from the end, so =-1= means "last
+position."
+
+Some useful coordinates:
+- ='(0 0)= — first group, first position
+- ='(1 -1)= — second group, last position
+- ='(2 0)= — third group, first position
+
+*** Available Functions
+
+| Function                   | Purpose                    |
+|----------------------------+----------------------------|
+| =transient-append-suffix=  | Add after location         |
+| =transient-insert-suffix=  | Add before location        |
+| =transient-replace-suffix= | Replace at location        |
+| =transient-remove-suffix=  | Remove at location         |
+| =transient-suffix-put=     | Modify a property          |
+
+*** Example: Custom Magit Shortcuts
+
+A practical example — adding quick shortcuts to Magit's dispatch menu:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'magit
+  ;; Add quick status to dispatch
+  (transient-append-suffix 'magit-dispatch "!"
+    '("S" "Quick status" magit-status)))
+#+end_src
+
+Here's a more complete example showing several modifications:
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'magit
+  ;; Add a reuse-message option to commit
+  (transient-append-suffix 'magit-commit "-S"
+    '("-R" "Reuse message" "--reuse-message=HEAD"))
+
+  ;; Remove an option we never use
+  (transient-remove-suffix 'magit-commit "-s"))
+#+end_src
+
+With these techniques, you can tailor any transient menu to match your
+workflow. In Part II, you'll learn to create entirely new transients from
+scratch.
+
+** The Vocabulary: Prefix, Infix, Suffix
+
+Now that you understand how transient menus work, let's introduce the
+technical vocabulary. You'll encounter these terms in documentation, when
+reading code, and throughout Part II of this manual.
+
+*** The Terms
+
+What you've been calling a *menu* is technically a *prefix* — short for
+"prefix command." Just as {{{kbd(C-x)}}} is a prefix key that waits for more
+input, a transient prefix command displays a menu and waits for you to choose.
+
+What you've been calling *options* are technically *infixes* — they come
+between (in-fix) the prefix and the final action, modifying how the action
+behaves.
+
+What you've been calling *actions* are technically *suffixes* — they come
+at the end (suffix) and complete the command sequence.
+
+*** Visual Mapping
+
+#+begin_example
+┌─────────────────────────────────────┐
+│          Your mental model          │
+├───────────┬───────────┬─────────────┤
+│   Menu    │  Options  │   Actions   │
+├───────────┼───────────┼─────────────┤
+│  Prefix   │  Infixes  │   Suffixes  │
+├───────────┴───────────┴─────────────┤
+│        Technical vocabulary         │
+└─────────────────────────────────────┘
+#+end_example
+
+*** Why These Names?
+
+The terminology comes from argument position in function calls:
+
+#+begin_src emacs-lisp
+(prefix    infix-args...    suffix-action)
+(git       --verbose -m     commit)
+#+end_src
+
+The prefix is the command. Infixes are the middle arguments. The suffix is
+what actually runs.
+
+This naming also reflects the user interface: the prefix command invokes the
+menu, infixes set values, and suffixes execute.
+
+*** One Subtlety: Suffixes Include Infixes
+
+Technically, an infix is a special kind of suffix. When documentation says
+"suffixes," it sometimes means "all commands in the menu" (including infixes),
+and sometimes means "non-infix suffixes" (just actions).
+
+Context usually makes this clear, but if you're confused, remember:
+
+- All infixes are suffixes
+- Not all suffixes are infixes
+- "Suffix" alone usually means "action" in user-focused documentation
+- "Suffix" in technical docs might include infixes
+
+*** Groups
+
+Groups aren't prefix/infix/suffix — they're containers. A group holds
+suffixes and determines their layout (column, row, etc.).
+
+*** Going Forward
+
+With this vocabulary, you can:
+
+- Read transient source code and docstrings
+- Follow Part II of this manual
+- Ask questions using standard terminology
+
+In Part II, we'll use the technical terms exclusively, since you're now
+creating transients rather than just using them.
+
+** User Reference
+
+This chapter provides quick-reference tables for users already familiar with
+transient concepts. If you need to learn how something works, refer to the
+chapter indicated.
+
+*** Key Bindings in Transient Menus
+
+Commands available while a transient menu is active:
+
+| Key           | Command                       | Purpose                          |
+|---------------+-------------------------------+----------------------------------|
+| {{{kbd(C-g)}}}| =transient-quit-one=          | Exit this transient              |
+| {{{kbd(C-q)}}}| =transient-quit-all=          | Exit all transients              |
+| {{{kbd(C-z)}}}| =transient-suspend=           | Suspend (resume with M-x)        |
+| {{{kbd(C-h)}}}| (prefix)                      | Help for next key                |
+| {{{kbd(C-x l)}}}| =transient-set-level=       | Set level for a suffix           |
+| {{{kbd(C-x s)}}}| =transient-set=             | Set values for session           |
+| {{{kbd(C-x C-s)}}}| =transient-save=          | Save values permanently          |
+| {{{kbd(C-x C-k)}}}| =transient-reset=          | Reset to defaults                |
+| {{{kbd(M-p)}}}| (in minibuffer)               | Previous history entry           |
+| {{{kbd(M-n)}}}| (in minibuffer)               | Next history entry               |
+
+See [[*Setting Values]] for details on saving and history.
+
+*** Global Commands
+
+Commands available anywhere:
+
+| Command                | Purpose                                   |
+|------------------------+-------------------------------------------|
+| =transient-resume=     | Resume last suspended transient           |
+
+*** Customization Variables
+
+Core behavior (see [[*Customizing Your Experience]]):
+
+| Variable                           | Default    | Purpose                     |
+|------------------------------------+------------+-----------------------------|
+| =transient-default-level=          | 4          | Visibility threshold (1-7)  |
+| =transient-show-menu=              | t          | When menu appears           |
+| =transient-enable-menu-navigation= | ='verbose= | Mouse/arrow navigation      |
+| =transient-semantic-coloring=      | t          | Color keys by behavior      |
+
+Display:
+
+| Variable                          | Default         | Purpose               |
+|-----------------------------------+-----------------+-----------------------|
+| =transient-display-buffer-action= | =(bottom)=      | Window placement      |
+| =transient-mode-line-format=      | (mode line)     | Mode line format      |
+
+Persistence:
+
+| Variable                 | Default  | Purpose                          |
+|--------------------------+----------+----------------------------------|
+| =transient-save-history= | t        | Remember input history           |
+| =transient-history-file= | (varies) | Where history is saved           |
+| =transient-values-file=  | (varies) | Where saved values are stored    |
+| =transient-levels-file=  | (varies) | Where level settings are stored  |
+
+*** Modifying Transients
+
+Functions for adding/removing commands (see [[*Modifying Existing Menus]]):
+
+| Function                   | Purpose                                   |
+|----------------------------+-------------------------------------------|
+| =transient-append-suffix=  | Add command after location                |
+| =transient-insert-suffix=  | Add command before location               |
+| =transient-replace-suffix= | Replace command at location               |
+| =transient-remove-suffix=  | Remove command at location                |
+| =transient-suffix-put=     | Modify a suffix property                  |
+| =transient-get-suffix=     | Get suffix object at location             |
+
+*** File Locations
+
+Transient stores persistent data in your =user-emacs-directory=:
+
+| File                         | Contents                     |
+|------------------------------+------------------------------|
+| =transient/history.el=       | Input history                |
+| =transient/values.el=        | Saved prefix values          |
+| =transient/levels.el=        | Custom visibility levels     |
+
+*** Faces
+
+| Face                    | Purpose                           |
+|-------------------------+-----------------------------------|
+| =transient-key=         | Key bindings                      |
+| =transient-argument=    | Active arguments                  |
+| =transient-value=       | Argument values                   |
+| =transient-inactive-value= | Inactive argument values       |
+| =transient-heading=     | Group headings                    |
+| =transient-disabled-suffix= | Unavailable commands           |
+
+* Part II: Creating Transient Menus
+
+** What You Can Build
+
+If you're a package author — or just someone who wants to create custom
+commands — transient lets you build sophisticated keyboard-driven interfaces.
+
+*** Examples in the Wild
+
+*Magit* uses transient for every operation: commits, branches, remotes,
+rebasing. Each popup shows available flags, lets you toggle options, then
+execute.
+
+*Forge* (GitHub/GitLab integration) uses transient for issue and pull request
+operations.
+
+*Consult* uses transient for complex search configurations.
+
+Many other packages have adopted transient for their command interfaces.
+
+*** What Transient Gives You
+
+- *Discoverability*: Users see available commands and options
+- *State display*: Current settings are visible before execution
+- *History*: Previous values are remembered
+- *Persistence*: Users can save their preferred defaults
+- *Progressive disclosure*: Hide advanced options from beginners
+
+*** Compared to Alternatives
+
+*Prefix keys* (like =C-x=): Work for small command sets. Don't show options,
+don't remember state, require memorization.
+
+*Hydra*: Similar concept, different philosophy. Hydra focuses on modal key
+bindings with heads displayed in a popup. Transient focuses on command
+arguments with a more structured approach to values and persistence.
+
+*Universal argument* (=C-u=): Too limited for complex option sets.
+
+*** When to Use Transient
+
+*Good fits*:
+- Commands with many optional parameters
+- Commands that wrap CLI tools with flags
+- Related command groups that share context
+- Any interface where users benefit from seeing available options
+
+*Maybe overkill*:
+- Commands with zero or one parameter
+- Simple toggle commands
+- Commands that need to be maximally fast
+
+*** What You'll Learn in Part II
+
+1. Creating basic menus with actions
+2. Adding options (switches, values, choices)
+3. Controlling menu behavior and layout
+4. Extending transient with custom classes
+5. Advanced patterns for sophisticated interfaces
+
+You should be comfortable with Part I before continuing. Creating good
+transient interfaces requires understanding how users experience them.
+
+** Your First Menu in 5 Minutes
+
+Let's create a transient. Evaluate this:
+
+#+begin_src emacs-lisp
+(transient-define-prefix demo-file-operations ()
+  "Demonstrate file operations."
+  ["File Actions"
+   ("c" "Copy file" copy-file)
+   ("r" "Rename file" rename-file)
+   ("d" "Delete file" delete-file)]
+  ["Directory Actions"
+   ("m" "Make directory" make-directory)
+   ("D" "Delete directory" delete-directory)])
+#+end_src
+
+Now run it:
+
+: M-x demo-file-operations
+
+You see a menu with two groups. Press {{{kbd(c)}}} and you're prompted to copy
+a file. The menu closes, the command runs.
+
+*** Add Some Options
+
+Let's add options that affect behavior. Evaluate this updated version:
+
+#+begin_src emacs-lisp
+(transient-define-prefix demo-file-operations ()
+  "Demonstrate file operations."
+  ["Options"
+   ("-f" "Force" "--force")
+   ("-v" "Verbose" "--verbose")]
+  ["File Actions"
+   ("c" "Copy file" copy-file)
+   ("r" "Rename file" rename-file)
+   ("d" "Delete file" delete-file)]
+  ["Directory Actions"
+   ("m" "Make directory" make-directory)
+   ("D" "Delete directory" delete-directory)])
+#+end_src
+
+Run it again. Now you can toggle =-f= and =-v= before executing a command.
+(These options don't actually affect the built-in commands yet — that comes
+later.)
+
+*** What You Just Did
+
+You defined a *prefix command* (=demo-file-operations=) with:
+- Groups (=["File Actions" ...]= and =["Directory Actions" ...]=)
+- Suffixes (the action commands like =copy-file=)
+- Infixes (the =-f= and =-v= options)
+
+The next chapters explain each piece and how to make options actually do
+something.
+
+** Building Menus
+
+The =transient-define-prefix= macro creates a transient command. Let's examine
+its structure.
+
+*** Basic Structure
+
+#+begin_src emacs-lisp
+(transient-define-prefix NAME ()
+  "DOCSTRING"
+  [GROUP...]
+  [BODY...])
+#+end_src
+
+- =NAME= — the command symbol (what you call with =M-x=)
+- =DOCSTRING= — description shown in help
+- =GROUP...= — one or more groups containing suffixes
+- =BODY...= — optional Lisp code (advanced usage)
+
+*** Groups
+
+A group is a vector (=[ ]=) containing:
+
+1. An optional string (the group heading)
+2. Suffix specifications
+
+#+begin_src emacs-lisp
+["Actions"                        ; heading
+ ("a" "Do action A" action-a)     ; suffix
+ ("b" "Do action B" action-b)]    ; suffix
+#+end_src
+
+Without a heading:
+
+#+begin_src emacs-lisp
+[("a" "Action A" action-a)
+ ("b" "Action B" action-b)]
+#+end_src
+
+*** Suffix Specifications
+
+Each suffix is typically:
+
+: (KEY DESCRIPTION COMMAND)
+
+For example:
+
+#+begin_src emacs-lisp
+("g" "Show git status" magit-status)
+#+end_src
+
+When the user presses {{{kbd(g)}}}, =magit-status= is called.
+
+*** Multiple Groups
+
+Use multiple groups to organize related commands:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-git-menu ()
+  "Git operations."
+  ["Status"
+   ("s" "Status" magit-status)
+   ("l" "Log" magit-log)]
+  ["Changes"
+   ("c" "Commit" magit-commit)
+   ("p" "Push" magit-push)]
+  ["Branches"
+   ("b" "Branch" magit-branch)
+   ("m" "Merge" magit-merge)])
+#+end_src
+
+Groups appear in order, visually separated.
+
+*** Inline Commands
+
+You can define commands inline using lambdas:
+
+#+begin_src emacs-lisp
+(transient-define-prefix quick-messages ()
+  "Send quick messages."
+  ["Messages"
+   ("h" "Hello" (lambda () (interactive) (message "Hello!")))
+   ("g" "Goodbye" (lambda () (interactive) (message "Goodbye!")))])
+#+end_src
+
+For anything non-trivial, define named commands separately:
+
+#+begin_src emacs-lisp
+(defun my-hello ()
+  "Say hello."
+  (interactive)
+  (message "Hello!"))
+
+(transient-define-prefix quick-messages ()
+  "Send quick messages."
+  ["Messages"
+   ("h" "Hello" my-hello)])
+#+end_src
+
+*** Multi-Key Bindings
+
+Keys can be sequences:
+
+#+begin_src emacs-lisp
+["Advanced"
+ ("a a" "Action A-A" action-aa)
+ ("a b" "Action A-B" action-ab)]
+#+end_src
+
+The user presses {{{kbd(a)}}}, sees filtered options, then presses the second
+key.
+
+*** Sub-Transients
+
+A suffix can invoke another transient:
+
+#+begin_src emacs-lisp
+(transient-define-prefix sub-menu ()
+  "A sub-menu."
+  [("x" "Do X" do-x)])
+
+(transient-define-prefix main-menu ()
+  "The main menu."
+  [("s" "Sub-menu" sub-menu)])    ; Opens sub-menu transient
+#+end_src
+
+Pressing {{{kbd(s)}}} replaces the current menu with =sub-menu=. Press
+{{{kbd(C-g)}}} to return.
+
+*** Descriptions from Functions
+
+Descriptions can be dynamic:
+
+#+begin_src emacs-lisp
+("s" my-dynamic-description my-command)
+#+end_src
+
+Where =my-dynamic-description= is a function returning a string:
+
+#+begin_src emacs-lisp
+(defun my-dynamic-description ()
+  (if some-condition "Enabled" "Disabled"))
+#+end_src
+
+*** Conditional Display
+
+Show suffixes only when conditions are met:
+
+#+begin_src emacs-lisp
+("g" "Git status" magit-status :if (lambda () (vc-git-root default-directory)))
+#+end_src
+
+This suffix only appears in Git repositories. Other predicates:
+
+- =:if= — show when predicate returns non-nil
+- =:if-not= — show when predicate returns nil
+- =:if-mode= — show when in specified mode
+- =:if-derived= — show when mode derives from specified mode
+
+*** Putting It Together
+
+A complete example:
+
+#+begin_src emacs-lisp
+(defun my-project-root ()
+  "Get project root or nil."
+  (project-root (project-current)))
+
+(transient-define-prefix my-project-menu ()
+  "Project operations."
+  :transient-suffix 'transient--do-stay
+  ["Navigate"
+   ("f" "Find file" project-find-file)
+   ("d" "Dired" project-dired)]
+  ["Search"
+   ("s" "Search" project-search)
+   ("r" "Replace" project-query-replace-regexp)]
+  ["External"
+   ("g" "Magit" magit-status :if (lambda () (vc-git-root (my-project-root))))
+   ("t" "Terminal" project-shell)])
+#+end_src
+
+** Adding Options
+
+So far, our menus have only had actions — commands that do something and exit.
+Now let's add *options* (infixes) that let users configure behavior before
+acting.
+
+*** Switches: Boolean Toggles
+
+The simplest option is a switch — on or off:
+
+#+begin_src emacs-lisp
+("-v" "Verbose" "--verbose")
+#+end_src
+
+This creates an infix that:
+- Has key =-v=
+- Shows description "Verbose"
+- Produces argument =--verbose= when active
+
+The shorthand format is:
+
+: (KEY DESCRIPTION ARGUMENT)
+
+When the argument ends with ===, it becomes an option that takes a value
+(covered below). Otherwise it's a switch.
+
+*** Options with Values
+
+For options that take a value:
+
+#+begin_src emacs-lisp
+("-f" "File" "--file=")
+#+end_src
+
+The trailing === tells transient this option needs a value. When pressed, the
+user is prompted for input, and the result looks like =--file=notes.txt=.
+
+*** Retrieving Option Values
+
+Options are useless unless your commands can read them. Use =transient-args=:
+
+#+begin_src emacs-lisp
+(defun my-command ()
+  "A command that uses transient arguments."
+  (interactive)
+  (let ((args (transient-args 'my-prefix)))
+    (message "Args: %S" args)))
+#+end_src
+
+=transient-args= returns a list of strings:
+
+#+begin_src emacs-lisp
+;; If user enabled --verbose and set --file=notes.txt:
+("--verbose" "--file=notes.txt")
+#+end_src
+
+*** A Complete Example
+
+Let's build a transient that actually uses its options:
+
+#+begin_src emacs-lisp
+(defun my-grep (args)
+  "Run grep with transient arguments."
+  (interactive (list (transient-args 'my-grep-menu)))
+  (let ((pattern (read-string "Pattern: "))
+        (cmd (concat "grep"
+                     (if (member "-i" args) " -i" "")
+                     (if (member "-r" args) " -r" "")
+                     (if (member "-n" args) " -n" "")
+                     " " (shell-quote-argument pattern)
+                     " .")))
+    (compile cmd)))
+
+(transient-define-prefix my-grep-menu ()
+  "Search with grep."
+  ["Options"
+   ("-i" "Ignore case" "-i")
+   ("-r" "Recursive" "-r")
+   ("-n" "Line numbers" "-n")]
+  ["Actions"
+   ("g" "Grep" my-grep)])
+#+end_src
+
+Now =M-x my-grep-menu= lets users toggle options before searching.
+
+*** The Interactive Form Pattern
+
+The idiomatic way to get transient arguments is in the =interactive= form:
+
+#+begin_src emacs-lisp
+(defun my-command (args)
+  "Command using ARGS from transient."
+  (interactive (list (transient-args 'my-prefix)))
+  ;; args is now bound
+  (do-something-with args))
+#+end_src
+
+This pattern:
+1. Declares =args= as a parameter
+2. Uses =interactive= with a list to populate it
+3. Calls =transient-args= with the prefix symbol
+
+*** Parsing Arguments
+
+For more complex argument handling, you can parse the list:
+
+#+begin_src emacs-lisp
+(defun my-command (args)
+  (interactive (list (transient-args 'my-prefix)))
+  (let ((verbose (member "--verbose" args))
+        (file (transient-arg-value "--file=" args)))
+    (when verbose
+      (message "Running in verbose mode"))
+    (when file
+      (message "Using file: %s" file))))
+#+end_src
+
+=transient-arg-value= extracts the value part from options like =--file=value=.
+
+*** Choices: Predefined Values
+
+For options with a fixed set of choices:
+
+#+begin_src emacs-lisp
+("-s" "Sort by" "--sort="
+ :choices ("name" "date" "size"))
+#+end_src
+
+The user sees a completion list instead of a free-form prompt.
+
+*** Multi-Value Options
+
+Some options accept multiple values:
+
+#+begin_src emacs-lisp
+("-e" "Exclude" "--exclude="
+ :multi-value t)
+#+end_src
+
+Each press adds another value, producing output like:
+=--exclude=*.log --exclude=*.tmp=
+
+*** Default Values
+
+Set an initial value for an option:
+
+#+begin_src emacs-lisp
+("-n" "Count" "--count="
+ :init-value (lambda (obj) (oset obj value "10")))
+#+end_src
+
+Or for the whole prefix:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-prefix ()
+  :value '("--verbose" "--count=10")
+  ...)
+#+end_src
+
+*** The Accumulate-Then-Consume Model
+
+Remember from Part I: options *accumulate* and actions *consume*.
+
+When you define options, you're creating the accumulation phase. Users toggle
+and configure. Only when they press an action key does your command receive
+the accumulated values via =transient-args=.
+
+This model means your suffix commands don't need to prompt for each option —
+they receive everything at once, already configured.
+
+** Controlling Behavior
+
+By default, pressing an action closes the transient, while pressing an option
+keeps it open. But you can change this.
+
+*** The :transient Slot
+
+Every suffix has a =:transient= slot that controls what happens after it runs:
+
+| Value | Behavior |
+|-------+----------|
+| =nil= | Exit the transient (default for actions) |
+| =t=   | Stay in the transient (default for options) |
+
+Override the default:
+
+#+begin_src emacs-lisp
+;; An action that stays open
+("r" "Refresh" my-refresh :transient t)
+
+;; An option that exits
+("-q" "Quick mode" "--quick" :transient nil)
+#+end_src
+
+*** Staying Open After All Actions
+
+To make all actions stay open by default:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-prefix ()
+  :transient-suffix 'transient--do-stay
+  ...)
+#+end_src
+
+This is useful for menus where users typically run multiple actions.
+
+*** Conditional Display
+
+Sometimes suffixes should only appear in certain contexts:
+
+#+begin_src emacs-lisp
+;; Only in git repos
+("g" "Git status" magit-status
+ :if (lambda () (vc-git-root default-directory)))
+
+;; Only when a region is active
+("r" "Act on region" my-region-command
+ :if use-region-p)
+
+;; Only in certain modes
+("e" "Eval" eval-last-sexp
+ :if-mode emacs-lisp-mode)
+#+end_src
+
+Available predicates:
+
+| Slot          | Meaning                              |
+|---------------+--------------------------------------|
+| =:if=         | Show when function returns non-nil   |
+| =:if-not=     | Show when function returns nil       |
+| =:if-mode=    | Show when in specified major mode    |
+| =:if-derived= | Show when mode derives from specified |
+| =:if-nil=     | Show when variable is nil            |
+| =:if-non-nil= | Show when variable is non-nil        |
+
+*** Inapt Suffixes: Visible but Disabled
+
+Sometimes you want users to *see* a command but not be able to run it — for
+example, to show what would be available in a different context:
+
+#+begin_src emacs-lisp
+("c" "Commit" magit-commit
+ :inapt-if-not (lambda () (magit-anything-staged-p)))
+#+end_src
+
+This shows "Commit" grayed out when nothing is staged. The user sees it exists
+but can't invoke it.
+
+| Slot                | Meaning                          |
+|---------------------+----------------------------------|
+| =:inapt-if=         | Disable when function returns t  |
+| =:inapt-if-not=     | Disable when function returns nil |
+| =:inapt-if-nil=     | Disable when variable is nil     |
+| =:inapt-if-non-nil= | Disable when variable is non-nil |
+
+*** When to Use :if vs :inapt-if
+
+- Use =:if= when the command is *irrelevant* in this context
+- Use =:inapt-if= when the command is *relevant but not currently applicable*
+
+For example, in a Git menu:
+- "Commit" should be inapt when nothing is staged (relevant but not applicable)
+- "SVN commit" should use =:if= to hide entirely (irrelevant in a Git repo)
+
+*** Incompatible Options
+
+Some options are mutually exclusive:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-prefix ()
+  :incompatible '(("--short" "--long")
+                  ("--json" "--xml" "--yaml"))
+  ["Output"
+   ("-s" "Short" "--short")
+   ("-l" "Long" "--long")]
+  ["Format"
+   ("-j" "JSON" "--json")
+   ("-x" "XML" "--xml")
+   ("-y" "YAML" "--yaml")]
+  ...)
+#+end_src
+
+When the user enables =--short=, transient automatically disables =--long=.
+The =:incompatible= slot takes a list of groups, where each group contains
+mutually exclusive arguments.
+
+*** Levels: Hiding Advanced Options
+
+Assign levels to hide complex options from beginners:
+
+#+begin_src emacs-lisp
+("-d" "Debug" "--debug" :level 6)
+#+end_src
+
+Users with =transient-default-level= below 6 won't see this option. This is
+how Magit keeps its menus manageable despite having many options.
+
+*** Putting It Together
+
+A complete example showing several behavior controls:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-build-menu ()
+  "Build operations."
+  :incompatible '(("--debug" "--release"))
+  :transient-suffix 'transient--do-stay
+  ["Options"
+   ("-d" "Debug build" "--debug")
+   ("-r" "Release build" "--release")
+   ("-v" "Verbose" "--verbose" :level 5)]
+  ["Actions"
+   ("b" "Build" my-build)
+   ("c" "Clean" my-clean)
+   ("t" "Test" my-test :if (lambda () (file-exists-p "tests/")))]
+  ["Deploy"
+   ("p" "Push" my-push :inapt-if-not my-build-exists-p)])
+#+end_src
+
+** Layout and Appearance
+
+So far we've used the default layout: groups stack vertically, suffixes within
+each group also stack vertically. But transient offers more control.
+
+*** Column Layout (Default)
+
+The default layout stacks everything vertically:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-prefix ()
+  ["Group A"
+   ("a" "Action A" action-a)
+   ("b" "Action B" action-b)]
+  ["Group B"
+   ("c" "Action C" action-c)
+   ("d" "Action D" action-d)])
+#+end_src
+
+This displays as:
+
+#+begin_example
+Group A
+ a  Action A
+ b  Action B
+
+Group B
+ c  Action C
+ d  Action D
+#+end_example
+
+*** Row Layout
+
+To arrange suffixes horizontally instead of vertically:
+
+#+begin_src emacs-lisp
+[:class transient-row
+ ("a" "A" action-a)
+ ("b" "B" action-b)
+ ("c" "C" action-c)]
+#+end_src
+
+This displays as:
+
+#+begin_example
+ a A   b B   c C
+#+end_example
+
+Row layout is useful for related commands that you want compact.
+
+*** Multi-Column Layout
+
+For complex menus, use =transient-columns= to create side-by-side groups:
+
+#+begin_src emacs-lisp
+[:class transient-columns
+ ["Column 1"
+  ("a" "Action A" action-a)
+  ("b" "Action B" action-b)]
+ ["Column 2"
+  ("c" "Action C" action-c)
+  ("d" "Action D" action-d)]]
+#+end_src
+
+This displays groups side by side:
+
+#+begin_example
+Column 1              Column 2
+ a  Action A           c  Action C
+ b  Action B           d  Action D
+#+end_example
+
+*** Subgroups
+
+Use =transient-subgroups= for visual grouping with spacing:
+
+#+begin_src emacs-lisp
+[:class transient-subgroups
+ ["File Operations"
+  ("c" "Copy" copy-file)
+  ("r" "Rename" rename-file)]
+ ["Directory Operations"
+  ("m" "Make dir" make-directory)
+  ("d" "Delete dir" delete-directory)]]
+#+end_src
+
+Subgroups add vertical spacing between logical sections.
+
+*** Group Descriptions
+
+Groups can have descriptions that appear as headings:
+
+#+begin_src emacs-lisp
+["Actions" :description "Common file actions"
+ ("c" "Copy" copy-file)
+ ("r" "Rename" rename-file)]
+#+end_src
+
+The =:description= shows above the group.
+
+*** Padding
+
+Control spacing with =:pad-keys=:
+
+#+begin_src emacs-lisp
+["Actions" :pad-keys t
+ ("a" "Short" action-a)
+ ("abc" "Long key" action-abc)]
+#+end_src
+
+With padding, keys align nicely regardless of length.
+
+*** Suffix Formatting
+
+Each suffix can control its format with =:format=:
+
+#+begin_src emacs-lisp
+("a" "Action" my-command :format " %k %d")
+#+end_src
+
+Format specifiers:
+- =%k= — the key
+- =%d= — the description
+- =%v= — the value (for infixes)
+
+*** Hiding Empty Groups
+
+Groups with no visible suffixes (due to =:if= predicates) are hidden
+automatically. You can also explicitly hide a group:
+
+#+begin_src emacs-lisp
+["Debug" :if my-debug-mode-p
+ ("d" "Debug" debug-command)]
+#+end_src
+
+If no commands in the group are visible, the entire group disappears.
+
+*** A Complete Layout Example
+
+Combining layout features:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-project-menu ()
+  "Project operations with nice layout."
+  [:class transient-columns
+   ["Files" :pad-keys t
+    ("f f" "Find file" project-find-file)
+    ("f r" "Find regex" project-find-regexp)
+    ("f d" "Dired" project-dired)]
+   ["Build"
+    ("b" "Build" my-build)
+    ("c" "Clean" my-clean)
+    ("t" "Test" my-test)]]
+  [:class transient-row
+   ("q" "Quit" transient-quit-one)
+   ("?" "Help" my-help)])
+#+end_src
+
+This creates a two-column layout for the main commands, with a compact row of
+utility commands at the bottom.
+
+** Reading User Input
+
+When an option takes a value, transient needs to read that value from the
+user. This chapter covers how to control that process.
+
+*** Default Readers
+
+For options with a trailing ===, transient prompts for a string:
+
+#+begin_src emacs-lisp
+("-f" "File" "--file=")
+#+end_src
+
+Press =-f= and you're prompted: =File: =
+
+The default reader is =transient-read-string=, which works like =read-string=.
+
+*** Built-in Readers
+
+Transient provides several built-in readers:
+
+| Reader                           | Purpose                        |
+|----------------------------------+--------------------------------|
+| =transient-read-number-N0=       | Read a non-negative integer    |
+| =transient-read-number-N+=       | Read a positive integer        |
+| =transient-read-file=            | Read a file path (completion)  |
+| =transient-read-existing-file=   | Read an existing file          |
+| =transient-read-directory=       | Read a directory               |
+| =transient-read-existing-directory= | Read an existing directory  |
+| =transient-read-date=            | Read a date                    |
+
+Use them via the =:reader= slot:
+
+#+begin_src emacs-lisp
+("-n" "Count" "--count=" :reader transient-read-number-N+)
+("-f" "Input file" "--file=" :reader transient-read-existing-file)
+#+end_src
+
+*** Choices: Completion from a List
+
+For options with predefined values, use =:choices=:
+
+#+begin_src emacs-lisp
+("-s" "Sort by" "--sort="
+ :choices ("name" "date" "size" "type"))
+#+end_src
+
+The user sees completion candidates instead of a free-form prompt.
+
+*** Dynamic Choices
+
+Choices can be computed at runtime:
+
+#+begin_src emacs-lisp
+("-b" "Branch" "--branch="
+ :choices (lambda () (magit-list-branch-names)))
+#+end_src
+
+The function is called each time the option is invoked, so the list is always
+current.
+
+*** Custom Readers
+
+For complete control, define a custom reader function:
+
+#+begin_src emacs-lisp
+(defun my-read-color (prompt initial-input history)
+  "Read a color name with preview."
+  (let ((color (read-color prompt)))
+    color))
+
+("-c" "Color" "--color=" :reader my-read-color)
+#+end_src
+
+A reader function receives:
+- =prompt= — the prompt string to display
+- =initial-input= — initial minibuffer content (usually nil)
+- =history= — history symbol for =read-string=
+
+It should return the value as a string.
+
+*** Readers with Side Effects
+
+Readers can do more than just read:
+
+#+begin_src emacs-lisp
+(defun my-read-file-and-validate (prompt initial history)
+  "Read a file, ensuring it exists and is readable."
+  (let ((file (read-file-name prompt)))
+    (unless (file-readable-p file)
+      (error "File not readable: %s" file))
+    file))
+#+end_src
+
+*** Multi-Value Options
+
+Some options need to accept multiple values:
+
+#+begin_src emacs-lisp
+("-e" "Exclude" "--exclude="
+ :multi-value t
+ :reader transient-read-file)
+#+end_src
+
+Each press adds another value. The result is multiple arguments:
+=--exclude=*.log --exclude=*.tmp=
+
+To read multiple values at once (space-separated):
+
+#+begin_src emacs-lisp
+("-t" "Tags" "--tag="
+ :multi-value rest)
+#+end_src
+
+With =rest=, entering "foo bar baz" produces three separate =--tag= arguments.
+
+*** Always-Read Options
+
+Normally, pressing an option with a value prompts only if it has no value.
+To always prompt:
+
+#+begin_src emacs-lisp
+("-m" "Message" "--message=" :always-read t)
+#+end_src
+
+This is useful for options where the user typically wants to enter a new
+value each time, like commit messages.
+
+*** The :prompt Slot
+
+Customize the prompt text:
+
+#+begin_src emacs-lisp
+("-f" "File" "--file="
+ :prompt "Select input file: ")
+#+end_src
+
+*** History
+
+Each option automatically gets its own history. Users can press =M-p= to
+cycle through previous values.
+
+To share history between options:
+
+#+begin_src emacs-lisp
+("-i" "Input" "--input=" :history-key file-history)
+("-o" "Output" "--output=" :history-key file-history)
+#+end_src
+
+Both now share the same history list.
+
+*** Combining Readers with Choices
+
+You can use both =:reader= and =:choices= together. When you do, the reader
+function receives the choices as additional context:
+
+#+begin_src emacs-lisp
+("-p" "Priority" "--priority="
+ :choices ("low" "medium" "high" "critical")
+ :reader my-priority-reader)
+#+end_src
+
+This gives you completion from the choices list while allowing custom reader
+behavior like validation or transformation.
+
+*** Reading in the Interactive Form
+
+Remember from Chapter 13 that commands retrieve option values via
+=transient-args=. The reader only runs when the user invokes the option — the
+value is then stored and passed to your command when it executes.
+
+This separation is important: readers control how values enter the system,
+while =transient-args= controls how commands retrieve them. Your reader
+function doesn't need to know about the command that will eventually use the
+value.
+
+*** Error Handling in Readers
+
+When a reader encounters invalid input, it can signal an error:
+
+#+begin_src emacs-lisp
+(defun my-read-port (prompt initial history)
+  "Read a port number (1-65535)."
+  (let* ((input (read-string prompt initial history))
+         (port (string-to-number input)))
+    (unless (and (> port 0) (<= port 65535))
+      (user-error "Port must be between 1 and 65535"))
+    input))
+#+end_src
+
+The =user-error= aborts the read without setting the option. The transient
+stays open, and the user can try again.
+
+*** When to Use Custom Readers
+
+Use the built-in readers when they fit your needs — they handle edge cases and
+provide consistent behavior. Write custom readers when you need:
+
+- Validation beyond type checking
+- Transformation of input values
+- Custom completion behavior
+- Integration with external systems
+- Multi-step input processes
+
+*** A Complete Example
+
+A transient with various input types:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-export-menu ()
+  "Export data with options."
+  ["Format"
+   ("-f" "Format" "--format="
+    :choices ("csv" "json" "xml"))]
+  ["Files"
+   ("-i" "Input" "--input="
+    :reader transient-read-existing-file
+    :prompt "Input file: ")
+   ("-o" "Output" "--output="
+    :reader transient-read-file
+    :prompt "Output file: ")]
+  ["Options"
+   ("-n" "Limit rows" "--limit="
+    :reader transient-read-number-N+)
+   ("-e" "Exclude columns" "--exclude="
+    :multi-value t
+    :choices (lambda () (my-get-column-names)))]
+  ["Actions"
+   ("e" "Export" my-export)])
+#+end_src
+
+This example demonstrates:
+- Static choices for format selection
+- File readers with custom prompts
+- Numeric input validation
+- Multi-value options with dynamic choices
+
+The reader infrastructure makes it straightforward to build interfaces that
+guide users toward valid input while remaining flexible enough for complex
+use cases.
+
+** The Class System
+
+Everything in transient is an object. Understanding the class system unlocks
+advanced customization.
+
+*** Why Classes?
+
+Transient uses EIEIO (Emacs's built-in object system, similar to CLOS). This
+provides:
+
+- *Extensibility*: Create new suffix types by subclassing
+- *Polymorphism*: Same generic functions, different behavior per class
+- *Encapsulation*: Slots hold state; methods define behavior
+
+You've been using classes implicitly — every suffix specification becomes an
+object of some class.
+
+*** The Class Hierarchy
+
+#+begin_example
+transient-prefix
+  └─ (manages the overall menu state)
+
+transient-child (abstract)
+  ├─ transient-group (layout containers)
+  │   ├─ transient-column
+  │   ├─ transient-row
+  │   └─ transient-columns
+  │
+  └─ transient-suffix (commands in the menu)
+      ├─ transient-infix (options that set values)
+      │   ├─ transient-switch (boolean flags)
+      │   ├─ transient-option (values with =)
+      │   ├─ transient-switches (mutually exclusive)
+      │   └─ transient-variable (sets Emacs variables)
+      │
+      └─ transient-information (display-only)
+#+end_example
+
+When you write =("-v" "Verbose" "--verbose")=, transient creates a
+=transient-switch= object. When you write =("-f" "File" "--file=")=,
+transient creates a =transient-option= object.
+
+*** Specifying a Class Explicitly
+
+You can specify the class:
+
+#+begin_src emacs-lisp
+("-v" "Verbose" "--verbose" :class transient-switch)
+#+end_src
+
+Usually unnecessary — transient infers the right class from the argument
+format. But explicit classes are needed for custom types.
+
+*** Important Slots
+
+Each class has slots (like instance variables). Common slots:
+
+**** Suffix Slots
+
+| Slot          | Purpose                                    |
+|---------------+--------------------------------------------|
+| =key=         | The key binding                            |
+| =description= | Text shown in the menu                     |
+| =command=     | The function to call                       |
+| =transient=   | Whether to stay open (t/nil/function)      |
+| =if=          | Predicate for visibility                   |
+| =inapt=       | Predicate for disabled state               |
+| =level=       | Visibility level (1-7)                     |
+
+**** Infix Slots
+
+| Slot          | Purpose                                    |
+|---------------+--------------------------------------------|
+| =argument=    | The argument string (e.g., "--verbose")    |
+| =value=       | Current value                              |
+| =reader=      | Function to read new value                 |
+| =choices=     | Completion candidates                      |
+| =multi-value= | Whether to accept multiple values          |
+
+*** Generic Functions
+
+Transient defines generic functions that you can specialize for custom classes:
+
+| Function                   | Purpose                               |
+|----------------------------+---------------------------------------|
+| =transient-init-value=     | Set initial value when menu opens    |
+| =transient-infix-read=     | Read a new value from user           |
+| =transient-infix-set=      | Store the new value                  |
+| =transient-infix-value=    | Get current value for =transient-args= |
+| =transient-format-value=   | Format value for display             |
+| =transient-format-description= | Format description for display   |
+
+Override these to customize behavior.
+
+*** Creating a Custom Infix: Example
+
+Let's create a custom infix that reads a color with preview:
+
+#+begin_src emacs-lisp
+;; 1. Define the class
+(defclass my-color-infix (transient-option)
+  ()
+  "An infix that reads a color with preview.")
+
+;; 2. Override the reader method
+(cl-defmethod transient-infix-read ((obj my-color-infix))
+  "Read a color, showing the current value."
+  (read-color (format "Color (current: %s): "
+                      (or (oref obj value) "none"))))
+
+;; 3. Override the format method for nice display
+(cl-defmethod transient-format-value ((obj my-color-infix))
+  "Format the color value with a preview."
+  (let ((value (oref obj value)))
+    (if value
+        (propertize (concat " " value)
+                    'face (list :foreground value))
+      " (none)")))
+
+;; 4. Use it
+(transient-define-prefix my-theme-menu ()
+  "Theme settings."
+  ["Colors"
+   ("-b" "Background" "--bg="
+    :class my-color-infix)
+   ("-f" "Foreground" "--fg="
+    :class my-color-infix)]
+  ["Actions"
+   ("a" "Apply" my-apply-theme)])
+#+end_src
+
+Now the color options show their values with actual colors.
+
+*** When to Create Custom Classes
+
+Create custom classes when:
+
+- You need a non-standard reader (beyond =:reader=)
+- You want custom display formatting
+- You need special value handling
+- You're integrating with external systems
+
+For most uses, the built-in classes with =:reader= and =:choices= suffice.
+
+*** Understanding Slot Inheritance
+
+Slots are inherited from parent classes. =transient-switch= inherits all
+=transient-infix= slots, which inherits all =transient-suffix= slots.
+
+Use =describe-class= to explore:
+
+: M-x describe-class RET transient-switch RET
+
+*** The Prefix Object
+
+The prefix itself is an object with slots:
+
+| Slot               | Purpose                              |
+|--------------------+--------------------------------------|
+| =value=            | The accumulated argument values      |
+| =scope=            | Context passed to suffixes           |
+| =history=          | Command history                      |
+| =incompatible=     | Mutually exclusive argument groups   |
+| =transient-suffix= | Default exit behavior for suffixes   |
+
+Access the current prefix with =transient-current-prefix=.
+
+*** Accessing Objects at Runtime
+
+During transient execution:
+
+#+begin_src emacs-lisp
+;; Get the current prefix object
+(transient-current-prefix)
+
+;; Get the current suffix object (inside a suffix command)
+(transient-suffix-object)
+
+;; Get all suffix objects
+transient-current-suffixes
+#+end_src
+
+** Advanced Patterns
+
+This chapter covers advanced techniques for sophisticated transient UIs.
+
+*** Nested Transients
+
+A suffix can invoke another transient, creating a hierarchy:
+
+#+begin_src emacs-lisp
+(transient-define-prefix child-menu ()
+  "A child menu."
+  ["Child Options"
+   ("-x" "Option X" "--x")]
+  ["Actions"
+   ("d" "Do something" child-action)])
+
+(transient-define-prefix parent-menu ()
+  "A parent menu."
+  ["Navigate"
+   ("c" "Child menu" child-menu)])
+#+end_src
+
+Pressing =c= in the parent replaces it with the child. Press {{{kbd(C-g)}}} to
+return to the parent.
+
+*** Preserving Values Across Nesting
+
+By default, each transient has its own value. To share values:
+
+#+begin_src emacs-lisp
+(transient-define-prefix parent-menu ()
+  :value '("--shared")
+  ["Navigate"
+   ("c" "Child" child-menu :transient transient--do-recurse)])
+#+end_src
+
+With =transient--do-recurse=, the child inherits the parent's value.
+
+*** Scope: Passing Context
+
+The =:scope= slot passes context to all suffixes:
+
+#+begin_src emacs-lisp
+(transient-define-prefix file-menu (file)
+  "Operations on FILE."
+  :scope file
+  ["Actions"
+   ("c" "Copy" my-copy-file)
+   ("d" "Delete" my-delete-file)])
+
+(defun my-copy-file ()
+  (interactive)
+  (let ((file (transient-scope)))
+    (copy-file file (read-file-name "Copy to: "))))
+#+end_src
+
+Invoke with:
+
+#+begin_src emacs-lisp
+(file-menu "/path/to/file.txt")
+#+end_src
+
+All suffixes can access the file via =transient-scope=.
+
+*** Dynamic Suffixes
+
+Suffixes can be generated at runtime:
+
+#+begin_src emacs-lisp
+(transient-define-prefix dynamic-menu ()
+  "A menu with dynamic content."
+  ["Files" :setup-children my-setup-file-children]
+  ["Actions"
+   ("q" "Quit" transient-quit-one)])
+
+(defun my-setup-file-children (_)
+  (mapcar (lambda (file)
+            (list (substring file 0 1)  ; key
+                  file                   ; description
+                  (lambda () (interactive) (find-file file))))
+          (directory-files "." nil "\\.el$")))
+#+end_src
+
+The =:setup-children= function runs each time the menu is displayed.
+
+*** Integrating with CLI Tools
+
+Transient was designed for wrapping CLI tools. Here's a pattern:
+
+#+begin_src emacs-lisp
+(defun my-run-command (args)
+  "Run my-tool with ARGS."
+  (interactive (list (transient-args 'my-tool-menu)))
+  (compile (mapconcat #'identity
+                      (cons "my-tool" args)
+                      " ")))
+
+(transient-define-prefix my-tool-menu ()
+  "Interface for my-tool."
+  ["Options"
+   ("-v" "Verbose" "--verbose")
+   ("-o" "Output" "--output=")
+   ("-f" "Format" "--format="
+    :choices ("json" "csv" "xml"))]
+  ["Actions"
+   ("r" "Run" my-run-command)])
+#+end_src
+
+The =transient-args= return value is already a list of CLI-style strings.
+
+*** Persisting Values
+
+Transient persists values in files under =user-emacs-directory=:
+
+| File             | Contents                  |
+|------------------+---------------------------|
+| =transient/history.el= | Input history        |
+| =transient/values.el=  | Saved prefix values  |
+| =transient/levels.el=  | User visibility levels |
+
+To customize the location:
+
+#+begin_src emacs-lisp
+(setq transient-history-file "~/.emacs.d/my-transient-history.el")
+#+end_src
+
+*** Remembering Values
+
+Control value persistence per-prefix:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-prefix ()
+  :remember-value t   ; Remember between sessions
+  ...)
+#+end_src
+
+With =:remember-value=, values are saved when the user presses {{{kbd(C-x s)}}}.
+
+*** Common Patterns
+
+**** Pattern: Command Dispatcher
+
+A simple command menu with no options:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-dispatch ()
+  "Quick access to commands."
+  [("a" "Agenda" org-agenda)
+   ("c" "Capture" org-capture)
+   ("s" "Search" consult-ripgrep)])
+#+end_src
+
+**** Pattern: Mode-Specific Menu
+
+A menu that adapts to the current mode:
+
+#+begin_src emacs-lisp
+(transient-define-prefix my-mode-menu ()
+  "Mode-specific operations."
+  ["Emacs Lisp" :if (lambda () (derived-mode-p 'emacs-lisp-mode))
+   ("e" "Eval" eval-last-sexp)
+   ("b" "Byte-compile" byte-compile-file)]
+  ["Python" :if (lambda () (derived-mode-p 'python-mode))
+   ("r" "Run" python-shell-send-buffer)
+   ("t" "Test" python-pytest)])
+#+end_src
+
+**** Pattern: Wizard Flow
+
+Multi-step configuration:
+
+#+begin_src emacs-lisp
+(transient-define-prefix wizard-step-1 ()
+  "Step 1: Choose type."
+  ["Type"
+   ("a" "Type A" (lambda () (interactive)
+                   (setq my-wizard-type 'a)
+                   (wizard-step-2)))
+   ("b" "Type B" (lambda () (interactive)
+                   (setq my-wizard-type 'b)
+                   (wizard-step-2)))])
+
+(transient-define-prefix wizard-step-2 ()
+  "Step 2: Configure options."
+  :value (lambda () (my-wizard-defaults my-wizard-type))
+  ["Options"
+   ("-n" "Name" "--name=")]
+  ["Actions"
+   ("f" "Finish" my-wizard-finish)
+   ("b" "Back" wizard-step-1)])
+#+end_src
+
+**** Pattern: Context-Aware Actions
+
+Actions that change based on state:
+
+#+begin_src emacs-lisp
+(defun my-toggle-description ()
+  (if my-feature-enabled "Disable feature" "Enable feature"))
+
+(transient-define-prefix my-feature-menu ()
+  ["Feature"
+   ("t" my-toggle-description my-toggle-feature)])
+#+end_src
+
+*** Debugging Transients
+
+Useful debugging techniques:
+
+#+begin_src emacs-lisp
+;; Inspect the current prefix
+(transient-current-prefix)
+
+;; Inspect all suffixes
+transient-current-suffixes
+
+;; Trace value flow
+(setq transient-detect-key-conflicts t)
+#+end_src
+
+Use =describe-class= to explore object slots:
+
+: M-x describe-class RET transient-prefix RET
+
+** Developer Reference
+
+Quick reference tables for experienced transient developers.
+
+*** Macros
+
+| Macro                          | Purpose                                |
+|--------------------------------+----------------------------------------|
+| =transient-define-prefix=      | Define a transient prefix command      |
+| =transient-define-suffix=      | Define a transient suffix command      |
+| =transient-define-infix=       | Define a transient infix command       |
+| =transient-define-argument=    | Alias for =transient-define-infix=     |
+
+**** transient-define-prefix
+
+#+begin_src emacs-lisp
+(transient-define-prefix NAME ([ARGLIST])
+  [DOCSTRING]
+  [KEYWORD VALUE]...
+  GROUP...
+  [BODY...])
+#+end_src
+
+Keywords: =:class=, =:value=, =:scope=, =:history-key=, =:incompatible=,
+=:transient-suffix=, =:transient-non-suffix=, =:refresh-suffixes=
+
+*** Classes
+
+**** Prefix Classes
+
+| Class              | Purpose                               |
+|--------------------+---------------------------------------|
+| =transient-prefix= | Base class for all prefixes           |
+
+Key slots: =command=, =value=, =scope=, =history=, =incompatible=
+
+**** Group Classes
+
+| Class               | Purpose                              |
+|---------------------+--------------------------------------|
+| =transient-group=   | Base class for groups                |
+| =transient-column=  | Vertical layout (default)            |
+| =transient-row=     | Horizontal layout                    |
+| =transient-columns= | Side-by-side groups                  |
+| =transient-subgroups= | Groups with vertical spacing       |
+
+**** Suffix Classes
+
+| Class                  | Purpose                            |
+|------------------------+------------------------------------|
+| =transient-suffix=     | Base class for all suffixes        |
+| =transient-infix=      | Base class for options             |
+| =transient-switch=     | Boolean toggle (on/off)            |
+| =transient-option=     | Option with value (--key=value)    |
+| =transient-switches=   | Mutually exclusive options         |
+| =transient-variable=   | Sets an Emacs variable             |
+| =transient-information= | Display-only, no action           |
+
+*** Common Slots
+
+**** Suffix Slots
+
+| Slot            | Type     | Purpose                          |
+|-----------------+----------+----------------------------------|
+| =key=           | string   | Key binding                      |
+| =description=   | string/fn| Description shown in menu        |
+| =command=       | symbol   | Function to invoke               |
+| =transient=     | bool/fn  | Stay open? (t/nil/function)      |
+| =if=            | function | Show when returns non-nil        |
+| =if-not=        | function | Show when returns nil            |
+| =if-mode=       | symbol   | Show in this major mode          |
+| =if-derived=    | symbol   | Show when derived from mode      |
+| =inapt=         | function | Disable when returns non-nil     |
+| =level=         | integer  | Visibility level (1-7)           |
+| =format=        | string   | Format string for display        |
+
+**** Infix Slots
+
+| Slot            | Type     | Purpose                          |
+|-----------------+----------+----------------------------------|
+| =argument=      | string   | CLI argument (e.g., "--verbose") |
+| =shortarg=      | string   | Short form (e.g., "-v")          |
+| =value=         | any      | Current value                    |
+| =init-value=    | function | Set initial value                |
+| =reader=        | function | Read new value from user         |
+| =prompt=        | string   | Minibuffer prompt                |
+| =choices=       | list/fn  | Completion candidates            |
+| =multi-value=   | bool/sym | Accept multiple values           |
+| =always-read=   | boolean  | Always prompt for value          |
+| =history-key=   | symbol   | Key for history list             |
+
+*** Generic Functions
+
+**** Initialization
+
+| Function                | Purpose                              |
+|-------------------------+--------------------------------------|
+| =transient-init-scope=  | Initialize prefix scope              |
+| =transient-init-value=  | Initialize prefix/suffix value       |
+
+**** Infix Operations
+
+| Function                | Purpose                              |
+|-------------------------+--------------------------------------|
+| =transient-infix-read=  | Read a new value from user           |
+| =transient-infix-set=   | Store the new value                  |
+| =transient-infix-value= | Get value for =transient-args=       |
+
+**** Formatting
+
+| Function                      | Purpose                        |
+|-------------------------------+--------------------------------|
+| =transient-format=            | Format entire suffix           |
+| =transient-format-key=        | Format the key                 |
+| =transient-format-description=| Format the description         |
+| =transient-format-value=      | Format the value               |
+
+*** Functions
+
+**** Value Access
+
+| Function                  | Purpose                            |
+|---------------------------+------------------------------------|
+| =transient-args=          | Get arguments for a prefix         |
+| =transient-arg-value=     | Extract value from "--key=value"   |
+| =transient-suffixes=      | Get all suffixes for a prefix      |
+
+**** Suffix Modification
+
+| Function                   | Purpose                           |
+|----------------------------+-----------------------------------|
+| =transient-append-suffix=  | Add suffix after location         |
+| =transient-insert-suffix=  | Add suffix before location        |
+| =transient-replace-suffix= | Replace suffix at location        |
+| =transient-remove-suffix=  | Remove suffix at location         |
+| =transient-get-suffix=     | Get suffix at location            |
+| =transient-suffix-put=     | Modify a suffix property          |
+
+**** Current State
+
+| Function/Variable              | Purpose                      |
+|--------------------------------+------------------------------|
+| =transient-current-prefix=     | Current prefix object        |
+| =transient-current-command=    | Current prefix command symbol|
+| =transient-current-suffixes=   | List of current suffix objects|
+| =transient-scope=              | Get current prefix scope     |
+| =transient-suffix-object=      | Current suffix object        |
+
+*** Variables
+
+**** User Configuration
+
+| Variable                          | Default  | Purpose                   |
+|-----------------------------------+----------+---------------------------|
+| =transient-default-level=         | 4        | Visibility threshold      |
+| =transient-show-menu=             | t        | When to show menu         |
+| =transient-display-buffer-action= | (bottom) | Window placement          |
+| =transient-semantic-coloring=     | t        | Color keys by behavior    |
+| =transient-enable-menu-navigation=| 'verbose | Mouse/arrow navigation    |
+| =transient-save-history=          | t        | Persist input history     |
+
+**** File Locations
+
+| Variable               | Purpose                            |
+|------------------------+------------------------------------|
+| =transient-history-file= | Where history is saved           |
+| =transient-values-file=  | Where prefix values are saved    |
+| =transient-levels-file=  | Where level settings are saved   |
+
+**** Developer Options
+
+| Variable                         | Default | Purpose                   |
+|----------------------------------+---------+---------------------------|
+| =transient-detect-key-conflicts= | nil     | Warn about key conflicts  |
+| =transient-highlight-mismatched-keys= | nil | Debug key mismatches  |
+
+*** Pre-Commands
+
+Functions that determine suffix behavior:
+
+| Function                    | Behavior                          |
+|-----------------------------+-----------------------------------|
+| =transient--do-stay=        | Stay in transient, don't export   |
+| =transient--do-call=        | Stay in transient, export values  |
+| =transient--do-exit=        | Exit transient                    |
+| =transient--do-return=      | Return to parent transient        |
+| =transient--do-recurse=     | Invoke child, preserve values     |
+| =transient--do-replace=     | Replace with child transient      |
+
+*** Faces
+
+| Face                       | Purpose                           |
+|----------------------------+-----------------------------------|
+| =transient-key=            | Key bindings                      |
+| =transient-argument=       | Active arguments                  |
+| =transient-value=          | Argument values                   |
+| =transient-inactive-value= | Inactive argument values          |
+| =transient-heading=        | Group headings                    |
+| =transient-disabled-suffix=| Unavailable commands              |
+| =transient-enabled-suffix= | Available commands                |
+| =transient-inapt-suffix=   | Inapt commands                    |
+
+* Appendices
+
+** Keystroke Index
+:PROPERTIES:
+:INDEX: ky
+:END:
+
+** Command and Function Index
+:PROPERTIES:
+:INDEX: fn
+:END:
+
+** Variable Index
+:PROPERTIES:
+:INDEX: vr
+:END:
+
+** Concept Index
+:PROPERTIES:
+:INDEX: cp
+:END:
+
