@@ -469,7 +469,7 @@ This one is just for funsies:
 
 ** macOS shenanigans
 this config [[https://en.wikipedia.org/wiki/Unitarian_Universalist_Association#Principles_and_purposes][covenants to affirm and promote the inherent worth and dignity]] of every computer it's installed on, even macs
-I was raised by and around a bunch of earnest, wordy people; deal with it.
+(look, I was raised by and around a bunch of earnest, wordy people; deal with it.)
 
 #+begin_src elisp
 (setq! mac-command-modifier 'meta
