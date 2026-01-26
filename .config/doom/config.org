@@ -474,7 +474,8 @@ this config [[https://en.wikipedia.org/wiki/Unitarian_Universalist_Association#P
 #+begin_src elisp
 (setq! mac-command-modifier 'meta
        mac-option-modifier 'meta
-       ns-function-modifier 'super)
+       mac-right-option-modifier 'left
+       mac-function-modifier 'super)
 #+end_src
 
 *** trouble? shoot it.

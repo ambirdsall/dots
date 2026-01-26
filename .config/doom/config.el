@@ -70,7 +70,8 @@ the active region will be used."
 
 (setq! mac-command-modifier 'meta
        mac-option-modifier 'meta
-       ns-function-modifier 'super)
+       mac-right-option-modifier 'left
+       mac-function-modifier 'super)
 
 (use-package! kkp
   :if (not (display-graphic-p))
