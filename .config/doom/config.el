@@ -457,6 +457,7 @@ name as well to trigger updates"
     (add-to-list 'golden-ratio-extra-commands fn))
   (map! :leader
         "wG" #'golden-ratio
+        "tG" #'golden-ratio-mode
         "wgg" #'golden-ratio-mode))
 
 (defvar amb--more-current-window-original-sizes (make-hash-table :test 'eq)
