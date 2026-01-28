@@ -1,7 +1,16 @@
+# add to the start
 dots/add_to_path() {
     local BIN_DIR="$1"
     if [ -d "$BIN_DIR" -a ! $(echo $PATH | grep "$BIN_DIR(:|$)") ]; then
         export PATH="$BIN_DIR:$PATH"
+    fi
+}
+
+# add to the end
+dots/append_to_path() {
+    local BIN_DIR="$1"
+    if [ -d "$BIN_DIR" -a ! $(echo $PATH | grep "$BIN_DIR(:|$)") ]; then
+        export PATH="$PATH:$BIN_DIR"
     fi
 }
 

@@ -22,10 +22,19 @@ Everything new is old; ourobouros can have a little ourobouros (as a treat).
 
 * personal configuration utility functions
 #+begin_src zsh :tangle ./00-utils.zsh
+# add to the start
 dots/add_to_path() {
     local BIN_DIR="$1"
     if [ -d "$BIN_DIR" -a ! $(echo $PATH | grep "$BIN_DIR(:|$)") ]; then
         export PATH="$BIN_DIR:$PATH"
+    fi
+}
+
+# add to the end
+dots/append_to_path() {
+    local BIN_DIR="$1"
+    if [ -d "$BIN_DIR" -a ! $(echo $PATH | grep "$BIN_DIR(:|$)") ]; then
+        export PATH="$PATH:$BIN_DIR"
     fi
 }
 
@@ -795,7 +804,7 @@ cdd () {
 #+begin_src zsh :tangle ./20-homebrew.zsh
 # This file gets such a low prefix number for two reasons:
 # 1) although homebrew is in nobody's POSIX spec, package management is pretty fundamental
-# 2) sourcing it after language-specific tooling (nv,rbenv,pyenv,asdf,etc) causes Problems
+# 2) sourcing it after language-specific tooling (nvm,rbenv,pyenv,asdf,etc) causes Problems
 
 if dots/at_hand /opt/homebrew/bin/brew; then
     eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -1417,7 +1426,7 @@ check_node_version() {
 
 if [ -f "/usr/share/nvm/init-nvm.sh" ]; then
 	source /usr/share/nvm/init-nvm.sh
-	[ -f /usr/share/nvm/bash_completion ] && source /usr/share/nvm/init-nvm.sh
+	[ -f /usr/share/nvm/bash_completion ] && source /usr/share/nvm/bash_completion
 	add-zsh-hook precmd check_node_version
 elif [ -f "$HOME/.nvm/nvm.sh" ]; then
 	source "$HOME/.nvm/nvm.sh"
