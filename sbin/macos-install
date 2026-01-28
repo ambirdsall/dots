@@ -14,7 +14,7 @@ for tap in "${taps[@]}"; do
 done
 
 # formulae that need custom flags just get explicitly installed like the special snowflakes they are
-brew install emacs-plus --with-native-comp --with-poll --with-xwidgets --with-no-frame-refocus --with-mailutils --with-modern-doom3-icon
+# brew install emacs-plus --with-poll --with-xwidgets --with-no-frame-refocus --with-mailutils --with-modern-doom3-icon
 
 # let 'er rip
 for pkg in $(cat ~/lib/brew-cask); do
