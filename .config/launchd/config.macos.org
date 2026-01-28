@@ -1,5 +1,14 @@
 #+title: So you just logged into a mac...
 
+#+begin_src elisp :results none
+(org-babel-tangle-file (buffer-file-name))
+#+end_src
+
+#+begin_src elisp :results none
+(add-hook! 'after-save-hook :local
+  (org-babel-tangle-file (buffer-file-name)))
+#+end_src
+
 This directory contains the launch agent definitions to start shit up automatically.
 
 To install a launch agent, make sure you've installed the application it runs, and then
