@@ -421,7 +421,7 @@ theme "vesper"
 ** Enable automatic copying (and clearing) of selection when releasing mouse
 Default: true
 #+begin_src kdl :tangle config.kdl
-copy_on_select false
+copy_on_select true
 #+end_src
 
 * untangled config options for reference
