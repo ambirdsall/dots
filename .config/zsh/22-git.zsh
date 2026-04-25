@@ -1,5 +1,3 @@
-# * porcelain
-# ** g is for git, that's good enough for me
 # No arguments: `git status`
 # With arguments: acts like `git`
 g () {
@@ -14,7 +12,6 @@ compdef g=git
 
 # cf ./23-emacs-aliases.zsh for `magit` alias
 
-# * ship shape
 # # TODO expand this into a proper little program
 # subcommands:
 #   ship it :: push current branch to its counterpart at origin
@@ -26,8 +23,6 @@ alias SHIPIT='ahoy && git push --force-with-lease -u origin $(git rev-parse --ab
 # who doesn't love a good typo
 alias SHIIT='ahoy && echo "      FUUCK"'
 
-# * standard git operations
-# ** clone
 # run `git clone` and `cdd` into dir
 # if no arguments are provided, assumes you have copied a repo url to your clipboard
 gc () {
@@ -44,7 +39,6 @@ gc () {
   cdd $repo_dir
 }
 
-# ** checkout
 co () {
   if [[ $# -gt 0 ]]; then
     git checkout "$@"
@@ -66,29 +60,33 @@ cor () {
 
 com () {
     local big_kahuna_branch=$(git rev-parse --abbrev-ref origin/HEAD | cut -c8-)
-
-    g co $big_kahuna_branch && g pull --rebase
+    git fetch origin
+    git checkout $big_kahuna_branch
+    git pull --ff-only
 }
 
 cob () {
   git checkout -b "`echo $* | tr ' ' -`"
 }
 
-# ** diff
 d () {
   git diff --color "$@"
 }
 
 D () {
-  git diff --diff-algorithm=histogram --color "$@" | diff-so-fancy | bat --plain
+  if dots/at_hand difft; then
+    git -c diff.external=difft diff --diff-algorithm=histogram --color "$@" | bat --plain
+  elif dots/at_hand diff-so-fancy; then
+    git diff --diff-algorithm=histogram --color "$@" | diff-so-fancy | bat --plain
+  else
+    git diff --diff-algorithm=histogram --color "$@"
+  fi
 }
 alias gdc="d --cached"
 alias gdo="git diff \$(git rev-parse --abbrev-ref HEAD 2> /dev/null)..origin/\$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
 
-# ** add
 alias p="git add -p"
 
-# ** commit
 c () {
   if [[ $# -gt 0 ]]; then
     git commit -m "$*"
@@ -99,7 +97,6 @@ c () {
 alias a="git commit --amend"
 alias arh="git commit --amend --reuse-message=HEAD"
 
-# ** fetch/pull
 alias f="git fetch"
 
 alias gp="git pull"
@@ -112,7 +109,6 @@ alias GPR="GP --rebase"
 alias gpf="git pull --ff-only"
 alias GPF="GP --ff-only"
 
-# ** rebase
 # TODO checkout, pull, and rebase all have a common ingredient: nacho code. Tug on that
 # thread a little.
 alias gr="git rebase"
@@ -121,15 +117,15 @@ dots/clear_name grm
 grm () {
   local big_kahuna_branch=$(git rev-parse --abbrev-ref origin/HEAD | cut -c8-)
   g fetch origin $big_kahuna_branch:$big_kahuna_branch
-  g rebase $big_kahuna_branch
+  # github's commit list orders by author date, not commit date; the `--reset-author-date`
+  # flag can help avoid some Dumb Situations when rebasing on a busy upstream
+  g rebase $big_kahuna_branch --reset-author-date
 }
 alias gri="g ri" # home-cooked git-ri, which simplifies syntax of `git rebase -i`
 
-# ** branch
 alias gb="git branch"
 alias gbl="git branch -l"
 
-# ** log
 l () {
   # no args
   if [[ $# -eq 0 ]]; then
@@ -219,18 +215,13 @@ describe-commits () {
   fi
 }
 
-# ** grep
 alias gg="git grep"
 
-# ** blame
 alias b="git blame"
 
-# ** stash
 alias stash="git stash save -u"
 alias pop="git stash pop"
 
-# * nonstandard git operations
-# ** open a "dirty" file in editor
 ge () {
   local files
   local file_to_edit
@@ -250,7 +241,6 @@ ge () {
   fi
 }
 
-# ** list most recently visited refs
 unique () {
   perl -ne '$H{$_}++ or print'
 }
