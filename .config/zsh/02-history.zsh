@@ -1,7 +1,11 @@
-export HISTFILE=~/.histfile
-export HISTSIZE=10000
-export SAVEHIST=100000
-export HISTCONTROL=ignorespace
+HISTFILE=~/.histfile
+HISTSIZE=10000
+SAVEHIST=10000
+HISTCONTROL=ignorespace
+
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_ALL_DUPS
 
 if dots/at_hand fzf; then
   r () {
