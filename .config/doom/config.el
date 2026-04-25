@@ -164,6 +164,15 @@ For example, any of `(kebab-case \"foo bar\")', `(kebab-case \"foo_bar\")', or `
 
 (setq company-global-modes '(not text-mode org-mode))
 
+(map!
+ :leader
+ "h:" (defun describe-evil-ex-binding (ex-cmd)
+        (interactive
+         (list (completing-read "Type evil ex command :" evil-ex-commands nil t)))
+        (if-let* ((binding (evil-ex-binding ex-cmd)))
+            (describe-function binding)
+          (user-error "No ex command bound to :%s" ex-cmd))))
+
 (use-package! evil-replace-with-register
   :init
   (setq evil-replace-with-register-key (kbd "gr"))

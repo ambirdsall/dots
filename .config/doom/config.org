@@ -697,6 +697,20 @@ Now, all elegies aside, I do semi-frequently use my tmux split navigation comman
 =prefix+{h,j,k,l}= rather than =ctrl+{h,j,k,l}=) when I intend to navigate a TUI emacs split.
 It would be good to revisit the package in a way that makes it workable with my current
 keybinding scheme as well sometime.
+
+*** when you want to do emacsy shit like function advice to vimmy shit like =:q=...
+We can make it a little nicer to look up the specific functions at hand:
+#+begin_src elisp
+(map!
+ :leader
+ "h:" (defun describe-evil-ex-binding (ex-cmd)
+        (interactive
+         (list (completing-read "Type evil ex command :" evil-ex-commands nil t)))
+        (if-let* ((binding (evil-ex-binding ex-cmd)))
+            (describe-function binding)
+          (user-error "No ex command bound to :%s" ex-cmd))))
+#+end_src
+
 *** replace with register
 #+begin_src elisp :tangle packages.el
 (package! evil-replace-with-register)
