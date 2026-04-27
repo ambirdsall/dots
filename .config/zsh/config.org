@@ -1512,7 +1512,7 @@ run-npm-script () {
   # avoid mangling script keys containing colons
   local chosen_script=$(scripts | grep -Eo '".+": ' | sed 's/"//' | sed 's/": //' | fzf)
 
-  test -n $chosen_script && $run $chosen_script
+  test -n $chosen_script && sh -c "$run $chosen_script"
 }
 alias S=run-npm-script
 #+end_src
