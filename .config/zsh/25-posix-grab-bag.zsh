@@ -2,7 +2,7 @@ alias awkcsv='awk -F "\"*,\"*"'
 
 alias cx='chmod +x'
 
-alias ls="ls -GF"
+alias ls="ls -GFH"
 alias la="ls -A"
 alias ll="ls -lh"
 
