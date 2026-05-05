@@ -1,0 +1,347 @@
+#!/usr/bin/env janet
+
+# The "t" in "t" stands for "tmux".
+#
+# Subsumes some prior tmux-wrapping art, and adds a janet DSL for predefining tmux
+# layouts keyed off session name. Drop one file per session in ~/.tmux/sessions
+# (override with $T_SESSIONS_DIR). For example, ~/.tmux/sessions/substack.janet:
+#
+#     (define substack-layout
+#       (layout
+#         :cwd "~/c/work/substack"
+#         :service {:split :vertical
+#                   :bottom {:prefill "npm run dev"}
+#                   :top    {:split :horizontal
+#                            :left  {}
+#                            :right {:cwd "~/c/work/substack/packages/x"
+#                                    :prefill "npm run start:demo"}}}
+#         :dev     {:split :vertical
+#                   :top    {:prefill "e todo.org"}
+#                   :bottom {}}))
+#
+# Then `t substack` attaches if the session exists, else materializes the
+# layout and attaches. See the docstrings on `layout` and `create-session`
+# below for the full grammar.
+
+(use sh)
+
+# --- Config -----------------------------------------------------------------
+
+(def- sessions-dir
+  (or (os/getenv "T_SESSIONS_DIR")
+      (string (os/getenv "HOME") "/.tmux/sessions")))
+
+(def- default-session
+  (or (os/getenv "DEFAULT_TMUX_SESSION") "home"))
+
+(def- default-autostart
+  # Matches the original t.up: create "dots" and "home", attach to "home".
+  # The corresponding layouts ship in ~/.tmux/sessions/{dots,home}.janet.
+  [:dots :home :substack])
+
+# --- Small helpers ----------------------------------------------------------
+
+(defn- expand-path [p]
+  (cond
+    (nil? p) nil
+    (string/has-prefix? "~" p) (string (os/getenv "HOME") (string/slice p 1))
+    p))
+
+(defn- keyword->string [k]
+  (cond
+    (keyword? k) (string k)
+    (string? k) k))
+
+(defn- list-sessions []
+  # Suppress stderr; `tmux ls` chirps "no server running" when idle.
+  (def out ($<_ sh -c "tmux list-sessions -F '#S' 2>/dev/null"))
+  (->> (string/split "\n" out)
+       (filter |(not (empty? $)))))
+
+(defn- session-exists? [name]
+  (assert (and (string? name) (not (empty? name)))
+          (string/format "session-exists?: invalid name %p" name))
+  # NOTE: the name is interpolated into a single-quoted shell argument, so a
+  # name containing a literal `'` breaks the quoting. Not a problem today —
+  # names come from the CLI or from .janet filename stems under $sessions-dir,
+  # and neither route produces quote-bearing names in practice. Revisit if
+  # that changes.
+  ($? sh -c ,(string "tmux has-session -t '=" name "' 2>/dev/null")))
+
+(defn- confirm-attach [name]
+  (eprinf "Session %s already exists; press [Y/y] to attach or any other key to exit: "
+          name)
+  (eflush)
+  (def ch (try ($<_ bash -c "read -rsn1 ch && printf '%s' \"$ch\"")
+               ([_] "")))
+  (eprint)
+  (or (= ch "Y") (= ch "y")))
+
+(defn- attach! [name]
+  # If we're already inside tmux, switch-client; otherwise attach-session.
+  (if (os/getenv "TMUX")
+    ($ tmux switch-client -t ,name)
+    ($ tmux attach-session -t ,name)))
+
+# --- DSL --------------------------------------------------------------------
+
+(defmacro define
+  "Sugar alias for `def`, for the layout-DSL style."
+  [name value]
+  ~(def ,name ,value))
+
+(defmacro layout
+  ```
+  Build an order-preserving layout from alternating key/value pairs.
+
+  `:cwd "/path"` must appear somewhere; it's conventionally first. Other
+  keys are tab names (keywords or strings) mapping to pane-or-panes trees:
+
+      LAYOUT = (layout :cwd "/path" TAB_NAME PANE_OR_PANES ...)
+
+      PANE_OR_PANES = PANE | SPLIT
+
+      SPLIT = {:split :vertical   :top PANE_OR_PANES :bottom PANE_OR_PANES}
+            | {:split :horizontal :left PANE_OR_PANES :right PANE_OR_PANES}
+
+      PANE  = {}
+            | {:cwd "/path"}
+            | {:cwd "/path" :prefill "shell"}     # type, don't execute
+            | {:cwd "/path" :run "shell"}         # type and hit Enter
+
+  `:cwd` defaults from the enclosing scope at each level, so most panes
+  can omit it. Tab name keywords are coerced to window names via `string`.
+  ```
+  [& body]
+  (assert (even? (length body))
+          "layout requires alternating key/value pairs")
+  (def pair-exprs
+    (seq [i :range [0 (length body) 2]]
+      [(get body i) (get body (+ i 1))]))
+  ~[,;(map (fn [[k v]] ~[,k ,v]) pair-exprs)])
+
+# --- Builder ----------------------------------------------------------------
+
+(defn- first-pane-cwd
+  "The :cwd of the first PANE leaf of a pane-or-panes tree, or nil.
+  Establishes the invariant that `build-pane-or-panes` relies on: the pane
+  we're handed was created with a cwd matching the subtree's first leaf."
+  [node]
+  (match node
+    {:split :vertical   :top  a} (first-pane-cwd a)
+    {:split :horizontal :left a} (first-pane-cwd a)
+    (p (or (struct? p) (table? p))) (get p :cwd)
+    _ nil))
+
+(var- pending-keys nil)
+
+(defn- apply-pane-props [pane-id node]
+  # Defer send-keys until after all panes are created: the shell inside a
+  # freshly-spawned pane hasn't finished initializing yet, so keystrokes
+  # sent immediately after `new-window`/`split-window` race the shell and
+  # get dropped (most visibly, the trailing Enter does nothing).
+  (when-let [prefill (get node :prefill)]
+    (array/push pending-keys [pane-id prefill false]))
+  (when-let [run (get node :run)]
+    (array/push pending-keys [pane-id run true])))
+
+(def- shell-init-delay
+  # Zsh with the user's .zshrc typically takes ~1s to init; give it a little
+  # headroom so the trailing Enter from `:run` lands after the prompt draws
+  # (otherwise the keys get buffered ahead of the shell and the newline is
+  # dropped). Tune via $T_SHELL_INIT_DELAY if your rc files are slower.
+  (or (scan-number (os/getenv "T_SHELL_INIT_DELAY" "")) 2))
+
+(defn- flush-pending-keys []
+  (unless (empty? pending-keys)
+    (os/sleep shell-init-delay)
+    (each [pane-id s run?] pending-keys
+      (if run?
+        ($ tmux send-keys -t ,pane-id ,s "Enter")
+        ($ tmux send-keys -t ,pane-id ,s)))))
+
+(defn- split-pane-and-get-id [source-pane flag cwd]
+  (string/trim
+    ($<_ tmux split-window -d -t ,source-pane ,flag -c ,cwd
+         -P -F "#{pane_id}")))
+
+(defn- build-pane-or-panes
+  # `current-cwd` is the cwd of `pane-id`. We thread it so that splits whose
+  # subtrees don't specify :cwd still inherit the parent pane's cwd — without
+  # it, tmux falls back to the caller shell's cwd, which is wrong.
+  [pane-id node current-cwd]
+  (defn split-both [a b flag]
+    (def b-cwd (or (expand-path (first-pane-cwd b)) current-cwd))
+    (def new-pane (split-pane-and-get-id pane-id flag b-cwd))
+    (build-pane-or-panes pane-id a current-cwd)
+    (build-pane-or-panes new-pane b b-cwd))
+  (match node
+    {:split :vertical   :top  a :bottom b} (split-both a b "-v")
+    {:split :horizontal :left a :right  b} (split-both a b "-h")
+    {:split x} (errorf "unknown :split direction %p in %p" x node)
+    (p (or (struct? p) (table? p))) (apply-pane-props pane-id p)
+    _ (errorf "invalid pane-or-panes: %p" node)))
+
+(defn- layout-pairs [data]
+  "Normalize a layout into a tuple of [key value] pairs. Accepts the ordered
+  tuple-of-pairs produced by `layout`, plus plain structs/tables (useful for
+  single-tab or no-tab layouts where order is irrelevant)."
+  (cond
+    (indexed? data) data
+    (or (struct? data) (table? data)) (pairs data)
+    (errorf "invalid layout: %p" data)))
+
+(defn- new-session-first-pane [session-name wname wcwd]
+  (string/trim
+    (if wname
+      ($<_ tmux new-session -d -s ,session-name -c ,wcwd -n ,wname
+           -P -F "#{pane_id}")
+      ($<_ tmux new-session -d -s ,session-name -c ,wcwd
+           -P -F "#{pane_id}"))))
+
+(defn- new-window-first-pane [session-name wname wcwd]
+  (def target (string session-name ":"))
+  (string/trim
+    (if wname
+      ($<_ tmux new-window -d -t ,target -c ,wcwd -n ,wname
+           -P -F "#{pane_id}")
+      ($<_ tmux new-window -d -t ,target -c ,wcwd
+           -P -F "#{pane_id}"))))
+
+(defn- materialize-layout [session-name layout-data]
+  (def pairs-data (layout-pairs layout-data))
+  (def cwd-pair (find (fn [[k _]] (= k :cwd)) pairs-data))
+  (unless cwd-pair
+    (errorf "layout for %s must have a top-level :cwd" session-name))
+  (def layout-cwd (expand-path (get cwd-pair 1)))
+  (def tabs (filter (fn [[k _]] (not= k :cwd)) pairs-data))
+
+  (set pending-keys @[])
+  (if (empty? tabs)
+    ($ tmux new-session -d -s ,session-name -c ,layout-cwd)
+    (let [[[first-key first-contents] & rest-tabs] tabs
+          wname (keyword->string first-key)
+          wcwd (or (expand-path (first-pane-cwd first-contents)) layout-cwd)
+          first-pane (new-session-first-pane session-name wname wcwd)]
+      (build-pane-or-panes first-pane first-contents wcwd)
+      (each [tk tc] rest-tabs
+        (def wname2 (keyword->string tk))
+        (def wcwd2 (or (expand-path (first-pane-cwd tc)) layout-cwd))
+        (def pane-id (new-window-first-pane session-name wname2 wcwd2))
+        (build-pane-or-panes pane-id tc wcwd2))
+      # Select the first window so that attach lands in the expected place.
+      # (Redundant today given `-d` on every subsequent new-window call keeps
+      # the initial window active, but cheap defense in depth.)
+      ($ tmux select-window -t ,(string session-name ":{start}"))))
+  (flush-pending-keys))
+
+# --- DSL: create-session (usable inside the layouts file) -------------------
+
+(defn create-session
+  ```
+  Create a tmux session from a layout. Idempotent by default: if the session
+  already exists, does nothing. Pass `:on-existing :prompt` to ask the user
+  whether to attach, or `:on-existing :error` to raise.
+  ```
+  [session-name layout-data &opt opts]
+  (default opts {})
+  (def on-existing (get opts :on-existing :skip))
+  (cond
+    (session-exists? session-name)
+    (case on-existing
+      :skip nil
+      :error (errorf "session %s already exists" session-name)
+      :prompt (if (confirm-attach session-name)
+                (attach! session-name)
+                (os/exit 0)))
+
+    (materialize-layout session-name layout-data)))
+
+# --- Session-definition loading ---------------------------------------------
+
+(def- layouts-env
+  (when (= :directory (get (os/stat sessions-dir) :mode))
+    # Evaluate every .janet file in the sessions directory with our DSL
+    # bindings in scope, accumulating all definitions into a shared env. The
+    # convention is one file per session named `<session>.janet`, containing
+    # `(define <session>-layout (layout ...))`, but nothing is enforced —
+    # files may declare multiple layouts or fire imperative `create-session`
+    # calls at load time.
+    (def env (make-env root-env))
+    (put env 'layout (dyn 'layout))
+    (put env 'define (dyn 'define))
+    (put env 'create-session @{:value create-session})
+    (each file (sort (os/dir sessions-dir))
+      (when (string/has-suffix? ".janet" file)
+        (dofile (string sessions-dir "/" file) :env env)))
+    env))
+
+(defn- layout-for [session-name]
+  (when layouts-env
+    (when-let [entry (get layouts-env (symbol session-name "-layout"))]
+      (get entry :value))))
+
+# --- Subcommands ------------------------------------------------------------
+
+(defn- autostart-list []
+  (if-let [env-val (os/getenv "DEFAULT_TMUX_SESSIONS")]
+    (->> (string/split "," env-val)
+         (map string/trim)
+         (filter |(not (empty? $))))
+    (map keyword->string default-autostart)))
+
+(defn- cmd-up [& args]
+  (def detached? (some |(= $ "-d") args))
+  (each name (autostart-list)
+    (if-let [ly (layout-for name)]
+      (create-session name ly)
+      (eprintf "t up: no layout for %s, skipping" name)))
+  (unless detached?
+    (attach! default-session)))
+
+(defn- cmd-attach-or-create [session-name]
+  (if (session-exists? session-name)
+    (attach! session-name)
+    (if-let [ly (layout-for session-name)]
+      (do (materialize-layout session-name ly)
+          (attach! session-name))
+      (do (eprintf "t: no session or layout named %s" session-name)
+          (os/exit 1)))))
+
+(defn- cmd-new [session-name]
+  (if (session-exists? session-name)
+    (when (confirm-attach session-name)
+      (attach! session-name))
+    (if-let [ly (layout-for session-name)]
+      (do (materialize-layout session-name ly)
+          (attach! session-name))
+      (do (eprintf "t: no layout named %s-layout" session-name)
+          (os/exit 1)))))
+
+(defn- positional-arg? [arg]
+  (unless (string/has-prefix? "-" arg) arg))
+
+(defn- n-ary?? [n]
+  # Janet's `match` on `[_ _ ...]` really means "at least N elements", so
+  # we need explicit length guards to distinguish subcommand arities.
+  (let [expected (+ n 1)]
+    (fn [lst] (= expected (length lst)))))
+
+(def- no-args? (n-ary?? 0))
+(def- single-arg? (n-ary?? 1))
+(def- two-args? (n-ary?? 2))
+
+(defn main [& invocation]
+  (match invocation
+    ([_] (no-args? invocation)) (cmd-up)
+    [_ "up" & args] (cmd-up ;args)
+    # `tmux ls` with no server bails with exit 1 and an error; let it print
+    # its own "no server running" message and swallow the non-zero exit so
+    # the script doesn't dump a janet stack trace on an expected condition.
+    [_ "ls" & flags] (try ($ tmux list-sessions ;flags) ([_] nil))
+    [_ "list-sessions" & flags] (try ($ tmux list-sessions ;flags) ([_] nil))
+    ([_ "kill" name] (two-args? invocation)) ($ tmux kill-session -t ,name)
+    ([_ "new" name] (two-args? invocation)) (cmd-new name)
+    ([_ session] (and (single-arg? invocation) (positional-arg? session)))
+                 (cmd-attach-or-create session)
+    [_ & args] ($ tmux ;args)))
