@@ -76,7 +76,7 @@ magit() {
     emacs_server_name=magit
   fi
 
-  emacsclient --socket=magit -nw -e "
+  emacsclient --socket=$emacs_server_name -nw -e "
 (progn
   (or (advice-member-p 'save-buffers-kill-terminal '+magit/quit)
       (advice-add '+magit/quit :before 'save-buffers-kill-terminal))
