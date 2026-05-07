@@ -35,9 +35,10 @@
   (or (os/getenv "DEFAULT_TMUX_SESSION") "home"))
 
 (def- default-autostart
-  # Matches the original t.up: create "dots" and "home", attach to "home".
-  # The corresponding layouts ship in ~/.tmux/sessions/{dots,home}.janet.
-  [:dots :home :substack])
+ (let [session-dir (string (os/getenv "HOME") "/.tmux/sessions")
+       session-file-list ($<_ ls ,session-dir | sed -E "s/\\.janet$//")
+       session-files (string/split "\n" session-file-list)]
+  (map keyword session-files)))
 
 # --- Small helpers ----------------------------------------------------------
 
