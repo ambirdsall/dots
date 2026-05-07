@@ -101,3 +101,29 @@ copy the corresponding plist into ~/Library/LaunchAgents.
 </dict>
 </plist>
 #+end_src
+
+* update tldr cache weekly
+#+begin_src xml :tangle (shell-command-to-string "command -v tldr > /dev/null && echo -n '~/Library/LaunchAgents/com.amb.tldr-update.plist' || echo -n no")
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.amb.tldr-update</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/tldr</string>
+        <string>--update</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>1</integer>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+</dict>
+</plist>
+#+end_src
