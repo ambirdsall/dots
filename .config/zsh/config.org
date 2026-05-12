@@ -1681,8 +1681,7 @@ if [ $OS_TYPE == "macos" ]; then
 fi
 #+end_src
 
-* TODO reorganize :: grab bag of aliases, shortcuts, and side-effects
-** aliases
+* grab bag of aliases
 #+begin_src zsh :tangle ./80-aliases.zsh
 alias fuck="rm -rf"
 if dots/at_hand xdg-open; then
@@ -1695,7 +1694,7 @@ fi
 [ -f ~/.local-aliases.zsh ] && source ~/.local-aliases.zsh || true
 #+end_src
 
-** TODO prevent expanding longer words that end in some abbrev :: self-expanding abbrevs
+* TODO prevent expanding longer words that end in some abbrev :: self-expanding abbrevs
 #+begin_src zsh :tangle ./81-self-expanding-abbrevs.zsh
 typeset -Ag abbreviations
 abbreviations=(
@@ -1730,7 +1729,7 @@ bindkey "^x " no-magic-abbrev-expand
 bindkey -M isearch " " self-insert
 #+end_src
 
-** today in history! iff available, anyway (BSD-based only (i.e. macOS), IIUC)
+* today in history! iff available, anyway (BSD-based only (i.e. macOS), IIUC)
 #+begin_src zsh :tangle ./82-print-calendar-entry.zsh
 if [[ -f /usr/share/calendar/calendar.history ]]; then
     echo "Today in history:"
@@ -1739,14 +1738,14 @@ if [[ -f /usr/share/calendar/calendar.history ]]; then
 fi
 #+end_src
 
-** clean up old macOS screenshots
+* clean up old macOS screenshots
 #+begin_src zsh :tangle ./83-clean-up-screenshots.zsh
 &>/dev/null rm ~/Desktop/Screenshot*.png
 #+end_src
 
-*** TODO also clean up video screen captures
+** TODO also clean up video screen captures
 
-** copy fun unicode emoticons
+* copy fun unicode emoticons
 #+begin_src zsh :tangle ./84-unicodes.zsh
 alias idk="echo -n '¯\_(ツ)_/¯' | pbcopy && echo 'Copied \"¯\_(ツ)_/¯\" to clipboard'"
 # Backslashes and underscores must be doubly escaped if the text will be parsed as markdown
