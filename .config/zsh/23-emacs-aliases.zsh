@@ -1,10 +1,10 @@
 # alias e="qed"
 e() {
-  emacsclient -nw --socket-name=ttylated --alternate-editor="" "$@"
+  emacsclient -nw --alternate-editor="" "$@"
 }
 
 edo() {
-  emacsclient -nw --socket-name=ttylated --eval "$@"
+  emacsclient -nw --eval "$@"
 }
 
 E() {
@@ -31,7 +31,7 @@ EEE() {
 # a scenario where falling back to vim is preferable to a slow-booting editor.
 emv() {
   if command -v emacs >/dev/null; then
-    emacsclient -nw --socket-name=ttylated --alternate-editor="vim" $@
+    emacsclient -nw --alternate-editor="vim" $@
   else
     vim $@
   fi
@@ -84,7 +84,7 @@ magit() {
 }
 
 man() {
-  emacsclient -nw --socket-name=ttylated --eval "
+  emacsclient -nw --eval "
 (progn
   (man \"$@\")
   (or
@@ -99,6 +99,6 @@ man() {
 }
 
 unicode() {
-  emacsclient -nw --socket-name=ttylated --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
+  emacsclient -nw --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
   echo "Copied $(pbpaste) to the clipboard"
 }
