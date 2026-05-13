@@ -1,17 +1,30 @@
 list_multiplexer_sessions () {
     local zellij_sessions
 
-    if [[ -n $TMUX ]]; then
-        echo "Tmux sessions:"
-        tmux list-sessions
-        printf "\n"
-    fi
-
-    if dots/at_hand zellij; then
-        if [ -z "$(env | grep -i zellij)" ]; then
-            echo "Zellij sessions:"
-            zellij list-sessions
+    if [[ -f $HOME/.preferred-mux ]]; then
+        case $(cat $HOME/.preferred-mux | tr -d '\n') in
+            tmux) echo "Tmux sessions:"
+                  tmux list-sessions
+                  printf "\n"
+                  ;;
+            zellij) echo "Zellij sessions:"
+                    zellij list-sessions
+                    printf "\n"
+                    ;;
+        esac
+    else
+        if [[ -n $TMUX ]]; then
+            echo "Tmux sessions:"
+            tmux list-sessions
             printf "\n"
+        fi
+
+        if dots/at_hand zellij; then
+            if [ -z "$(env | grep -i zellij)" ]; then
+                echo "Zellij sessions:"
+                zellij list-sessions
+                printf "\n"
+            fi
         fi
     fi
 }
