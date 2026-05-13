@@ -1,12 +1,23 @@
-(require-macros :spacehammer.lib.macros)
-(require-macros :spacehammer.lib.advice.macros)
-(local windows (require :spacehammer.windows))
-(local emacs (require :spacehammer.emacs))
-(local slack (require :spacehammer.slack))
-(local vim (require :spacehammer.vim))
+(require-macros :lib.macros)
+(require-macros :lib.advice.macros)
+(local windows (require :windows))
+(local emacs (require :emacs))
+(local slack (require :slack))
+(local vim (require :vim))
 
 (local {:concat concat
-        :logf logf} (require :spacehammer.lib.functional))
+        :logf logf} (require :lib.functional))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; WARNING
+;; Make sure you are customizing ~/.spacehammer/config.fnl and not
+;; ~/.hammerspoon/config.fnl
+;; Otherwise you will lose your customizations on upstream changes.
+;; A copy of this file should already exist in your ~/.spacehammer directory.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(local bearclaw [:alt :cmd :ctrl])
+(local puppy-paw [:alt :cmd])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Table of Contents
@@ -49,8 +60,8 @@
 ;; [x] |-- f - fullscreen
 ;; [x] |-- v - split
 ;;
-;; [x] alt-n - next-app
-;; [x] alt-p - prev-app
+;; [x] bearclaw-n - next-app
+;; [x] bearclaw-p - prev-app
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -81,6 +92,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; General
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(local music-app "Spotify")
 
 (local return
        {:key :space
@@ -217,10 +230,8 @@
           :action "windows:undo"}]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; * Apps Menu
+;; Apps Menu
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(local music-app "Spotify")
 
 (local app-bindings
        [return
@@ -239,9 +250,6 @@
         {:key :s
          :title "Slack"
          :action (activator "Slack")}
-        {:key :t
-         :title "Terminal"
-         :action (activator "WezTerm")}
         {:key :b
          :title "Brave"
          :action (activator "brave browser")}
@@ -288,19 +296,27 @@
          :action "emacs:full-screen"}])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; * Main Menu & Config
+;; Main Menu & Config
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; hs.eventtap.keyStroke(modifiers, character[, delay, application])
-;; ("fn", "ctrl", "alt", "cmd", "shift", or their Unicode equivalents)
+
+(fn installed? [app-name]
+  (if (hs.application.infoForBundlePath (.. "/Applications/" app-name ".app"))
+      app-name))
+
 (local menu-items
        [{:key    :space
          :title  "Spotlight"
-         :action #(hs.eventtap.keyStroke [:cmd :alt] :space)}
+         :action #(hs.eventtap.keyStroke [:cmd] :space)}
         {:key   :return
          :title "New terminal window"
-         :action #(if (hs.application.get "iTerm")
-                      (hs.execute "osascript -e 'tell application \"iTerm\" to create window with default profile'")
-                      (hs.application.launchOrFocus "iTerm"))}
+         :action #(let [term
+                        (or (installed? "Ghostty")
+                            (installed? "kitty")
+                            (installed? "iTerm")
+                            "Terminal")]
+                    (if (hs.application.get term)
+                        (hs.osascript.javascript (.. "Application('" term "').newWindow()"))
+                        (hs.application.launchOrFocus term)))}
         {:key   :w
          :title "Window"
          :enter "windows:enter-window-menu"
@@ -320,13 +336,13 @@
          :items emacs-bindings}])
 
 (local common-keys
-       [{:mods [:cmd :alt]
+       [{:mods puppy-paw
          :key :space
-         :action "spacehammer.lib.modal:activate-modal"}
-        {:mods [:alt]
+         :action "lib.modal:activate-modal"}
+        {:mods bearclaw
          :key :n
          :action "apps:next-app"}
-        {:mods [:alt]
+        {:mods bearclaw
          :key :p
          :action "apps:prev-app"}
         {:mods [:cmd :ctrl]
@@ -419,23 +435,10 @@
                {:mods [:ctrl]
                 :key :l
                 :action "slack:next-element"}
-               {:mods [:ctrl]
-                :key :t
-                :action "slack:thread"}
-               {:mods [:ctrl]
-                :key :p
-                :action "slack:prev-day"}
-               {:mods [:ctrl]
-                :key :n
-                :action "slack:next-day"}
-               {:mods [:ctrl]
-                :key :e
-                :action "slack:scroll-up"
-                :repeat true}
-               {:mods [:ctrl]
-                :key :y
-                :action "slack:scroll-down"
-                :repeat true}
+               ;; {:mods [:ctrl]
+               ;;  :key :y
+               ;;  :action "slack:scroll-down"
+               ;;  :repeat true}
                {:mods [:ctrl]
                 :key :i
                 :action "slack:next-history"
@@ -444,14 +447,15 @@
                 :key :o
                 :action "slack:prev-history"
                 :repeat true}
-               {:mods [:ctrl]
-                :key :j
-                :action "slack:down"
-                :repeat true}
-               {:mods [:ctrl]
-                :key :k
-                :action "slack:up"
-                :repeat true}]})
+               ;; {:mods [:ctrl]
+               ;;  :key :j
+               ;;  :action "slack:down"
+               ;;  :repeat true}
+               ;; {:mods [:ctrl]
+               ;;  :key :k
+               ;;  :action "slack:up"
+               ;;  :repeat true}
+               ]})
 
 (local apps
        [brave-config
@@ -474,7 +478,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; * Exports
+;; Exports
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 config

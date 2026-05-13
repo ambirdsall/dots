@@ -1,4 +1,4 @@
-(require-macros :spacehammer.lib.macros)
+(require-macros :lib.macros)
 
 ;; toggle hs.console with Ctrl+Cmd+~
 (hs.hotkey.bind
