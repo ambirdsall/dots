@@ -2,6 +2,7 @@ typeset -Ag abbreviations
 abbreviations=(
 "A"     "| awk '{print $2 }'"
 "B"     "| bc"
+"C"     "| pbcopy"
 "GROFF" "| groff -s -p -t -e -Tlatin1 -mandoc"
 "F"     "| fzf"
 "G"     "| rg -S"
