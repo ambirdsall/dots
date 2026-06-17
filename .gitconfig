@@ -1,8 +1,5 @@
-[user]
-	name = Alex Birdsall
-	email = ambirdsall@gmail.com
-[help]
-	autocorrect = prompt
+[advice]
+	skippedCherryPicks = false
 [alias]
 	# Accepts an unquoted commit message if provided, otherwise opens editor
 	c = "!_f(){ [ $# -gt 0 ] && git commit -m \"$*\" || git commit -v; };_f"
@@ -17,43 +14,54 @@
 	latest = "!git reflog | grep checkout: | awk '{print $6}' | awk '!H[$0]++'"
 	# a safer force push
 	shove = push --force-with-lease
-[github]
-	user = ambirdsall
-[init]
-	defaultBranch = main
+[branch]
+	sort = -committerdate
+[column]
+	ui = auto
+[commit]
+	verbose = true
+[core]
+	excludesfile = ~/.gitignore
+[diff]
+	algorithm = histogram
+	colorMoved = plain
+	mnemonicPrefix = true
+	renames = true
+[feature]
+	experimental = true
 [fetch]
 	prune = true
 	pruneTage = true
 	all = true
+[github]
+	user = ambirdsall
+[grep]
+	patternType = perl
+[help]
+	autocorrect = prompt
+[include]
+	path = "~/.gitconfig.local"
+[init]
+	defaultBranch = main
+[merge]
+	conflictstyle = zdiff3
 [pull]
 	rebase = true
 [push]
 	default = simple
 	autoSetupRemote = true
 	followTags = true
-[advice]
-	skippedCherryPicks = false
-[include]
-	path = "~/.gitconfig.local"
-[column]
-	ui = auto
-[branch]
-	sort = -committerdate
-[tag]
-	sort = version:refname
-[diff]
-	algorithm = histogram
-	colorMoved = plain
-	mnemonicPrefix = true
-	renames = true
-[core]
-	excludesfile = ~/.gitignore
 [rebase]
 	autoSquash = true
 	autoStash = true
-	updateRefs = true
+	# updateRefs = true
 [rerere]
 	enabled = true
 	autoupdate = true
 [safe]
 	directory = /home/amb/c/janet/build/spork
+[tag]
+	sort = version:refname
+[user]
+	name = Alex Birdsall
+	email = ambirdsall@gmail.com
