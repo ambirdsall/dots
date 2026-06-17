@@ -274,7 +274,12 @@
     (put env 'create-session @{:value create-session})
     (each file (sort (os/dir sessions-dir))
       (when (string/has-suffix? ".janet" file)
-        (dofile (string sessions-dir "/" file) :env env)))
+        # A broken session file must not take down every `t` invocation
+        # (including ones like `t ls` that don't need layouts at all). Warn
+        # and skip; the other files still load.
+        (try
+          (dofile (string sessions-dir "/" file) :env env)
+          ([err] (eprintf "t: skipping %s: %p" file err)))))
     env))
 
 (defn- layout-for [session-name]
