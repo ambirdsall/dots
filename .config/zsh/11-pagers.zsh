@@ -1,6 +1,6 @@
 if dots/at_hand bat; then
     export PAGER='bat --plain'
-    export MANPAGER="bat -l man -p"
+    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 fi
 
 if dots/at_hand doom; then

@@ -745,7 +745,7 @@ alias sane='stty sane'
 #+begin_src zsh :tangle ./11-pagers.zsh
 if dots/at_hand bat; then
     export PAGER='bat --plain'
-    export MANPAGER="bat -l man -p"
+    export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 fi
 
 if dots/at_hand doom; then
@@ -1241,6 +1241,19 @@ magit() {
   (magit-status))" || emacs --daemon=$emacs_server_name
 }
 
+unicode() {
+  emacsclient -nw --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
+  echo "Copied $(pbpaste) to the clipboard"
+}
+#+end_src
+
+I used to also use emacsclient as my de facto =$MANPAGER= by shadowing the actual =man=
+command; it was a leaky wrapper, though, and (at least the way I had implemented it), a
+bit more trouble than it was worth. Demoted out of my tangled config, but I'm keeping the
+source around for reference/historical interest—and because I harbor a lingering suspicion
+that the problems I've had with short term single-use emacsclient TUIs were a skill issue
+all along.
+#+begin_src zsh :tangle (or "no" "./23-emacs-aliases.zsh")
 man() {
   emacsclient -nw --eval "
 (progn
@@ -1254,11 +1267,6 @@ man() {
     (doom/window-maximize-buffer)
    (run-with-timer 0.3 nil (fn! (doom/window-maximize-buffer))))
   (add-hook 'kill-buffer-hook #'amb/man-clean-up-after-yourself))"
-}
-
-unicode() {
-  emacsclient -nw --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
-  echo "Copied $(pbpaste) to the clipboard"
 }
 #+end_src
 
