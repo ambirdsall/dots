@@ -116,6 +116,26 @@ unsetopt beep nomatch
 setopt auto_cd PROMPT_SUBST
 #+end_src
 
+** pushing past the ulimit: 256 is not enough file descriptors
+macOS-only solution to a macOS-only problem: it watches files via
+=kqueue=, which costs one file descriptor per watched directory, and it ships a
+256-descriptor soft limit (=launchctl limit maxfiles=, though that's just a default rather
+than a real constraint). Anything spawned from here inherits it: sans fix, an =emacs= daemon
+(the real =fd= hog here) started by =e= gets 256, its =eglot= watchers die 207 directories into
+a large repo, and file watching silently turns itself off.
+
+Linux needs nothing (shout out to =inotify=, where every watch shares a single descriptor
+and the ceiling is the =fs.inotify.max_user_watches= sysctl instead). Nothing, Lebowski!
+
+2048 is deliberately unambitious: Emacs inspired the fix and Emacs caps out around 975
+watches regardless (an internal ~1024-descriptor ceiling that =ulimit= does not move), so
+there is nothing doing above a couple of thousand.
+#+begin_src zsh :tangle ./01-opts.zsh
+if [[ $OS_TYPE == "macos" ]]; then
+    ulimit -n 2048
+fi
+#+end_src
+
 ** shell history
 #+begin_src zsh :tangle ./02-history.zsh
 HISTFILE=~/.histfile
