@@ -296,14 +296,15 @@
          (filter |(not (empty? $))))
     (map keyword->string default-autostart)))
 
-(defn- cmd-up [& args]
-  (def detached? (some |(= $ "-d") args))
+(defn- cmd-up [&opt arg]
+  (def detached? (= arg "-d"))
+  (def attach-target (if (and arg (not detached?)) arg default-session))
   (each name (autostart-list)
     (if-let [ly (layout-for name)]
       (create-session name ly)
       (eprintf "t up: no layout for %s, skipping" name)))
   (unless detached?
-    (attach! default-session)))
+    (attach! attach-target)))
 
 (defn- cmd-attach-or-create [session-name]
   (if (session-exists? session-name)
@@ -321,8 +322,15 @@
     (if-let [ly (layout-for session-name)]
       (do (materialize-layout session-name ly)
           (attach! session-name))
-      (do (eprintf "t: no layout named %s-layout" session-name)
-          (os/exit 1)))))
+      (do ($ tmux new-session -d -s ,session-name)
+          (attach! session-name)))))
+
+(defn- derive-session-name []
+  (let [toplevel (try ($<_ git rev-parse --show-toplevel)
+                      ([_] nil))]
+    (if (and toplevel (not (empty? toplevel)))
+      (last (string/split "/" (string/trim toplevel)))
+      (last (string/split "/" (os/cwd))))))
 
 (defn- positional-arg? [arg]
   (unless (string/has-prefix? "-" arg) arg))
@@ -340,7 +348,8 @@
 (defn main [& invocation]
   (match invocation
     ([_] (no-args? invocation)) (cmd-up)
-    [_ "up" & args] (cmd-up ;args)
+    ([_ "up"] (single-arg? invocation)) (cmd-up)
+    ([_ "up" arg] (two-args? invocation)) (cmd-up arg)
     # `tmux ls` with no server bails with exit 1 and an error; let it print
     # its own "no server running" message and swallow the non-zero exit so
     # the script doesn't dump a janet stack trace on an expected condition.
@@ -348,6 +357,7 @@
     [_ "list-sessions" & flags] (try ($ tmux list-sessions ;flags) ([_] nil))
     ([_ "kill" name] (two-args? invocation)) ($ tmux kill-session -t ,name)
     ([_ "new" name] (two-args? invocation)) (cmd-new name)
+    ([_ "new"] (single-arg? invocation)) (cmd-new (derive-session-name))
     ([_ session] (and (single-arg? invocation) (positional-arg? session)))
                  (cmd-attach-or-create session)
     [_ & args] ($ tmux ;args)))
