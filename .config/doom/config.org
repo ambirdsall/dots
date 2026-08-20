@@ -31,14 +31,18 @@ This will define =SPC f b b= to invoke foo-bar-baz and =SPC f b q= to invoke foo
 **** [[https://github.com/thisisran/nova][nova]] :: stylish-compatible svg child frames
 
 * begin config files at the beginning
+first, we inject some boilerplate preambles (initial comments, setting lexical scope, etc; cf. the appendix section where they are defined):
 #+begin_src elisp
 <<config-preamble>>
 #+end_src
 
-In order to conditionally define config, we have some toggles which can be overridden via a non-git-tracked local file:
+** polyfill for pretest Emacs
+My Emacs 31.0.50 build predates =set-local= (which landed later in the 31 cycle), but Compat only backports it for Emacs <31 and assumes any 31.x already has it — so Vertico's =M-x= setup hits a void function. Define it ourselves until the build (or Compat) catches up; the =fboundp= guard makes this a no-op once =set-local= exists natively:
 #+begin_src elisp
-<<default-toggles>>
-<<load-local-toggle-overrides>>
+(unless (fboundp 'set-local)
+  (defun set-local (variable value)
+    "Make VARIABLE buffer-local and set it to VALUE."
+    (set (make-local-variable variable) value)))
 #+end_src
 
 #+begin_src elisp :tangle packages.el
@@ -52,6 +56,13 @@ In order to conditionally define config, we have some toggles which can be overr
 
 <<doom-block>>
 #+end_src
+
+In order to conditionally define config, we have some toggles (defined with =defvar= forms) which can be overridden via a non-git-tracked local file; we put these definitions in =init.el= so that they'll be in scope for both the doom CLI and my runtime config:
+#+begin_src elisp :tangle no :noweb-ref init-preconfig
+<<default-toggles>>
+<<load-local-toggle-overrides>>
+#+end_src
+
 
 * doom modules
 #+begin_src elisp :tangle no :noweb-ref doom-block
@@ -1037,7 +1048,7 @@ For additional reference, see [[https://discourse.doomemacs.org/t/how-to-change-
 **** make it look nice
 I don't rely on the short menu anymore; I know how to get around in doom/emacs just fine now. Let's get rid of that. And while we're at it, let's replace the splash image with something nice:
 #+begin_src elisp
-(setq fancy-splash-image (concat doom-private-dir "emacs.png"))
+(setq fancy-splash-image (concat doom-user-dir "emacs.png"))
 (remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-shortmenu)
 (remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-footer)
 #+end_src
@@ -1062,7 +1073,7 @@ they are, in practice, only being added to the emacs-state map.*
         :desc "Find file" :ne "f" #'find-file
         :desc "Recent files" :ne "r" #'consult-recent-file
         :desc "Config dir" :ne "C" #'doom/open-private-config
-        :desc "Open config.org" :ne "c" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
+        :desc "Open config.org" :ne "c" (cmd! (find-file (expand-file-name "config.org" doom-user-dir)))
         :desc "Open dotfile" :ne "." (cmd! (doom-project-find-file "~/.config/"))
         :desc "Notes (roam)" :ne "n" #'org-roam-node-find
         :desc "Switch buffer" :ne "b" #'+vertico/switch-workspace-buffer
@@ -1914,12 +1925,13 @@ and should I feel like playing a game of flycheckers:
 
 #+end_src
 
-#+begin_src elisp :tangle (if (boundp 'amb/enable-copilot) "packages.el" "no")
+The =:tangle= targets below are machine-local: copilot is only tangled where =amb/enable-copilot= is on. Resolving that at tangle time is delegated to =amb/tangle-when= (in the hand-maintained =tangle-support.el=), so it works even in the bare async save-tangle subprocess that doesn't load =init.el=:
+#+begin_src elisp :tangle (progn (require 'tangle-support (expand-file-name "tangle-support.el" default-directory)) (amb/tangle-when 'amb/enable-copilot "packages.el"))
 (package! copilot
-  :recipe (:host github :repo "zerolfx/copilot.el" :files ("*.el" "dist")))
+  :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
 #+end_src
 
-#+begin_src elisp :tangle (if (boundp 'amb/enable-copilot) "config.el" "no")
+#+begin_src elisp :tangle (progn (require 'tangle-support (expand-file-name "tangle-support.el" default-directory)) (amb/tangle-when 'amb/enable-copilot "config.el"))
 ;; accept completion from copilot and fallback to company
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
@@ -2520,8 +2532,8 @@ Some functionality uses this to identify you, e.g. GPG configuration, email clie
 *** shortcuts to open doom config file(s)
 #+begin_src elisp
 (map! :leader
-      :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
-      :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
+      :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-user-dir)))
+      :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-user-dir)))
       :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
 #+end_src
 
@@ -2543,7 +2555,7 @@ it or you should be.
   "A very simplified version of `+literate-tangle-h', but async."
   :override #'+literate-tangle-h
   (unless (getenv "__NOTANGLE")
-    (let ((default-directory doom-private-dir))
+    (let ((default-directory doom-user-dir))
       (when +literate-tangle--proc
         (message "Killing outdated tangle process...")
         (set-process-sentinel +literate-tangle--proc #'ignore)
@@ -2597,8 +2609,11 @@ it or you should be.
 
 ** top-of-file preambles
 *** packages.el
+The =load= below is the one tracked line that lets machine-local =package!= declarations live in an untracked file, alongside =local-config.el= and =local-toggles.el=. Package declarations can't go in =local-config.el= itself: Doom reads =$DOOMDIR/packages.el= during =doom sync=, long before =config.el= is loaded. The indirection is safe because =doom-packages--read='s only call site (=doom-packages.el:389=) evaluates the file rather than scraping it for =package!= forms.
 #+begin_src elisp :tangle no :noweb-ref packages-preamble
 ;; -*- no-byte-compile: t; -*-
+
+(load (expand-file-name "local-packages.el" doom-user-dir) t t)
 
 #+end_src
 
@@ -2628,24 +2643,26 @@ computer-specific config files, to be loaded if present:
 - =local-config.el= is loaded last, giving me a convenient place for ad hoc overrides of any
   setting in here.
 *** define vars for local config files for future reference
-#+begin_src elisp :noweb-ref config-preamble
-(defvar amb/computer-specific-config (expand-file-name "local-config.el" doom-private-dir)
+#+begin_src elisp :noweb-ref init-preamble
+
+
+(defvar amb/computer-specific-config (expand-file-name "local-config.el" doom-user-dir)
   "A file for computer-specific config and overrides, hidden from git; for example,
 configuration for a work computer and its (possibly private) product projects.")
 
-(defvar amb/computer-specific-toggles (expand-file-name "local-toggles.el" doom-private-dir)
+(defvar amb/computer-specific-toggles (expand-file-name "local-toggles.el" doom-user-dir)
   "A file for {en,dis}abling configuration and features on a computer-specific basis,
 hidden from git; for example, configuration for proprietary
 features enabled for a work computer by a company account.")
 #+end_src
 
 *** load file with local overrides if present
-#+begin_src elisp :noweb-ref load-local-toggle-overrides
+#+begin_src elisp :tangle no :noweb-ref load-local-toggle-overrides
 (if (file-exists-p amb/computer-specific-toggles)
       (load amb/computer-specific-toggles))
 #+end_src
 
-#+begin_src elisp :noweb-ref config-epilogue
+#+begin_src elisp :tangle no :noweb-ref config-epilogue
 (if (file-exists-p amb/computer-specific-config)
       (load amb/computer-specific-config))
 #+end_src

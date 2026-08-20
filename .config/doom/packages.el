@@ -1,6 +1,6 @@
 ;; -*- no-byte-compile: t; -*-
 
-(package! kkp)
+(load (expand-file-name "local-packages.el" doom-user-dir) t t)
 
 (package! clipetty)
 

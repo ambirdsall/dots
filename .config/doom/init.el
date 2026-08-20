@@ -1,5 +1,23 @@
 ;;; init.el -*- lexical-binding: t; -*-
 
+
+(defvar amb/computer-specific-config (expand-file-name "local-config.el" doom-user-dir)
+  "A file for computer-specific config and overrides, hidden from git; for example,
+configuration for a work computer and its (possibly private) product projects.")
+
+(defvar amb/computer-specific-toggles (expand-file-name "local-toggles.el" doom-user-dir)
+  "A file for {en,dis}abling configuration and features on a computer-specific basis,
+hidden from git; for example, configuration for proprietary
+features enabled for a work computer by a company account.")
+
+(defvar amb/enable-workspace-tabs nil
+  "Do I really want to show tabs of the workspace names?")
+
+(defvar amb/enable-copilot nil
+  "Is my company paying for, and actively encouraging me to use, github copilot?")
+
+(if (file-exists-p amb/computer-specific-toggles)
+      (load amb/computer-specific-toggles))
 (setq evil-disable-insert-state-bindings t)
 
 (doom!

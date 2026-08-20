@@ -2,25 +2,12 @@
 
 ;; commentary: what the fuck
 
-(defvar amb/computer-specific-config (expand-file-name "local-config.el" doom-private-dir)
-  "A file for computer-specific config and overrides, hidden from git; for example,
-configuration for a work computer and its (possibly private) product projects.")
+(unless (fboundp 'set-local)
+  (defun set-local (variable value)
+    "Make VARIABLE buffer-local and set it to VALUE."
+    (set (make-local-variable variable) value)))
 
-(defvar amb/computer-specific-toggles (expand-file-name "local-toggles.el" doom-private-dir)
-  "A file for {en,dis}abling configuration and features on a computer-specific basis,
-hidden from git; for example, configuration for proprietary
-features enabled for a work computer by a company account.")
-
-(defvar amb/enable-workspace-tabs nil
-  "Do I really want to show tabs of the workspace names?")
-
-(defvar amb/enable-copilot nil
-  "Is my company paying for, and actively encouraging me to use, github copilot?")
-
-(if (file-exists-p amb/computer-specific-toggles)
-      (load amb/computer-specific-toggles))
-
-(setq! select-enable-clipboard nil)
+(setopt select-enable-clipboard nil)
 
 (map! "C-M-y" #'clipboard-yank)
 
@@ -1130,24 +1117,18 @@ Also see `amb/window-delete-popup-frame'." command)
       user-mail-address "ambirdsall@gmail.com")
 
 (map! :leader
-      :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
-      :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-private-dir)))
+      :desc "open doom config" "F" (cmd! (find-file (expand-file-name "config.org" doom-user-dir)))
+      :desc "open doom config" "fP" (cmd! (find-file (expand-file-name "config.org" doom-user-dir)))
       :desc "open computer-specific doom config" "fL" (cmd! (find-file amb/computer-specific-config)))
 
-(defvar amb/computer-specific-config (expand-file-name "local-config.el" doom-private-dir)
+(defvar amb/computer-specific-config (expand-file-name "local-config.el" doom-user-dir)
   "A file for computer-specific config and overrides, hidden from git; for example,
 configuration for a work computer and its (possibly private) product projects.")
 
-(defvar amb/computer-specific-toggles (expand-file-name "local-toggles.el" doom-private-dir)
+(defvar amb/computer-specific-toggles (expand-file-name "local-toggles.el" doom-user-dir)
   "A file for {en,dis}abling configuration and features on a computer-specific basis,
 hidden from git; for example, configuration for proprietary
 features enabled for a work computer by a company account.")
-
-(if (file-exists-p amb/computer-specific-toggles)
-      (load amb/computer-specific-toggles))
-
-(if (file-exists-p amb/computer-specific-config)
-      (load amb/computer-specific-config))
 
 (if (file-exists-p amb/computer-specific-config)
       (load amb/computer-specific-config))
