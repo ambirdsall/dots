@@ -55,15 +55,12 @@ the active region will be used."
       (copy-to-clipboard char)
       (message "%s" (concat "Copied " char " to system clipboard")))))
 
-(setq! mac-command-modifier 'meta
+(setopt mac-command-modifier 'meta
        mac-option-modifier 'meta
        mac-right-option-modifier 'left
        mac-function-modifier 'super)
 
-(use-package! kkp
-  :if (not (display-graphic-p))
-  :config
-  (global-kkp-mode +1)
+(after! kkp
   (define-key! local-function-key-map
     [M-return] (kbd "M-RET")
     [M-tab] (kbd "M-TAB")
@@ -171,7 +168,7 @@ For example, any of `(kebab-case \"foo bar\")', `(kebab-case \"foo_bar\")', or `
 (use-package! evil-matchit
   :config (global-evil-matchit-mode 1))
 
-(setq! evil-ex-search-persistent-highlight nil
+(setopt evil-ex-search-persistent-highlight nil
        +evil-want-o/O-to-continue-comments nil)
 
 (map! :leader ":" #'eval-expression)
@@ -200,7 +197,7 @@ For example, any of `(kebab-case \"foo bar\")', `(kebab-case \"foo_bar\")', or `
 (use-package! evil-textobj-line
   :after evil)
 
-(setq! doom-snippets-enable-short-helpers 't)
+(setopt doom-snippets-enable-short-helpers 't)
 
 (use-package! command-log-mode)
 
@@ -272,7 +269,7 @@ Navigate Windows (exit with RET, ESC, q, or C-g)
     :weight bold :height 2.5 :box (:line-width 10 :color "dark green"))))
 
 (after! dirvish
-  (setq! dirvish-attributes '(collapse git-msg file-size)))
+  (setopt dirvish-attributes '(collapse git-msg file-size)))
 
 (defun sudo ()
   "Use TRAMP to `sudo' the current buffer."
@@ -319,13 +316,13 @@ projectile would recognize your root directory as a project."
         :desc "Browse ~/bin/" :ne "b" (file-jumper-for-project "~/bin/")
         :desc "Browse dotfiles" :ne "d" #'file-jumper-for-dots))
 
-(setq! doom-scratch-initial-major-mode 'org-mode)
+(setopt doom-scratch-initial-major-mode 'org-mode)
 
-(after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
+(after! persp-mode (setopt persp-emacsclient-init-frame-behaviour-override -1))
 
 (setq confirm-kill-emacs nil)
 
-(setq fancy-splash-image (concat doom-private-dir "emacs.png"))
+(setq fancy-splash-image (concat doom-user-dir "emacs.png"))
 (remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-shortmenu)
 (remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-footer)
 
@@ -376,7 +373,7 @@ Also immediately enables `mixed-pitch-modes' if currently in one of the modes."
   (add-hook! '(evil-operator-state-exit-hook evil-visual-state-exit-hook)
     (setq display-line-numbers 't)))
 
-(setq! fill-column 90)
+(setopt fill-column 90)
 (global-visual-line-mode -1)
 
 (setq frame-title-format
@@ -510,12 +507,12 @@ If the window occupies the entire frame, restore its original size."
 
 (setq standard-indent 2)
 
-(setq! projectile-project-search-path '("~/c/"))
+(setopt projectile-project-search-path '("~/c/"))
 
 (after! projectile
-  (setq! projectile-switch-project-action #'projectile-find-file))
+  (setopt projectile-switch-project-action #'projectile-find-file))
 
-(setq! find-file-existing-other-name nil
+(setopt find-file-existing-other-name nil
        find-file-visit-truename nil)
 
 (after! projectile
@@ -596,11 +593,11 @@ If the window occupies the entire frame, restore its original size."
   (map!
    :leader :desc "show references" "cR" #'lsp-ui-peek-find-references))
 
-(setq! web-mode-markup-indent-offset 2
+(setopt web-mode-markup-indent-offset 2
        web-mode-css-indent-offset 2
        web-mode-code-indent-offset 2)
 
-(setq! web-mode-engines-alist
+(setopt web-mode-engines-alist
        '(;("angular" . "\\.html")
          ("vue" . "\\.vue")
          ("phoenix" . "\\.html\\.eex")
@@ -731,7 +728,7 @@ If the window occupies the entire frame, restore its original size."
            "tt" #'exunit-toggle-file-and-test
            "tT" #'exunit-toggle-file-and-test-other-window))))
 
-(setq! geiser-active-implementations '(guile))
+(setopt geiser-active-implementations '(guile))
 
 (defun insert-guile-shebang ()
   (interactive)
@@ -807,7 +804,7 @@ If the window occupies the entire frame, restore its original size."
   
   (advice-add 'magit-whitespace-disallowed :around #'just-use-a-dash-instead-sheesh)
 
-  (setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
+  (setopt magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
 
   (defun amb/magit-checkout-default-branch ()
     "Check out the default branch of the current repository."
@@ -938,7 +935,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   (and (file-exists-p dir)
        (setq org-directory dir)))
 
-(setq! org-log-into-drawer t
+(setopt org-log-into-drawer t
        org-hierarchical-todo-statistics nil
        org-refile-use-outline-path 'full-file-path
        org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
@@ -977,7 +974,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   :after org)
 
 (after! org
-  (setq! org-babel-default-header-args
+  (setopt org-babel-default-header-args
         (cons '(:noweb . "yes")
               (assq-delete-all :noweb org-babel-default-header-args))))
 
@@ -991,7 +988,7 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
   '(outline-8 :weight semi-bold)
   '(outline-9 :weight semi-bold))
 
-(setq!
+(setopt
  org-hide-emphasis-markers t
  org-agenda-filter-preset '("-quotidian"))
 

@@ -409,7 +409,7 @@ literate
 ** clipboard
 By default, editing stuff in emacs shouldn't pollute the system clipboard:
 #+begin_src elisp
-(setq! select-enable-clipboard nil)
+(setopt select-enable-clipboard nil)
 
 #+end_src
 
@@ -483,7 +483,7 @@ this config [[https://en.wikipedia.org/wiki/Unitarian_Universalist_Association#P
 (look, I was raised by and around a bunch of earnest, wordy people; deal with it.)
 
 #+begin_src elisp
-(setq! mac-command-modifier 'meta
+(setopt mac-command-modifier 'meta
        mac-option-modifier 'meta
        mac-right-option-modifier 'left
        mac-function-modifier 'super)
@@ -503,7 +503,7 @@ to reset the value in =~/.config/doom/local-config.el= so it's manually set corr
 (i.e. with all nonstandard and/or versioned paths from language-specific package manager
 installation locations removed) reference version:
 #+begin_src elisp :tangle no
-(setq! woman-manpath
+(setopt woman-manpath
        '("/opt/homebrew/share/man/"
          "/usr/share/man/"
          "/usr/local/share/man/"
@@ -538,7 +538,7 @@ The naive config +(for why it's disabled see immediately below)+ it is now re-en
 
 The following snipped was added as a test at Henrik's request; it does what I want, and
 presumably somehow is better optimized for doom's loading than the above.
-#+begin_src elisp tangle no
+#+begin_src elisp :tangle no
 (add-hook! 'tty-setup-hook :depth -90
   (defun +tty-init-kkp-h ()
     (global-kkp-mode +1)
@@ -661,7 +661,7 @@ index db274fab2..344ccf8c0 100644
 
 
 +(when (modulep! +hybrid)
-+  (setq! evil-disable-insert-state-bindings t))
++  (setopt evil-disable-insert-state-bindings t))
 +
  ;;
  ;;; Text object plugins
@@ -754,7 +754,7 @@ We can make it a little nicer to look up the specific functions at hand:
 *** changing up some default settings
 **** evil defaults
 #+begin_src elisp
-(setq! evil-ex-search-persistent-highlight nil
+(setopt evil-ex-search-persistent-highlight nil
        +evil-want-o/O-to-continue-comments nil)
 #+end_src
 
@@ -824,7 +824,7 @@ using it as a mnemonic binding for ~imenu~:
 **** TODO tangle the line enabling the =snippets= module to =init.el= here
 **** enable the =doom-snippets= short helpers
 #+begin_src elisp
-(setq! doom-snippets-enable-short-helpers 't)
+(setopt doom-snippets-enable-short-helpers 't)
 #+end_src
 
 Quoth the readme,
@@ -874,7 +874,7 @@ $0
 (use-package! command-log-mode)
 #+end_src
 
-** window navigation
+** window management
 *** hydra at =SPC W= / =SPC w.=
 #+begin_src elisp
 (defhydra amb/window-nav-hydra (:hint nil :exit nil)
@@ -965,7 +965,7 @@ fucking directory I left it in/), I do prefer more marginalia in my directory bu
 default:
 #+begin_src elisp
 (after! dirvish
-  (setq! dirvish-attributes '(collapse git-msg file-size)))
+  (setopt dirvish-attributes '(collapse git-msg file-size)))
 #+end_src
 
 note to self: doom sets this on line 93 of =~/.emacs.d/modules/emacs/dired/config.el=
@@ -1026,14 +1026,14 @@ projectile would recognize your root directory as a project."
 ** scratch buffer
 If they're in org, that's good for notes and I can still write/exec code
 #+begin_src elisp
-(setq! doom-scratch-initial-major-mode 'org-mode)
+(setopt doom-scratch-initial-major-mode 'org-mode)
 #+end_src
 
 ** don't automatically open a new workspace for each new emacsclient frame
 I like freely opening client instances in the terminal and desktop environment alike; when
 doing so, a 1:1 mapping with workspaces quickly creates a terrible clutter.
 #+begin_src elisp
-(after! persp-mode (setq! persp-emacsclient-init-frame-behaviour-override -1))
+(after! persp-mode (setopt persp-emacsclient-init-frame-behaviour-override -1))
 #+end_src
 
 ** Don't confirm before quitting
@@ -1227,7 +1227,7 @@ I like absolute line numbers occasionally, and always when pairing/screen sharin
 #+end_src
 *** long lines: don't do 'em
 #+begin_src elisp
-(setq! fill-column 90)
+(setopt fill-column 90)
 (global-visual-line-mode -1)
 #+end_src
 *** Window title
@@ -1436,13 +1436,13 @@ If the window occupies the entire frame, restore its original size."
 ** managing projects with projectile
 Set things up so projects are automatically discovered in my default code directory:
 #+begin_src elisp
-(setq! projectile-project-search-path '("~/c/"))
+(setopt projectile-project-search-path '("~/c/"))
 #+end_src
 
 And undo the doom default that maps projects to workspaces:
 #+begin_src elisp
 (after! projectile
-  (setq! projectile-switch-project-action #'projectile-find-file))
+  (setopt projectile-switch-project-action #'projectile-find-file))
 #+end_src
 
 *** every project has a =todo.org= and every =todo.org= can just be hardlinks of the same underlying file
@@ -1452,7 +1452,7 @@ running projectile functions acting on what filesystem heuristics see as the sur
 project). It's an idiosyncratic pattern, but it exactly fits what I want on work computers.
 
 #+begin_src elisp
-(setq! find-file-existing-other-name nil
+(setopt find-file-existing-other-name nil
        find-file-visit-truename nil)
 
 (after! projectile
@@ -1606,11 +1606,11 @@ Okay, so repl-driven development is the bee's fucking knees; and while =node= is
 
 *** web-mode
 #+begin_src elisp
-(setq! web-mode-markup-indent-offset 2
+(setopt web-mode-markup-indent-offset 2
        web-mode-css-indent-offset 2
        web-mode-code-indent-offset 2)
 
-(setq! web-mode-engines-alist
+(setopt web-mode-engines-alist
        '(;("angular" . "\\.html")
          ("vue" . "\\.vue")
          ("phoenix" . "\\.html\\.eex")
@@ -1798,7 +1798,7 @@ have time to shop around. If the list stored at ~geiser-active-implementations~ 
 associate with every. single. scheme. buffer. that. I. have. ever. opened. in. my. life.
 It gets old fast:
 #+begin_src elisp
-(setq! geiser-active-implementations '(guile))
+(setopt geiser-active-implementations '(guile))
 #+end_src
 
 Guile's shebang convention is surprisingly well-considered from first principles, in terms
@@ -1989,7 +1989,7 @@ separator is deep, deep muscle memory. Why fight it?
 
 ** magit-status sections
 #+begin_src elisp :tangle no :noweb-ref magit-sections
-(setq! magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
+(setopt magit-section-initial-visibility-alist '((stashes . show) (commits . show)))
 #+end_src
 
 ** custom actions in magit transients
@@ -2177,7 +2177,7 @@ Notes must be at hand to be helpful, ideally on any of several computers:
 ** make org-mode act nicer...
 *** default overrides and TODOs
 #+begin_src elisp
-(setq! org-log-into-drawer t
+(setopt org-log-into-drawer t
        org-hierarchical-todo-statistics nil
        org-refile-use-outline-path 'full-file-path
        org-todo-keywords '((sequence "NEXT(n)" "TODO(t)" "BLOCKED(b)" "SOMEDAY(s)" "PROJ(p)" "QUESTION(q)" "|" "DONE(d)" "CANCELLED(c)")))
@@ -2242,7 +2242,7 @@ I also wonder if =kkp.el= or Henrik's adjustments atop it fix things for me?
 This snippet is taken directly from the org-mode info manual.
 #+begin_src elisp
 (after! org
-  (setq! org-babel-default-header-args
+  (setopt org-babel-default-header-args
         (cons '(:noweb . "yes")
               (assq-delete-all :noweb org-babel-default-header-args))))
 
@@ -2260,7 +2260,7 @@ This snippet is taken directly from the org-mode info manual.
   '(outline-8 :weight semi-bold)
   '(outline-9 :weight semi-bold))
 
-(setq!
+(setopt
  org-hide-emphasis-markers t
  org-agenda-filter-preset '("-quotidian"))
 
