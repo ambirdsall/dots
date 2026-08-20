@@ -3,5 +3,10 @@
 *.log
 tmp/
 
+# tangled from config.org
+/config.el
+/init.el
+/packages.el
 
-local.el
+# what it says on the tin's prefix
+local-*.el
