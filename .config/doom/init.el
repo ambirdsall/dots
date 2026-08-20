@@ -16,6 +16,8 @@ features enabled for a work computer by a company account.")
 (defvar amb/enable-copilot nil
   "Is my company paying for, and actively encouraging me to use, github copilot?")
 
+(defvar amb/enable-llm nil
+  "Does this machine have LLM credentials I'm willing to point gptel at?")
 (if (file-exists-p amb/computer-specific-toggles)
       (load amb/computer-specific-toggles))
 (setq evil-disable-insert-state-bindings t)
@@ -75,6 +77,7 @@ features enabled for a work computer by a company account.")
  pdf               ; pdf enhancements
  tmux              ; an API for interacting with tmux
  tree-sitter       ; syntax and parsing, sitting in a tree...
+ (:if amb/enable-llm llm)
  
  :os
  (:when (featurep :system 'macos)

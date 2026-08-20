@@ -247,6 +247,7 @@ make              ; run make tasks from Emacs
 pdf               ; pdf enhancements
 tmux              ; an API for interacting with tmux
 tree-sitter       ; syntax and parsing, sitting in a tree...
+(:if amb/enable-llm llm)
 #+end_src
 
 #+begin_src elisp :tangle no :noweb-ref -doom-modules-tools
@@ -1997,6 +1998,8 @@ and should I feel like playing a game of flycheckers:
 (defvar amb/enable-copilot nil
   "Is my company paying for, and actively encouraging me to use, github copilot?")
 
+(defvar amb/enable-llm nil
+  "Does this machine have LLM credentials I'm willing to point gptel at?")
 #+end_src
 
 The =:tangle= targets below are machine-local: copilot is only tangled where =amb/enable-copilot= is on. Resolving that at tangle time is delegated to =amb/tangle-when= (in the hand-maintained =tangle-support.el=), so it works even in the bare async save-tangle subprocess that doesn't load =init.el=:
@@ -2015,14 +2018,61 @@ The =:tangle= targets below are machine-local: copilot is only tangled where =am
               ("C-TAB" . 'copilot-accept-completion)
               ("C-<tab>" . 'copilot-accept-completion)))
 #+end_src
-*** chatGPT
-#+begin_src elisp :tangle packages.el
+*** gptel
+#+begin_src elisp :tangle (amb/tangle-when 'amb/enable-llm "packages.el")
+(unpin! gptel)
+#+end_src
+
+The rest is my original setup; now superceded by the =:tools llm= module, but kept around for reference.
+#+begin_src elisp :tangle no
 (package! gptel)
 #+end_src
 
-#+begin_src elisp
-(use-package! gptel)
+And for dessert, this stab at an ollama-backed local inference setup:
+#+begin_src elisp :tangle no
+(use-package! gptel
+  :config
+  (setq gptel-model 'elisp-qwen
+        gptel-backend (gptel-make-ollama "Llocal"
+                        :host "localhost:11434"
+                        :stream t
+                        :models '(<<ollama-models()>>))))
 #+end_src
+
+Regenerate the list of models with the following shell command:
+#+begin_src sh :tangle no :noweb-ref ollama-models
+ollama list | tail +2 | awk '{print $1}' | sed -E 's/ +$//'
+#+end_src
+
+*** agent-shell
+#+begin_src elisp :tangle (amb/tangle-when 'amb/enable-llm "packages.el")
+(package! shell-maker)
+(package! acp)
+(package! agent-shell)
+#+end_src
+
+#+begin_src elisp :tangle (amb/tangle-when 'amb/enable-llm "config.el")
+(require 'acp)
+(use-package agent-shell
+  :bind (:map agent-shell-mode-map
+              ("RET" . newline)
+              ;; ("C-c C-c" . agent-)
+              ("C-c C-k" . agent-shell-interrupt))
+  :config
+  (setq agent-shell-anthropic-claude-environment (agent-shell-make-environment-variables :inherit-env t)
+        agent-shell-prefer-viewport-interaction t))
+#+end_src
+
+*** beads
+#+begin_src elisp :tangle no
+(package! beads
+  :recipe (:host github :repo "ChristianTietze/beads.el" :files ("lisp/*.el")))
+#+end_src
+
+#+begin_src elisp :tangle no
+(use-package! beads)
+#+end_src
+
 * {ma,}git
 ** the skeleton ~(after! magit ...)~ form specific config can be nowebbed into
 :PROPERTIES:
