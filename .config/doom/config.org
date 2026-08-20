@@ -31,9 +31,19 @@ This will define =SPC f b b= to invoke foo-bar-baz and =SPC f b q= to invoke foo
 **** [[https://github.com/thisisran/nova][nova]] :: stylish-compatible svg child frames
 
 * begin config files at the beginning
-first, we inject some boilerplate preambles (initial comments, setting lexical scope, etc; cf. the appendix section where they are defined):
+first, we inject some boilerplate preambles (initial comments, setting lexical scope, etc;
+cf. the appendix section where they are defined):
+
 #+begin_src elisp
 <<config-preamble>>
+#+end_src
+
+Next, here's a non-tangled block that exists purely for tangle-time side-effects: the extra =(require 'tangle-support ...)=
+shenanigans force those tangle-time utilities to be evaluated upfront, allowing future
+source blocks to use its helpers in their own header args without any particular ceremony. So:
+#+begin_src elisp :tangle (progn (require 'tangle-support (expand-file-name "tangle-support.el" default-directory)) "no")
+;; Exists only for its :tangle header, which loads tangle-support.el before any
+;; later header calls amb/tangle-when. Must stay above all of them.
 #+end_src
 
 ** polyfill for pretest Emacs
@@ -1990,12 +2000,12 @@ and should I feel like playing a game of flycheckers:
 #+end_src
 
 The =:tangle= targets below are machine-local: copilot is only tangled where =amb/enable-copilot= is on. Resolving that at tangle time is delegated to =amb/tangle-when= (in the hand-maintained =tangle-support.el=), so it works even in the bare async save-tangle subprocess that doesn't load =init.el=:
-#+begin_src elisp :tangle (progn (require 'tangle-support (expand-file-name "tangle-support.el" default-directory)) (amb/tangle-when 'amb/enable-copilot "packages.el"))
+#+begin_src elisp :tangle (amb/tangle-when 'amb/enable-copilot "packages.el")
 (package! copilot
   :recipe (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
 #+end_src
 
-#+begin_src elisp :tangle (progn (require 'tangle-support (expand-file-name "tangle-support.el" default-directory)) (amb/tangle-when 'amb/enable-copilot "config.el"))
+#+begin_src elisp :tangle (amb/tangle-when 'amb/enable-copilot "config.el")
 ;; accept completion from copilot and fallback to company
 (use-package! copilot
   :hook (prog-mode . copilot-mode)
