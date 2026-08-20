@@ -22,6 +22,8 @@
 # Then `t substack` attaches if the session exists, else materializes the
 # layout and attaches. See the docstrings on `layout` and `create-session`
 # below for the full grammar.
+#
+# `t --zsh` prints the zsh completion script, for e.g. `source <(t --zsh)`.
 
 (use sh)
 
@@ -33,6 +35,10 @@
 
 (def- default-session
   (or (os/getenv "DEFAULT_TMUX_SESSION") "home"))
+
+(def- zsh-completion-file
+  (or (os/getenv "T_ZSH_COMPLETION")
+      (string (os/getenv "HOME") "/lib/zsh/t-comp.zsh")))
 
 (def- default-autostart
  (let [session-dir (string (os/getenv "HOME") "/.tmux/sessions")
@@ -306,6 +312,12 @@
   (unless detached?
     (attach! attach-target)))
 
+(defn- print-zsh-completion-source! []
+  (unless (os/stat zsh-completion-file)
+    (eprintf "t: no completion script at %s" zsh-completion-file)
+    (os/exit 1))
+  (prin (slurp zsh-completion-file)))
+
 (defn- cmd-attach-or-create [session-name]
   (if (session-exists? session-name)
     (attach! session-name)
@@ -347,6 +359,7 @@
 
 (defn main [& invocation]
   (match invocation
+    ([_ "--zsh"] (single-arg? invocation)) (print-zsh-completion-source!)
     ([_] (no-args? invocation)) (cmd-up)
     ([_ "up"] (single-arg? invocation)) (cmd-up)
     ([_ "up" arg] (two-args? invocation)) (cmd-up arg)
