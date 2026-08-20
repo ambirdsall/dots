@@ -1200,6 +1200,25 @@ instead the blithe simplicity of a lightswitch flipped in passing.
   (map! :leader
         "tt" #'amb/toggle-themes)
 
+  ;; Breaks a face inheritance cycle between Emacs and doom-themes.  Emacs defines
+  ;; `gnus-group-news-low' as (:inherit gnus-group-news-low-empty :weight bold)
+  ;; (gnus.el:473), while doom-themes-base.el:677 defines the *-empty face as
+  ;; (:inherit 'gnus-group-news-low) — each pointing at the other.  Normally
+  ;; doom-themes' own spec for the -low face (line 678) breaks it, but the -empty
+  ;; face is listed FIRST, so whichever event realizes these faces while the -low
+  ;; face still has only its defface spec gets:
+  ;;   Face inheritance results in inheritance cycle: gnus-group-news-low
+  ;; Reproduces in `emacs -Q' with nothing but (require 'gnus) plus that one
+  ;; doom-themes spec, so it is upstream, not local.  It stays dormant until gnus
+  ;; gets loaded — which is why it surfaces on `doom/reload' in a long-lived daemon
+  ;; rather than at startup.
+  ;;
+  ;; Plain `custom-set-faces', not Doom's `custom-set-faces!': the latter defers to
+  ;; `doom-load-theme-hook', which runs after `load-theme' below has already
+  ;; recorded the cyclic spec.  This must precede it.  The `user' theme outranks
+  ;; every other, so this spec is what resolves whenever the face is realized.
+  (custom-set-faces '(gnus-group-news-low ((t (:weight bold)))))
+
   (load-theme amb/doom-dark-theme t))
 #+end_src
 
