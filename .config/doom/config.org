@@ -516,18 +516,13 @@ installation locations removed) reference version:
 ** I didn't shell out, I bought in
 Leaving the untangled manual config in place for a bit so things work with my computers
 which aren't running a super up-to-date version of doom.
+*** kkp integration: let me use my whole keyboard, damn it
+=kkp= integration got upstreamed into the =:os tty= module, which now installs =kkp= (pinned) and enables it via a =tty-setup= hook. My teardown fixes for =emacsclient -nw= were merged into =benotn/kkp= (PR #30) and are included in that pinned upstream, so I no longer override the package with my fork.
 
-Relatedly, leaving this in =packages.el= so I can just dump the activation code in =local-config.el= if needed.
-#+begin_src elisp :tangle packages.el
-(package! kkp)
-#+end_src
 
-The naive config +(for why it's disabled see immediately below)+ it is now re-enabled but tbh I'm not sure if it will actually fix my minor grievances:
+The module already enables =global-kkp-mode= on =tty-setup=, so I only layer on my own terminal key translations. Using =after!= means these apply once =kkp= actually loads (i.e. in a tty), matching the old =(not (display-graphic-p))= guard:
 #+begin_src elisp
-(use-package! kkp
-  :if (not (display-graphic-p))
-  :config
-  (global-kkp-mode +1)
+(after! kkp
   (define-key! local-function-key-map
     [M-return] (kbd "M-RET")
     [M-tab] (kbd "M-TAB")
@@ -545,7 +540,11 @@ presumably somehow is better optimized for doom's loading than the above.
     (kkp-enable-in-terminal)))
 #+end_src
 
-*** better terminal keycode handling with =kkp=
+*** love it or hate it, mice are here to stay
+This mode is automatically enabled under many contexts, but as of writing, my terminal is not one; let's just make it explicit, then:
+#+begin_src elisp
+(add-hook 'tty-setup-hook #'xterm-mouse-mode)
+#+end_src
 
 *** use OSC52 for clipboard integration to avoid issues inside multiplexers
 #+begin_src elisp :tangle packages.el

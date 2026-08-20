@@ -68,10 +68,7 @@ the active region will be used."
     (kbd "M-<backspace>") (kbd "M-DEL")
     [M-delete] (kbd "M-DEL")))
 
-(add-hook! 'tty-setup-hook :depth -90
-  (defun +tty-init-kkp-h ()
-    (global-kkp-mode +1)
-    (kkp-enable-in-terminal)))
+(add-hook 'tty-setup-hook #'xterm-mouse-mode)
 
 (use-package! clipetty
   :if (not (display-graphic-p))
