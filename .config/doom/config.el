@@ -1165,11 +1165,6 @@ are at their original heading levels, with fully-done siblings pruned."
 
 (setq org-agenda-auto-exclude-function 'org-my-auto-exclude-fn)
 
-(use-package! outshine
-  :after org
-  :config
-  (add-hook 'prog-mode-hook 'outshine-mode))
-
 ;; should either of the following fns be wrapped in an `(after! org ...)` form?
 
 (defun amb/org-todo-stats ()

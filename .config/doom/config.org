@@ -2632,13 +2632,13 @@ because ~setq~ is a macro) and everything went to heck.
 
 #+end_src
 
-** outlines ✨ everywhere ✨with outshine
-#+begin_src elisp :tangle packages.el
+** TODO reenable when =revert-buffer= bug is gone :: outlines ✨ everywhere ✨with outshine
+#+begin_src elisp :tangle (or "no" "packages.el")
 (package! outshine
   :recipe (:host github :repo "alphapapa/outshine"))
 #+end_src
 
-#+begin_src elisp
+#+begin_src elisp :tangle no
 (use-package! outshine
   :after org
   :config

@@ -60,6 +60,3 @@
 
 (unpin! org-roam)
 (package! org-roam-ui)
-
-(package! outshine
-  :recipe (:host github :repo "alphapapa/outshine"))
