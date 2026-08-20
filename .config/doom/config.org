@@ -260,7 +260,8 @@ tree-sitter       ; syntax and parsing, sitting in a tree...
 #+end_src
 
 #+begin_src elisp :tangle no :noweb-ref doom-modules-os
-(:if IS-MAC macos)  ; improve compatibility with macOS
+(:when (featurep :system 'macos)
+  macos)  ; improve compatibility with macOS
 tty               ; improve the terminal Emacs experience
 #+end_src
 
@@ -302,6 +303,8 @@ rest              ; Emacs as a REST client
 (sh
   ;; +lsp
   +tree-sitter)        ; she sells {ba,z,fi}sh shells on the C xor
+(:when (featurep :system 'macos)
+  (swift +lsp))             ; who asked for emoji variables?
 (web
   +lsp
   +tree-sitter)        ; the tubes
@@ -339,7 +342,7 @@ rest              ; Emacs as a REST client
 ;;     (java
 ;;      +meghanada
 ;;      +tree-sitter)) ; the poster child for carpal tunnel syndrome
-;; (:if IS-MAC
+;; (:if (featurep :system 'macos)
 ;;     (java
 ;;      +tree-sitter)) ; the poster child for carpal tunnel syndrome
 ;;julia             ; a better, faster MATLAB
@@ -1138,13 +1141,13 @@ list of user-defined and default fallbacks, it crashes without even the courtesy
 useful error message. The point being: make sure these fonts are installed upfront.
 #+begin_src elisp
 (setq doom-font-increment 1
-      doom-font (font-spec :family "Victor Mono" :size (if IS-MAC 13 16) :weight 'semi-bold)
+      doom-font (font-spec :family "Victor Mono" :size (if (featurep :system 'macos) 13 16) :weight 'semi-bold)
       ;; doom-font (font-spec :family "Iosevka Fixed Slab" :size 16 :weight 'medium)
-      doom-big-font (font-spec :family "Victor Mono" :size (if IS-MAC 20 26))
-      doom-variable-pitch-font (font-spec :family "Overpass" :size (if IS-MAC 15 20))
-      doom-serif-font (font-spec :family "Iosevka Slab" :size (if IS-MAC 13 16))
-      ;; doom-unicode-font (font-spec :family "Iosevka" :size (if IS-MAC 13 16)))
-      doom-unicode-font (font-spec :family "Victor Mono" :size (if IS-MAC 13 16)))
+      doom-big-font (font-spec :family "Victor Mono" :size (if (featurep :system 'macos) 20 26))
+      doom-variable-pitch-font (font-spec :family "Overpass" :size (if (featurep :system 'macos) 15 20))
+      doom-serif-font (font-spec :family "Iosevka Slab" :size (if (featurep :system 'macos) 13 16))
+      ;; doom-unicode-font (font-spec :family "Iosevka" :size (if (featurep :system 'macos) 13 16)))
+      doom-unicode-font (font-spec :family "Victor Mono" :size (if (featurep :system 'macos) 13 16)))
 #+end_src
 We’d like to use mixed pitch in certain modes. If we simply add a hook, when directly
 opening a file with (a new) Emacs, ~mixed-pitch-mode~ runs before UI initialisation, which is
@@ -1549,7 +1552,7 @@ project). It's an idiosyncratic pattern, but it exactly fits what I want on work
                          c/show-hotspot-cluster-sync)
               :config
               (setq c/exclude-directories (list "node_modules" "bower_components" "vendor" "tmp" "images"))
-              (if IS-MAC (setq c/preferred-browser "open")))
+              (if (featurep :system 'macos) (setq c/preferred-browser "open")))
 #+end_src
 ** tree sitter
 #+begin_src elisp
@@ -2776,7 +2779,7 @@ the "close frame" function is added to the command per se as ~:after~ advice
        (interactive)
        (let* ((display-buffer-alist '(("")
                                       (display-buffer-full-frame)))
-              (bundle-identifier (when IS-MAC
+              (bundle-identifier (when (featurep :system 'macos)
                                    (ns-do-applescript "tell application \"System Events\" to get bundle identifier of first process whose frontmost is true")))
               (frame (make-frame
                       `((title . ,(format "popup-frame-%s" ',command))

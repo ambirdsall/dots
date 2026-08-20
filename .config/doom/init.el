@@ -77,7 +77,8 @@ features enabled for a work computer by a company account.")
  tree-sitter       ; syntax and parsing, sitting in a tree...
  
  :os
- (:if IS-MAC macos)  ; improve compatibility with macOS
+ (:when (featurep :system 'macos)
+   macos)  ; improve compatibility with macOS
  tty               ; improve the terminal Emacs experience
  
  :lang
@@ -111,6 +112,8 @@ features enabled for a work computer by a company account.")
  (sh
    ;; +lsp
    +tree-sitter)        ; she sells {ba,z,fi}sh shells on the C xor
+ (:when (featurep :system 'macos)
+   (swift +lsp))             ; who asked for emoji variables?
  (web
    +lsp
    +tree-sitter)        ; the tubes

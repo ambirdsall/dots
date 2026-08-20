@@ -353,13 +353,13 @@ projectile would recognize your root directory as a project."
 (remove-hook '+doom-dashboard-functions #'doom-dashboard-widget-footer)
 
 (setq doom-font-increment 1
-      doom-font (font-spec :family "Victor Mono" :size (if IS-MAC 13 16) :weight 'semi-bold)
+      doom-font (font-spec :family "Victor Mono" :size (if (featurep :system 'macos) 13 16) :weight 'semi-bold)
       ;; doom-font (font-spec :family "Iosevka Fixed Slab" :size 16 :weight 'medium)
-      doom-big-font (font-spec :family "Victor Mono" :size (if IS-MAC 20 26))
-      doom-variable-pitch-font (font-spec :family "Overpass" :size (if IS-MAC 15 20))
-      doom-serif-font (font-spec :family "Iosevka Slab" :size (if IS-MAC 13 16))
-      ;; doom-unicode-font (font-spec :family "Iosevka" :size (if IS-MAC 13 16)))
-      doom-unicode-font (font-spec :family "Victor Mono" :size (if IS-MAC 13 16)))
+      doom-big-font (font-spec :family "Victor Mono" :size (if (featurep :system 'macos) 20 26))
+      doom-variable-pitch-font (font-spec :family "Overpass" :size (if (featurep :system 'macos) 15 20))
+      doom-serif-font (font-spec :family "Iosevka Slab" :size (if (featurep :system 'macos) 13 16))
+      ;; doom-unicode-font (font-spec :family "Iosevka" :size (if (featurep :system 'macos) 13 16)))
+      doom-unicode-font (font-spec :family "Victor Mono" :size (if (featurep :system 'macos) 13 16)))
 
 (defvar mixed-pitch-modes '(org-mode markdown-mode gfm-mode Info-mode text-mode)
   "Modes that `mixed-pitch-mode' should be enabled in, but only after UI initialisation.")
@@ -585,7 +585,7 @@ If the window occupies the entire frame, restore its original size."
                          c/show-hotspot-cluster-sync)
               :config
               (setq c/exclude-directories (list "node_modules" "bower_components" "vendor" "tmp" "images"))
-              (if IS-MAC (setq c/preferred-browser "open")))
+              (if (featurep :system 'macos) (setq c/preferred-browser "open")))
 
 (setq treesit-language-source-alist
    '((bash "https://github.com/tree-sitter/tree-sitter-bash")
