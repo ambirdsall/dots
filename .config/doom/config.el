@@ -1048,7 +1048,108 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
           org-roam-ui-update-on-save t
           org-roam-ui-open-on-start t))
 
-(setq! org-agenda-files '("~/Dropbox/org/"
+(defun amb/org-dailies-directory ()
+  "Return the absolute path to the org-roam dailies directory."
+  (expand-file-name org-roam-dailies-directory org-roam-directory))
+
+(defun amb/org-dailies-file-for-date (date)
+  "Return the daily file path for DATE (a time value)."
+  (expand-file-name (format-time-string "%Y-%m-%d.org" date)
+                    (amb/org-dailies-directory)))
+
+(defun amb/org-dailies-previous-daily-file ()
+  "Find the previous day's daily file.
+On Monday, if Sunday's file is missing, fall back to Friday."
+  (let* ((today (current-time))
+         (yesterday (time-subtract today (days-to-time 1)))
+         (file (amb/org-dailies-file-for-date yesterday)))
+    (if (file-exists-p file)
+        file
+      (when (= (string-to-number (format-time-string "%u" today)) 1) ; Monday
+        (let ((friday (amb/org-dailies-file-for-date
+                       (time-subtract today (days-to-time 3)))))
+          (when (file-exists-p friday) friday))))))
+
+(defun amb/org-dailies-find-most-recent-existing-file ()
+  "Find the most recent existing daily file before today."
+  (let* ((today (format-time-string "%Y-%m-%d"))
+         (dailies-dir (amb/org-dailies-directory))
+         (files (directory-files dailies-dir t "\\.org$"))
+         (valid-dates (seq-filter (lambda (f)
+                                      (let ((fname (file-name-nondirectory f)))
+                                        (and fname
+                                             (string-match-p "^[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}\\.org$" fname)
+                                             (string< fname today))))
+                                    files))
+           (best-file (car (sort valid-dates 'string>))))
+    best-file))
+
+(defun amb/org-dailies-prompt-previous-existing-file ()
+  "Prompt to find the most recent existing daily file before today.
+Returns the absolute path if the user says yes and a file is found,
+otherwise nil."
+  (when (y-or-n-p "Previous day's/weekday's file doesn't exist. Look for
+the most recent existing daily file and pull spillover from it? ")
+    (amb/org-dailies-find-most-recent-existing-file)))
+
+(defun amb/org-dailies-subtree-has-undone-p (headline)
+  "Return non-nil if HEADLINE or any descendant has an undone TODO."
+  (org-element-map headline 'headline
+    (lambda (h) (eq (org-element-property :todo-type h) 'todo))
+    nil t))
+
+(defun amb/org-dailies-spillover-by-section (file)
+  "Extract children with undone TODOs from FILE, keyed by top-level heading.
+Returns an alist of (SECTION-NAME . CHILDREN-TEXT) where children
+are at their original heading levels, with fully-done siblings pruned."
+  (with-temp-buffer
+    (insert-file-contents file)
+    (org-mode)
+    (let ((tree (org-element-parse-buffer 'headline))
+          sections)
+      (org-element-map tree 'headline
+        (lambda (h)
+          (when (amb/org-dailies-subtree-has-undone-p h)
+            (let* ((section-name (org-element-property :raw-value h))
+                   (children (seq-filter
+                              (lambda (el) (eq (org-element-type el) 'headline))
+                              (org-element-contents h)))
+                   (kept (mapconcat
+                          (lambda (child)
+                            (if (amb/org-dailies-subtree-has-undone-p child)
+                                (buffer-substring-no-properties
+                                 (org-element-property :begin child)
+                                 (org-element-property :end child))
+                              ""))
+                          children
+                          "")))
+              (unless (string-empty-p (string-trim kept))
+                (push (cons section-name (string-trim-right kept)) sections)))))
+        nil t 'headline)
+      (nreverse sections))))
+
+(defun amb/org-dailies-header ()
+  "Generate the body for today's daily capture template."
+  (let* ((prev (amb/org-dailies-previous-daily-file))
+         (spillover-file (or prev
+                            (amb/org-dailies-prompt-previous-existing-file)))
+         (spillover (when spillover-file
+                     (amb/org-dailies-spillover-by-section spillover-file))))
+    (mapconcat
+     (lambda (section)
+       (let ((spill (cdr (assoc section spillover))))
+         (if spill
+             (format "* %s\n%s\n" section spill)
+           (format "* %s\n" section))))
+     '("Work" "Life" "Balance")
+     "\n")))
+
+(setq org-roam-dailies-capture-templates
+      '(("d" "default" entry "* %?"
+         :target (file+head "%<%Y-%m-%d>.org"
+                            "#+title: %<%Y-%m-%d>\n%(amb/org-dailies-header)"))))
+
+(setopt org-agenda-files '("~/Dropbox/org/"
                           "~/Dropbox/roam/daily/"))
 
 (defun org-my-auto-exclude-fn (tag)
