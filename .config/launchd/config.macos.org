@@ -35,9 +35,8 @@ copy the corresponding plist into ~/Library/LaunchAgents.
 </plist>
 #+end_src
 
-* start emacs daemons at login
+* start emacs daemon at login
 
-** ttylated
 #+begin_src xml :tangle (shell-command-to-string "command -v emacs > /dev/null && echo -n '~/Library/LaunchAgents/com.amb.emacs.ttylated.plist' || echo -n no")
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -59,8 +58,10 @@ copy the corresponding plist into ~/Library/LaunchAgents.
 </plist>
 #+end_src
 
-** interminable
-#+begin_src xml :tangle (shell-command-to-string "command -v emacs > /dev/null && echo -n '~/Library/LaunchAgents/com.amb.emacs.interminable.plist' || echo -n no")
+** fallow GUI daemon: interminable
+Former tangle arg: =:tangle (shell-command-to-string "command -v emacs > /dev/null && echo -n '~/Library/LaunchAgents/com.amb.emacs.interminable.plist' || echo -n no")=
+
+#+begin_src xml :tangle no
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -80,8 +81,9 @@ copy the corresponding plist into ~/Library/LaunchAgents.
 </plist>
 #+end_src
 
-** magit
-#+begin_src xml :tangle (shell-command-to-string "command -v emacs > /dev/null && echo -n '~/Library/LaunchAgents/com.amb.emacs.magit.plist' || echo -n no")
+** fallow magit-only daemon: magit
+Former tangle arg: =:tangle (shell-command-to-string "command -v emacs > /dev/null && echo -n '~/Library/LaunchAgents/com.amb.emacs.magit.plist' || echo -n no")=
+#+begin_src xml :tangle no
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
