@@ -79,6 +79,31 @@ the active region will be used."
 (after! tramp
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 
+(defmacro $ (&rest tokens)
+  "Return interactive elisp function from bash command"
+  (pcase-let* ((stringify (lambda (s)
+                            (format
+                             (if (stringp s) "\"%s\"" "%s")
+                             s)))
+               (tokens (mapcar stringify tokens))
+               (`(,command ,_) tokens)
+               (shell-command (string-join tokens " ")))
+    `(lambda ()
+       (interactive)
+       (start-process ,command
+                      nil
+                      (or (getenv "SHELL") "bash")
+                       "-c"
+                      ,shell-command))))
+
+(defmacro $$ (&rest tokens)
+  "Execute shell snippet and return STDOUT as a string."
+  (let* ((stringify (lambda (s)
+                            (format (if (stringp s) "\"%s\"" "%s") s)))
+               (tokens (mapcar stringify tokens))
+               (shell-command (string-join tokens " ")))
+    `(shell-command-to-string ,shell-command)))
+
 (defmacro cmds--on-string-or-region (fn)
   "Given a string-manipulation function FN, defines an interactive command which will apply that
 function to either a string argument or to selected text, depending on context."
@@ -265,8 +290,12 @@ Navigate Windows (exit with RET, ESC, q, or C-g)
     :foreground "white" :background "dark green"
     :weight bold :height 2.5 :box (:line-width 10 :color "dark green"))))
 
+(map! :leader "wF" #'fit-window-to-buffer)
+
 (after! dirvish
   (setopt dirvish-attributes '(collapse git-msg file-size)))
+
+(setq wdired-allow-to-change-permissions t)
 
 (defun sudo ()
   "Use TRAMP to `sudo' the current buffer."
@@ -870,7 +899,7 @@ If the window occupies the entire frame, restore its original size."
 (defun amb/magit-stage-file ()
   (interactive)
   (if (magit-gitdir)
-      (call-interactively #'magit-stage-file)
+      (call-interactively #'magit-file-stage)
       (shell-command (concat
                       "git --git-dir=$HOME/.dots/ --work-tree=$HOME add "
                       (buffer-file-name))
@@ -993,9 +1022,9 @@ _p_rev       _u_pper              _=_: upper/lower       _r_esolve
 
 (use-package! olivetti)
 
-(after! (olivetti org)
+(after! (olivetti org markdown)
   (defun amb/make-text-buffer-pretty ()
-    (olivetti-mode 1)
+    (unless (memq major-mode '(org-mode markdown-mode)) (olivetti-mode 1))
     (setq-local display-line-numbers nil))
 
   (remove-hook 'text-mode-hook #'display-line-numbers-mode)

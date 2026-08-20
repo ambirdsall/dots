@@ -572,6 +572,38 @@ language-specific package managers:
 (after! tramp
   (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
 #+end_src
+** Cutie macros for inlining shell snippets
+Thanks to the homie [[https://github.com/Arian-D/emacs-config/tree/3ee174de7e689c45f1b6a025aea2572d41eb0d33#ewm][𝛌]].
+
+*** =$= :: inline shell snippet as elisp function
+#+begin_src elisp
+(defmacro $ (&rest tokens)
+  "Return interactive elisp function from bash command"
+  (pcase-let* ((stringify (lambda (s)
+                            (format
+                             (if (stringp s) "\"%s\"" "%s")
+                             s)))
+               (tokens (mapcar stringify tokens))
+               (`(,command ,_) tokens)
+               (shell-command (string-join tokens " ")))
+    `(lambda ()
+       (interactive)
+       (start-process ,command
+                      nil
+                      (or (getenv "SHELL") "bash")
+                       "-c"
+                      ,shell-command))))
+#+end_src
+*** =$$= :: directly execute shell snippet, returning STDOUT as a string
+#+begin_src elisp
+(defmacro $$ (&rest tokens)
+  "Execute shell snippet and return STDOUT as a string."
+  (let* ((stringify (lambda (s)
+                            (format (if (stringp s) "\"%s\"" "%s") s)))
+               (tokens (mapcar stringify tokens))
+               (shell-command (string-join tokens " ")))
+    `(shell-command-to-string ,shell-command)))
+#+end_src
 * text editing per se
 ** text manipulation utilities [0/1]
 See the =text manipulation utility macros= appendix for deets.
@@ -684,7 +716,7 @@ index 6602d1339..4bec4c332 100644
 **** TODO are there (still?) load-order problems when running ~(setq! evil-disable-insert-state-bindings t)~ at a normal time (i.e. not hella early)?
 I recall (now too vaguely smh) that it only has worked for me when I put that (in a vanilla ~setq~ form) in ~init.el~, but not in ~config.el~. Why?
 
-*** [DEPRECATED] wait, is this split two tmux panes or two emacs windows?
+*** TODO wait, is this split two tmux panes or two emacs windows?
 +WHO CARES+
 
 So this used to be my JAM (I mean, just note the account hosting that fork's repo), but
@@ -951,6 +983,12 @@ Navigate Windows (exit with RET, ESC, q, or C-g)
     :foreground "white" :background "dark green"
     :weight bold :height 2.5 :box (:line-width 10 :color "dark green"))))
 #+end_src
+
+*** shrink window to fit its content
+#+begin_src elisp
+(map! :leader "wF" #'fit-window-to-buffer)
+#+end_src
+
 ** files, both local and remote
 *** Wha's like us? Damn few and they're all =dired=
 There's a doom module for dired with some preconfigured niceties:
@@ -968,6 +1006,11 @@ default:
 #+end_src
 
 note to self: doom sets this on line 93 of =~/.emacs.d/modules/emacs/dired/config.el=
+
+I also like to use wdired-mode, and have occasionally been stymied when trying to set some bits via text editing because I forgot about this cheeky little variable:
+#+begin_src elisp
+(setq wdired-allow-to-change-permissions t)
+#+end_src
 
 *** oops, I need to ~sudo~ edit this file
 #+begin_src elisp
@@ -2044,7 +2087,7 @@ The song-and-dance is a two-step:
 (defun amb/magit-stage-file ()
   (interactive)
   (if (magit-gitdir)
-      (call-interactively #'magit-stage-file)
+      (call-interactively #'magit-file-stage)
       (shell-command (concat
                       "git --git-dir=$HOME/.dots/ --work-tree=$HOME add "
                       (buffer-file-name))
@@ -2273,14 +2316,20 @@ an appropriate width for reading, such that long, wrapped lines don't look like 
 (package! olivetti)
 #+end_src
 
-Let's use =olivetti-mode= in all org buffers; and while I love line numbers in most cases,
-it looks /very/ clean without them, so let's set that too:
 #+begin_src elisp
 (use-package! olivetti)
+#+end_src
 
-(after! (olivetti org)
+Let's use =olivetti-mode= in all text buffers; while I love how it looks in prosaic org-mode
+buffers too, enabling it for org files by default is a net loss, because it really messes
+with files of literate programs and/or configs, which is an increasingly important use
+case for me. And while I love line numbers in most cases, removing them for
+reading-oriented buffers makes things look /very/ clean, so let's set that too:
+
+#+begin_src elisp
+(after! (olivetti org markdown)
   (defun amb/make-text-buffer-pretty ()
-    (olivetti-mode 1)
+    (unless (memq major-mode '(org-mode markdown-mode)) (olivetti-mode 1))
     (setq-local display-line-numbers nil))
 
   (remove-hook 'text-mode-hook #'display-line-numbers-mode)
@@ -2294,7 +2343,8 @@ First, I need a roam directory to serve as the "slipbox":
 (setq org-roam-directory "~/Dropbox/roam/")
 #+end_src
 
-I'd like a pretty and interactive graph visualization, too, while I'm at it:
+*** I'd like a pretty and interactive graph visualization, too, while I'm at it
+As luck would have it, there's a package for that:
 #+begin_src elisp
 (use-package! websocket
     :after org-roam)
