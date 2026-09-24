@@ -545,6 +545,10 @@ The module already enables =global-kkp-mode= on =tty-setup=, so I only layer on 
     [M-delete] (kbd "M-DEL")))
 #+end_src
 
+#+begin_src elisp :tangle no :noweb-ref init-preconfig
+(setq kkp-restore-legacy-keys-around-subprocesses t)
+#+end_src
+
 The following snipped was added as a test at Henrik's request; it does what I want, and
 presumably somehow is better optimized for doom's loading than the above.
 #+begin_src elisp :tangle no
