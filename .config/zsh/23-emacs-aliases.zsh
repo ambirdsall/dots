@@ -74,3 +74,7 @@ unicode() {
   emacsclient -nw --eval '(progn (copy-unicode-char-to-clipboard)(kill-frame))'
   echo "Copied $(pbpaste) to the clipboard"
 }
+
+today() {
+  emacsclient -nw --eval '(org-roam-dailies-goto-today)'
+}
