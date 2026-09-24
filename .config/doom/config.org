@@ -920,51 +920,49 @@ $0
 #+end_src
 
 ** window management
-*** hydra at =SPC W= / =SPC w.=
+*** transient menu at =SPC W= / =SPC w .=
+
+#+begin_src elisp :tangle packages.el
+(package! hydra)
+#+end_src
+
+
+At time of writing, doom doesn't autoload =transient-define-prefix=; there's probably a
+load-time-optimized trick for this, but let's keep life simple:
 #+begin_src elisp
-(defhydra amb/window-nav-hydra (:hint nil :exit nil)
-  "
-Navigate Windows (exit with RET, ESC, q, or C-g)
-  ^Navigate^
-  _h_ ←  _j_ ↓  _k_ ↑  _l_ →
+(require 'transient)
+#+end_src
 
-  ^Rearrange^
-  _H_ ←  _J_ ↓  _K_ ↑  _L_ →
-  _x_ Close _s_/_v_ Split
-
-  ^Repurpose^
-  _._ Nearby file  _p_/_SPC_ Project file  _r_ Recent file
-"
-  ;; Navigation
-  ("h" evil-window-left)
-  ("j" evil-window-down)
-  ("k" evil-window-up)
-  ("l" evil-window-right)
-
-  ;; Move windows
-  ("H" +evil/window-move-left)
-  ("J" +evil/window-move-down)
-  ("K" +evil/window-move-up)
-  ("L" +evil/window-move-right)
-
-  ;; Act on windows
-  ("x" +workspace/close-window-or-workspace)
-  ("." find-file)
-  ("p" projectile-find-file)
-  ("SPC" projectile-find-file)
-  ("r" consult-recent-file)
-  ("s" evil-window-split)
-  ("v" evil-window-vsplit)
-
-  ;; Exit hydra
-  ("RET" nil :exit t)
-  ("ESC" nil :exit t)
-  ("q" nil :exit t)
-  ("C-g" nil :exit t))
+#+begin_src elisp
+(transient-define-prefix amb/window-nav-transient ()
+  "Navigate, rearrange and repurpose windows."
+  :transient-suffix t
+  [["Navigate"
+    ("h" "←" evil-window-left)
+    ("j" "↓" evil-window-down)
+    ("k" "↑" evil-window-up)
+    ("l" "→" evil-window-right)]
+   ["Rearrange"
+    ("C-h" "←" +evil/window-move-left)
+    ("C-j" "↓" +evil/window-move-down)
+    ("C-k" "↑" +evil/window-move-up)
+    ("C-l" "→" +evil/window-move-right)
+    ("s" "split" evil-window-split)
+    ("v" "vsplit" evil-window-vsplit)
+    ("x" "close" +workspace/close-window-or-workspace)]
+   ["Repurpose"
+    ("." "nearby file"  find-file            :transient nil)
+    ("p" "project file" projectile-find-file :transient nil)
+    ("SPC" "project file" projectile-find-file :transient nil)
+    ("r" "recent file"  consult-recent-file  :transient nil)]
+   ["Exit"
+    ("RET" "done" transient-quit-one)
+    ("q"   "done" transient-quit-one)
+    ("<escape>" "done" transient-quit-one)]])
 
 (map! :leader
-      :desc "get movin'" "w." #'amb/window-nav-hydra/body
-      :desc "Manage windows" "W" #'amb/window-nav-hydra/body)
+      :desc "get movin'" "w." #'amb/window-nav-transient
+      :desc "Manage windows" "W" #'amb/window-nav-transient)
 #+end_src
 
 *** ace-window
@@ -1643,12 +1641,14 @@ I'm not sure about the keybindings. Maybe an extra top-level normal mode command
 
 **** TODO auto-inserted imports should be organized per project-local eslint rules
 
-*** TODO Actions at point hydra with =<leader>c.=
+*** TODO Actions at point transient with =<leader>c.=
 
-#+begin_src elisp :tangle no
+#+begin_src elisp
 (defun ide-shit-at-point ()
   (interactive)
-  (message "idk, read up on hydras?"))
+  (+popup-buffer (let ((transient-guide (concat doom-private-dir "docs/alternate-transient-guide.org")))
+                   (or (find-buffer-visiting transient-guide)
+                     (find-file-noselect transient-guide)))))
 
 (map!
  :leader "c." #'ide-shit-at-point)
@@ -1663,7 +1663,8 @@ I'm not sure about the keybindings. Maybe an extra top-level normal mode command
 | display references                 | ~+lookup/references~         | u   |
 | jump to definition                 | ~+lookup/definition~         | d   |
 | ⋆waves hands vaguely⋆ code actions | ~lsp-execute-code-action~    | a   |
-**** TODO how do I make a hydra again
+**** TODO how do I make a transient again
+cf. [[file:docs/alternate-transient-guide.org][this org file cheatsheet]]
 
 ** the four most frustrating words in the english language: web development in emacs [0/2]
 First of all:
@@ -2201,52 +2202,47 @@ projectile-project-root-files-bottom-up)))
 
 **** TODO filter candidate files to ~dots ls-files~
 
-** nice git conflic resolution hydra
-Gold standard, yes, but not be all and end all. This defines a nice hydra for working with
-files containing git conflicts.
+** nice git conflict transient
+Gold standard, yes, but not be all and end all; sometimes you just have to roll your
+sleeves up and go in a good old-fashioned file buffer. This defines a nice l'il action
+menu for resolving git conflicts:
 
 #+begin_src elisp
-;; all thanks and apologies to https://github.com/alphapapa/unpackaged.el
 (use-package! smerge-mode
-  :after (hydra magit)
+  :after (transient magit)
   :config
-  (defhydra amb/smerge-hydra
-    (:color pink :hint nil :post (smerge-auto-leave))
-    "
-^Move^       ^Keep^               ^Diff^                 ^Other^
-^^-----------^^-------------------^^---------------------^^-------
-_n_ext       _b_ase               _<_: upper/base        _C_ombine
-_p_rev       _u_pper              _=_: upper/lower       _r_esolve
-^^           _l_ower              _>_: base/lower        _k_ill current
-^^           _a_ll                _R_efine
-^^           _RET_: current       _E_diff
-"
-    ("n" smerge-next)
-    ("p" smerge-prev)
-    ("b" smerge-keep-base)
-    ("u" smerge-keep-upper)
-    ("l" smerge-keep-lower)
-    ("a" smerge-keep-all)
-    ("RET" smerge-keep-current)
-    ("\C-m" smerge-keep-current)
-    ("<" smerge-diff-base-upper)
-    ("=" smerge-diff-upper-lower)
-    (">" smerge-diff-base-lower)
-    ("R" smerge-refine)
-    ("E" smerge-ediff)
-    ("C" smerge-combine-with-next)
-    ("r" smerge-resolve)
-    ("k" smerge-kill-current)
-    ("ZZ" (lambda ()
-            (interactive)
-            (save-buffer)
-            (bury-buffer))
-     "Save and bury buffer" :color blue)
-    ("q" nil "cancel" :color blue))
-  (map! :leader :desc "resolve git conflicts" "gm" #'amb/smerge-hydra/body)
+  (transient-define-prefix amb/smerge-transient ()
+    "Resolve git conflicts in the current buffer."
+    :transient-suffix t
+    [["Move"
+      ("n" "next" smerge-next)
+      ("p" "prev" smerge-prev)]
+     ["Keep"
+      ("b" "base" smerge-keep-base)
+      ("u" "upper" smerge-keep-upper)
+      ("l" "lower" smerge-keep-lower)
+      ("a" "all" smerge-keep-all)
+      ("RET" "current" smerge-keep-current)]
+     ["Diff"
+      ("<" "upper/base"  smerge-diff-base-upper)
+      ("=" "upper/lower" smerge-diff-upper-lower)
+      (">" "base/lower"  smerge-diff-base-lower)
+      ("R" "refine" smerge-refine)
+      ("E" "ediff"  smerge-ediff :transient nil)]
+     ["Other"
+      ("C" "combine with next" smerge-combine-with-next)
+      ("r" "resolve" smerge-resolve)
+      ("k" "kill current" smerge-kill-current)
+      ("ZZ" "save and bury buffer"
+       (lambda () (interactive) (save-buffer) (bury-buffer))
+       :transient nil)
+      ("q" "cancel" transient-quit-one)]])
+
+  (map! :leader :desc "resolve git conflicts" "gm" #'amb/smerge-transient)
+
   :hook (magit-diff-visit-file . (lambda ()
                                    (when smerge-mode
-                                     (amb/smerge-hydra/body)))))
+                                     (amb/smerge-transient)))))
 #+end_src
 
 ** working with github
