@@ -2290,7 +2290,7 @@ If a region is active, link to the highlighted line(s)."
       "k" #'previous-line)
 #+end_src
 * org-mode config [0/1]
-** drop it in a box
+** drop files in a box
 Notes must be at hand to be helpful, ideally on any of several computers:
 #+begin_src elisp
 (let ((dir "~/Dropbox/org/"))
