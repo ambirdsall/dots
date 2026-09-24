@@ -2371,7 +2371,74 @@ This snippet is taken directly from the org-mode info manual.
               (assq-delete-all :noweb org-babel-default-header-args))))
 
 #+end_src
+**** automatically tangle =config(.system.)?.org= dotfiles on save
+#+begin_src elisp
+(defvar dots-literate-file-re
+  (concat "config" (pcase system-type
+                     ('darwin   "\\.\\(?:macos\\.\\)?org\\'")
+                     ('gnu/linux "\\.\\(?:linux\\.\\)?org\\'")
+                     (_          "\\.org\\'")))
+  "OS-filtered regexp for literate dotfile extensions.")
 
+(defvar dots-literate--procs (make-hash-table :test #'equal))
+(defvar dots-literate--start-times (make-hash-table :test #'equal))
+
+(defun dots-literate--dots-tracked-p (file)
+  "Return non-nil if FILE is tracked by the dots bare repo."
+  (zerop (call-process "git" nil nil nil
+                       "--git-dir" (expand-file-name ".dots/" "~")
+                       "--work-tree" (expand-file-name "~")
+                       "ls-files" "--error-unmatch" file)))
+
+(defun dots-literate--tangle-async (file)
+  "Tangle FILE asynchronously via `doom +org tangle'."
+  (let ((existing (gethash file dots-literate--procs))
+        (short (abbreviate-file-name file))
+        (buf-name (format " *tangle %s*" (file-name-nondirectory file))))
+    (when (and existing (process-live-p existing))
+      (kill-process existing)
+      (sit-for 0.3))
+    (puthash file (float-time) dots-literate--start-times)
+    (let ((proc (start-process
+                 buf-name
+                 (with-current-buffer (get-buffer-create buf-name)
+                   (erase-buffer) (current-buffer))
+                 (doom-path doom-emacs-dir "bin/doom")
+                 "+org" "tangle" file)))
+      (puthash file proc dots-literate--procs)
+      (set-process-sentinel proc (dots-literate--make-sentinel file))
+      (run-at-time nil nil (lambda () (message "Tangling %s..." short))))))
+
+(defun dots-literate--make-sentinel (file)
+  "Return a process sentinel for FILE's tangle process."
+  (let ((start-time (float-time)))
+    (lambda (process _signal)
+      (let ((short (abbreviate-file-name file))
+            (elapsed (- (float-time) start-time)))
+        (cond
+         ((and (eq 'exit (process-status process))
+               (= 0 (process-exit-status process)))
+          (message "Tangled %s (%.1fs)" short elapsed))
+         ((memq (process-status process) '(exit signal))
+          (message "Failed to tangle %s (%.1fs)" short elapsed)
+          (pop-to-buffer (process-buffer process)))))
+      (remhash file dots-literate--procs)
+      (remhash file dots-literate--start-times))))
+
+(defun dots-literate-maybe-tangle-h ()
+  "Tangle the current file if it's a dots-tracked literate config."
+  (when-let* ((file (buffer-file-name (buffer-base-buffer))))
+    (when (and (string-match-p dots-literate-file-re (file-name-nondirectory file))
+               (not (file-in-directory-p file (file-name-directory
+                                               (file-truename +literate-config-file))))
+               (dots-literate--dots-tracked-p file))
+      (dots-literate--tangle-async file))))
+
+(add-hook 'org-mode-hook
+          (defun dots-literate-enable-h ()
+            (add-hook 'after-save-hook #'dots-literate-maybe-tangle-h nil t)))
+
+#+end_src
 ** ...look nicer...
 #+begin_src elisp
 (custom-set-faces!
