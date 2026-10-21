@@ -16,7 +16,8 @@ Keep these imports first in =config.fnl=. Feature sections below contain the imp
         : PUPPY-PAW
         : bearclaw
         : BEARCLAW
-        : spacehammer} (require :keybindings))
+        : spacehammer
+        : spacehammer-prefix} (require :keybindings))
 
 (local {: window/center
         : window/fullscreen
@@ -248,7 +249,6 @@ This implementation is self-contained, but was heavily inspired by agzam et al's
 Spacehammer project and the [[https://learnhammerspoon.com/chapters/15-floating-hint-menu-for-keybindings/][Floating hint menu for keybindings]] chapter of
 learnhammerspoon.com.
 
-
 *** Canvas implementation
 
 The renderer accepts a title, an array of ={:key ... :label ...}= entries, and a footer. It sorts entries by key and puts long lists into columns.
@@ -461,6 +461,27 @@ A nil function declares a prefix. Prefix declarations are optional, but they giv
 
 =Escape= and =Delete= are reserved for navigation. A path cannot be both a command and a prefix. Re-registering an existing command replaces its function and, when supplied, its hint.
 
+=spacehammer-prefix= returns a binding helper whose paths are relative to a prefix. Its optional second argument names that prefix in the menu:
+
+#+begin_example
+(local windows-prefix (spacehammer-prefix :w "Windows"))
+(windows-prefix :l window/right "Focus right")
+#+end_example
+
+This is equivalent to:
+
+#+begin_example
+(spacehammer :w nil "Windows")
+(local windows-prefix (spacehammer-prefix :w))
+(windows-prefix :l window/right "Focus right")
+#+end_example
+
+Without a description, creating the helper does not register or rename a menu entry. Its first binding creates any missing prefixes, just as =spacehammer= does.
+
+With a description, the prefix is registered immediately, even if it has no children yet. An existing prefix keeps its children and receives the supplied label. An existing command cannot be declared as a prefix.
+
+Both the prefix and the relative paths accept strings or vectors. The returned helper has the same arguments and return value as =spacehammer=.
+
 *** Menu state and navigation
 
 =hammer= owns the keyboard modal. A separate tree stores bindings and descriptions. The stack records the current route through that tree.
@@ -594,10 +615,22 @@ This first version is not a general keyboard event filter:
     (when leader-active
       (draw-leader))
     node))
+#+end_src
 
-(fn in-prefix [prefix]
-  "Return a binding helper whose paths are relative to PREFIX."
+*** Relative binding helper
+
+=spacehammer-prefix= replaces =in-prefix=. It uses =spacehammer= to register an optional description, so prefix validation and hint updates follow the same rules as direct registrations.
+
+The helper copies the prefix keys when it is created. Each call builds a fresh combined path.
+
+#+begin_src fennel :tangle keybindings.fnl
+(fn spacehammer-prefix [prefix description]
+  "Return a relative binding helper; optionally name PREFIX in the menu."
+  (assert (or (= description nil) (= (type description) :string))
+          "A prefix description must be a string or nil.")
   (let [base (path-keys prefix)]
+    (when (~= description nil)
+      (spacehammer base nil description))
     (fn [path action description]
       (let [keys []]
         (each [_ key (ipairs base)]
@@ -607,11 +640,19 @@ This first version is not a general keyboard event filter:
         (spacehammer keys action description)))))
 #+end_src
 
-=in-prefix= now takes a path rather than an =hs.hotkey.modal= object. There were no callers of the old helper in this config.
+A relative helper can also declare nested prefixes:
 
 #+begin_example
-(local windows-prefix (in-prefix :w))
-(windows-prefix :l window/right "Focus right")
+(local windows-prefix (spacehammer-prefix :w "Windows"))
+(windows-prefix :p nil "Placement")
+(windows-prefix :pl window/right-half "Right half")
+#+end_example
+
+For a separate helper at the nested prefix, supply its full path:
+
+#+begin_example
+(local placement-prefix (spacehammer-prefix :wp "Placement"))
+(placement-prefix :l window/right-half "Right half")
 #+end_example
 
 *** TODO Support modifiers within leader paths
@@ -632,7 +673,7 @@ Keep a reference to the modifier watcher in the returned module.
  : bearclaw
  : BEARCLAW
  : spacehammer
- : in-prefix
+ : spacehammer-prefix
  : modifier-watcher}
 #+end_src
 
@@ -933,20 +974,23 @@ For example:
 - =Delete= returns to the parent menu.
 - =Escape= closes the menu.
 
-#+begin_src fennel :tangle config.fnl
-(spacehammer :w nil "Windows")
-(spacehammer :wh window/left "Focus left")
-(spacehammer :wj window/down "Focus down")
-(spacehammer :wk window/up "Focus up")
-(spacehammer :wl window/right "Focus right")
-(spacehammer :wc window/center "Center window")
-(spacehammer :wm window/fullscreen "Maximize window")
+The helper names the window prefix and makes these binding paths relative to =w=.
 
-(spacehammer :wp nil "Placement")
-(spacehammer :wph window/left-half "Left half")
-(spacehammer :wpj window/bottom-half "Bottom half")
-(spacehammer :wpk window/top-half "Top half")
-(spacehammer :wpl window/right-half "Right half")
+#+begin_src fennel :tangle config.fnl
+(local windows-prefix (spacehammer-prefix :w "Windows"))
+
+(windows-prefix :h window/left "Focus left")
+(windows-prefix :j window/down "Focus down")
+(windows-prefix :k window/up "Focus up")
+(windows-prefix :l window/right "Focus right")
+(windows-prefix :c window/center "Center window")
+(windows-prefix :m window/fullscreen "Maximize window")
+
+(windows-prefix :p nil "Placement")
+(windows-prefix :ph window/left-half "Left half")
+(windows-prefix :pj window/bottom-half "Bottom half")
+(windows-prefix :pk window/top-half "Top half")
+(windows-prefix :pl window/right-half "Right half")
 #+end_src
 
 ** Module exports
