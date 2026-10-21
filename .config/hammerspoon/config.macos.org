@@ -2,7 +2,6 @@
 
 * Bootstrap
 ** Shared imports
-
 Keep these imports first in =config.fnl=. Feature sections below contain the implementations and bindings.
 
 #+begin_src fennel :tangle config.fnl
@@ -34,7 +33,6 @@ Keep these imports first in =config.fnl=. Feature sections below contain the imp
 #+end_src
 
 ** Local configuration and CLI
-
 Load computer-specific lua config if it exists, and install the CLI.
 
 #+begin_src fennel :tangle config.fnl
@@ -45,14 +43,129 @@ Load computer-specific lua config if it exists, and install the CLI.
 (hs.ipc.cliInstall)
 #+end_src
 
-** Fennel runtime
-*** TODO Improve this :tangle arg
-It works, but why not cache the file? Does ~url-copy-file~ handle network errors? Maybe clean up the ~:tangle~ arg itself with a ~defun~ in an "eval but don't output anything" elisp src block?
-#+begin_src emacs-lisp :tangle (progn (require 'url) (url-copy-file "https://fennel-lang.org/downloads/fennel-1.3.1.lua" (expand-file-name "fennel.lua" (file-name-directory (buffer-file-name))) t) "no")
+** Fennel setup
+*** download the fennel runtime, but only if we simply must
+Tangling must not require a network connection when a usable runtime already exists.
+
+The bootstrap checks these sources in order:
+
+1. =fennel.lua= beside this Org file.
+2. A shared vendored copy at =~/lib/lua/fennel.lua=.
+3. The pinned Fennel 1.3.1 download.
+
+A usable local file is a readable, nonempty regular file. Existing local files are trusted; the bootstrap does not check their version or execute them.
+
+Downloads use HTTPS, a 15-second retrieval timeout, and an HTTP status check. A basic body check rejects empty responses and HTML-like error pages. This is not checksum verification.
+
+The bootstrap writes to a temporary file in the destination directory, then renames it into place. A failed fetch cannot leave a partial =fennel.lua=. Temporary filenames do not end in =.lua= or =.fnl=, so the Hammerspoon source watcher ignores them.
+
+If installation fails, tangling continues with a warning. If no runtime is available, Hammerspoon cannot load the generated configuration.
+
+The named block defines and runs the helper. It produces no tangled file and no results text. The following empty block invokes it during tangling, so a fresh Emacs process does not require a manual setup step. Normal Org Babel execution confirmation still applies.
+
+#+name: spoon-forge-ensure-fennel
+#+begin_src emacs-lisp :tangle no :results silent :exports none
+(defun spoon-forge--usable-runtime-p (file)
+  "Return non-nil when FILE is a readable, nonempty regular file."
+  (and (file-regular-p file)
+       (file-readable-p file)
+       (let ((attributes (file-attributes file)))
+         (and attributes
+              (> (file-attribute-size attributes) 0)))))
+
+(defun spoon-forge--download-fennel (url destination)
+  "Download URL into DESTINATION, or signal an error.
+DESTINATION must be a temporary file, not the installed runtime."
+  (require 'url)
+  (require 'url-http)
+  (let ((response nil))
+    (unwind-protect
+        (progn
+          (setq response (url-retrieve-synchronously url t t 15))
+          (unless (buffer-live-p response)
+            (error "No response from %s within the retrieval timeout" url))
+          (with-current-buffer response
+            (unless (and (boundp 'url-http-response-status)
+                         (equal url-http-response-status 200))
+              (error "HTTP response was %s"
+                     (if (boundp 'url-http-response-status)
+                         url-http-response-status
+                       "unavailable")))
+            (unless (and (boundp 'url-http-end-of-headers)
+                         url-http-end-of-headers)
+              (error "HTTP response has no header boundary"))
+            (goto-char url-http-end-of-headers)
+            (let ((body-start (point)))
+              (skip-chars-forward " \t\r\n")
+              (when (eobp)
+                (error "Downloaded fennel runtime is empty"))
+              (when (eq (char-after) ?<)
+                (error "Downloaded response looks like markup, not Lua"))
+              (let ((coding-system-for-write 'no-conversion))
+                (write-region body-start (point-max)
+                              destination nil 'silent)))))
+      (when (buffer-live-p response)
+        (kill-buffer response)))))
+
+(defun spoon-forge-ensure-fennel (directory)
+  "Ensure DIRECTORY contains fennel.lua without aborting a tangle.
+Reuse the installed runtime, then try a shared local copy, then HTTPS.
+Return the installed path on success, or nil after a warning."
+  (let* ((target (expand-file-name "fennel.lua" directory))
+         (shared (expand-file-name "~/lib/lua/fennel.lua"))
+         (version "1.3.1")
+         (url (format "https://fennel-lang.org/downloads/fennel-%s.lua"
+                      version)))
+    (if (spoon-forge--usable-runtime-p target)
+        target
+      (condition-case err
+          (let ((temporary
+                 (make-temp-file
+                  (expand-file-name ".fennel-install-" directory)
+                  nil ".tmp")))
+            (unwind-protect
+                (progn
+                  (if (spoon-forge--usable-runtime-p shared)
+                      (copy-file shared temporary t)
+                    (spoon-forge--download-fennel url temporary))
+                  (unless (spoon-forge--usable-runtime-p temporary)
+                    (error "Runtime installation produced an unusable file"))
+                  (rename-file temporary target t)
+                  (message "Spoon Forge: installed %s" target)
+                  target)
+              (when (file-exists-p temporary)
+                (delete-file temporary))))
+        (error
+         (display-warning
+          'spoon-forge
+          (format
+           (concat "Could not install %s: %s\n"
+                   "Tangling will continue, but Hammerspoon needs this runtime.\n"
+                   "Place a trusted fennel.lua at %s or %s, then tangle again.")
+           target (error-message-string err) target shared)
+          :warning)
+         nil)))))
+
+(let ((source (buffer-file-name (buffer-base-buffer))))
+  (unless source
+    (user-error "Save this Org file before bootstrapping Fennel"))
+  (spoon-forge-ensure-fennel (file-name-directory source)))
 #+end_src
 
-*** TODO can I do better than fetching fennel?
-e.g. can I consolidate my every fennelized config (hammerspoon, wezterm, possibly nvim) on a single shared and vendorized =~/lib/lua/fennel.lua=?
+This empty block is the tangle-time entry point. The named block above has =:tangle no=, so executing it does not recurse into this header.
+
+#+begin_src emacs-lisp :tangle (progn (save-excursion (org-babel-goto-named-src-block "spoon-forge-ensure-fennel") (org-babel-execute-src-block)) "no") :exports none
+#+end_src
+
+*** TODO Install a shared vendored Fennel runtime
+
+Place a trusted runtime at =~/lib/lua/fennel.lua= to bootstrap this configuration without a download. That file can also serve as the source for other Lua-based configurations.
+
+Hammerspoon receives its own copy beside =init.lua=, so its existing =require("fennel")= needs no search-path changes.
+
+An installed =fennel.lua= takes priority over the shared source. To refresh it from the shared source, remove the installed copy and tangle again. To upgrade the fallback download, change =version= in =spoon-forge-ensure-fennel=.
+
+The shared source is optional and is never modified by this configuration.
 
 ** Hammerspoon initialization
 *** Reload the config if any Lua or Fennel source file in the config directory changes.
