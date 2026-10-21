@@ -55,7 +55,6 @@ It works, but why not cache the file? Does ~url-copy-file~ handle network errors
 e.g. can I consolidate my every fennelized config (hammerspoon, wezterm, possibly nvim) on a single shared and vendorized =~/lib/lua/fennel.lua=?
 
 ** Hammerspoon initialization
-
 *** Reload the config if any Lua or Fennel source file in the config directory changes.
 
 #+begin_src lua :tangle init.lua
@@ -89,12 +88,9 @@ debug.traceback = fennel.traceback
 #+end_src
 
 *** And we're off!
-
 #+begin_src lua :tangle init.lua
 require("config")
 #+end_src
-
-
 
 * Notifications and diagnostics
 
@@ -127,6 +123,92 @@ require("config")
 #+end_src
 
 * Keyboard controls
+** Floating hint display
+
+Both kinds of hints use the same non-activating =hs.canvas= panel. The panel does not take keyboard focus.
+
+- Modifier hints are visible while an exact modifier chord is held.
+- Leader hints stay visible until the leader menu is dismissed.
+- Leader hints take priority over modifier hints.
+
+This implementation is self-contained, but was heavily inspired by agzam et al's
+Spacehammer project and the [[https://learnhammerspoon.com/chapters/15-floating-hint-menu-for-keybindings/][Floating hint menu for keybindings]] chapter of
+learnhammerspoon.com.
+
+
+*** Canvas implementation
+
+The renderer accepts a title, an array of ={:key ... :label ...}= entries, and a footer. It sorts entries by key and puts long lists into columns.
+
+The screen is selected when the panel is drawn. This first version does not track screen changes while a panel is already visible.
+
+#+begin_src fennel :tangle key-hints.fnl
+(var canvas nil)
+
+(fn hide []
+  (when canvas
+    (canvas:delete)
+    (set canvas nil)))
+
+(fn show [title entries footer]
+  (hide)
+  (table.sort entries (fn [a b] (< a.key b.key)))
+  (let [screen (: (hs.screen.mainScreen) :frame)
+        line-height 24
+        max-rows (math.max 1
+                          (math.min 12
+                                    (math.floor (/ (- screen.h 140)
+                                                   line-height))))
+        columns (math.max 1 (math.ceil (/ (# entries) max-rows)))
+        rows (math.max 1 (math.min max-rows (# entries)))
+        width (math.min (- screen.w 40) (+ 32 (* columns 340)))
+        height (+ 92 (* rows line-height))
+        column-width (/ (- width 32) columns)]
+    (set canvas
+         (hs.canvas.new {:x (+ screen.x (/ (- screen.w width) 2))
+                         :y (+ screen.y (- screen.h height 24))
+                         :w width
+                         :h height}))
+    (canvas:level hs.canvas.windowLevels.overlay)
+    (canvas:behavior [:canJoinAllSpaces :stationary :ignoresCycle])
+    (canvas:clickActivating false)
+    (canvas:appendElements
+      {:type :rectangle
+       :action :fill
+       :fillColor {:red 0.08 :green 0.09 :blue 0.12 :alpha 0.96}
+       :roundedRectRadii {:xRadius 12 :yRadius 12}}
+      {:type :text
+       :text title
+       :textFont "Menlo"
+       :textSize 18
+       :textColor {:white 1 :alpha 1}
+       :frame {:x 16 :y 12 :w (- width 32) :h 28}})
+    (each [i entry (ipairs entries)]
+      (let [index (- i 1)
+            column (math.floor (/ index max-rows))
+            row (% index max-rows)]
+        (canvas:appendElements
+          {:type :text
+           :text (string.format "%-7s %s" entry.key entry.label)
+           :textFont "Menlo"
+           :textSize 15
+           :textColor {:white 0.9 :alpha 1}
+           :frame {:x (+ 16 (* column column-width))
+                   :y (+ 48 (* row line-height))
+                   :w (- column-width 12)
+                   :h line-height}})))
+    (canvas:appendElements
+      {:type :text
+       :text footer
+       :textFont "Menlo"
+       :textSize 12
+       :textColor {:white 0.65 :alpha 1}
+       :frame {:x 16 :y (- height 28) :w (- width 32) :h 20}})
+    (canvas:show)))
+
+{: show : hide}
+#+end_src
+
 ** Modifier binding helpers
 
 Valid key strings are any single-character string, or any of the following strings:
@@ -140,56 +222,296 @@ Valid key strings are any single-character string, or any of the following strin
 - shift, rightshift, cmd, rightcmd, alt, rightalt, ctrl, rightctrl
 - capslock, fn
 
+The existing two-argument calls still work. An optional third argument supplies the hint:
+
+#+begin_example
+(puppy-paw :t wezterm-dropdown-toggle "Toggle terminal")
+#+end_example
+
+Without a description, the hint displays the key itself.
+
+*** Binding registry
+
+The numeric IDs encode Cmd, Alt, Ctrl, and Shift as 1, 2, 4, and 8. This lets the modifier watcher select an exact group without relying on table iteration order.
+
 #+begin_src fennel :tangle keybindings.fnl
-(local {: alert} (require :notifications))
+(local hints (require :key-hints))
 
-(fn puppy-paw [key func]
-  "bind a function func to run on cmd+alt+key"
-  (hs.hotkey.bind [:cmd :alt] key func))
+(var leader-active false)
 
-(fn PUPPY-PAW [key func]
-  "bind a function func to run on cmd+alt+shift+key"
-  (hs.hotkey.bind [:shift :cmd :alt] key func))
+(local modifier-groups
+       {3  {:title "puppy-paw · Cmd+Alt"
+            :mods [:cmd :alt]
+            :entries {}}
+        11 {:title "PUPPY-PAW · Cmd+Alt+Shift"
+            :mods [:cmd :alt :shift]
+            :entries {}}
+        7  {:title "bearclaw · Cmd+Alt+Ctrl"
+            :mods [:cmd :alt :ctrl]
+            :entries {}}
+        15 {:title "BEARCLAW · Cmd+Alt+Ctrl+Shift"
+            :mods [:cmd :alt :ctrl :shift]
+            :entries {}}})
 
-(fn bearclaw [key func]
-  "bind a function func to run on bearclaw+key"
-  (hs.hotkey.bind [:cmd :alt :ctrl] key func))
+(fn bind-modifiers [id key func description]
+  (let [group (. modifier-groups id)
+        binding (hs.hotkey.bind group.mods key func)]
+    (when binding
+      (tset group.entries key {:key key
+                              :label (or description key)}))
+    binding))
 
-(fn BEARCLAW [key func]
-  "bind a function func to run on shift+bearclaw+key"
-  (hs.hotkey.bind [:shift :cmd :alt :ctrl] key func))
+(fn puppy-paw [key func description]
+  "Bind Cmd+Alt+KEY, with an optional hint."
+  (bind-modifiers 3 key func description))
+
+(fn PUPPY-PAW [key func description]
+  "Bind Cmd+Alt+Shift+KEY, with an optional hint."
+  (bind-modifiers 11 key func description))
+
+(fn bearclaw [key func description]
+  "Bind Cmd+Alt+Ctrl+KEY, with an optional hint."
+  (bind-modifiers 7 key func description))
+
+(fn BEARCLAW [key func description]
+  "Bind Cmd+Alt+Ctrl+Shift+KEY, with an optional hint."
+  (bind-modifiers 15 key func description))
+#+end_src
+
+*** Hints while modifiers are held
+
+The watcher observes modifier changes; it does not consume events.
+
+Releasing a modifier hides the panel or switches to the newly held chord. For example, releasing Shift from =BEARCLAW= shows =bearclaw= if Cmd, Alt, and Ctrl remain held.
+
+Caps Lock does not affect group selection. Fn suppresses modifier hints. The leader menu suppresses modifier hints until it exits.
+
+#+begin_src fennel :tangle keybindings.fnl
+(fn modifier-id [flags]
+  (+ (if flags.cmd 1 0)
+     (if flags.alt 2 0)
+     (if flags.ctrl 4 0)
+     (if flags.shift 8 0)))
+
+(fn refresh-held-hints []
+  (when (not leader-active)
+    (let [flags (hs.eventtap.checkKeyboardModifiers)
+          group (and (not flags.fn)
+                     (. modifier-groups (modifier-id flags)))]
+      (if group
+          (let [entries []]
+            (each [_ entry (pairs group.entries)]
+              (table.insert entries entry))
+            (if (> (# entries) 0)
+                (hints.show group.title entries "Release modifiers to dismiss")
+                (hints.hide)))
+          (hints.hide)))))
+
+(local modifier-watcher
+       (: (hs.eventtap.new
+            [hs.eventtap.event.types.flagsChanged]
+            (fn [_]
+              (refresh-held-hints)
+              false))
+          :start))
 #+end_src
 
 ** Prefix map
 
-TODO which-key- or rofi-style pop-up hints.
+=Cmd+Alt+Ctrl+Space= opens the leader menu. Release the activation modifiers before typing a menu path.
+
+- =Escape= dismisses the menu.
+- =Delete= goes to the parent menu; at the root, it dismisses the menu.
+- The activation chord also toggles the menu off.
+- Selecting a prefix shows its children.
+- Running a command leaves the current menu open.
+- There is no timeout.
+
+*** Key-defining API
+
+=spacehammer= accepts a path, a function, and a hint. Strings represent sequences of single-character keys:
+
+#+begin_example
+(spacehammer :w nil "Windows")
+(spacehammer :wl window/right "Focus right")
+#+end_example
+
+Invoke the second binding with =Cmd+Alt+Ctrl+Space=, then =w l=.
+
+Use a vector for named keys:
+
+#+begin_example
+(spacehammer [:w :right] window/right "Focus right")
+#+end_example
+
+A nil function declares a prefix. Prefix declarations are optional, but they give the menu a useful name. Missing prefixes are created automatically.
+
+=Escape= and =Delete= are reserved for navigation. A path cannot be both a command and a prefix. Re-registering an existing command replaces its function and, when supplied, its hint.
+
+*** Menu state and navigation
+
+=hammer= owns the keyboard modal. A separate tree stores bindings and descriptions. The stack records the current route through that tree.
 
 #+begin_src fennel :tangle keybindings.fnl
-(fn def-modal-with-timeout [timeout mods key]
-  (let [modal (hs.hotkey.modal.new mods key)]
-    (var timer (hs.timer.new 4 #(modal:exit)))
-    (tset modal :entered #(timer:start))
-    (tset modal :exited #(and (timer:running) (timer:stop)))
+(local hammer (hs.hotkey.modal.new))
+(local menu-root {:label "Spacehammer" :children {}})
+(var menu-stack [menu-root])
+(local bound-menu-keys {})
 
-    modal))
+(fn current-menu []
+  (. menu-stack (# menu-stack)))
 
-(local hammer (def-modal-with-timeout 2 [:cmd :alt :ctrl] :space))
-(hammer:bind [] :escape nil nil #(hammer:exit))
+(fn draw-leader []
+  (let [entries []
+        route []]
+    (each [_ node (ipairs menu-stack)]
+      (table.insert route node.label))
+    (each [key node (pairs (. (current-menu) :children))]
+      (table.insert entries
+                    {:key key
+                     :label (.. node.label
+                                (if node.action "" " ›"))}))
+    (hints.show (table.concat route " / ")
+                entries
+                "Esc: close   Delete: back   Commands keep this menu open")))
+
+(tset hammer :entered
+      (fn []
+        (set leader-active true)
+        (set menu-stack [menu-root])
+        (draw-leader)))
+
+(tset hammer :exited
+      (fn []
+        (set leader-active false)
+        (set menu-stack [menu-root])
+        (refresh-held-hints)))
+
+(hammer:bind [] :escape nil #(hammer:exit))
+
+(hammer:bind [] :delete nil
+             (fn []
+               (if (> (# menu-stack) 1)
+                   (do
+                     (table.remove menu-stack)
+                     (draw-leader))
+                   (hammer:exit))))
+
+(bearclaw :space
+          (fn []
+            (if leader-active
+                (hammer:exit)
+                (hammer:enter)))
+          "Toggle leader menu")
 #+end_src
 
-TODO recursive bindings/prefix keys/whatever you want to call it.
+*** Paths and registration
 
-TODO support modifier keys.
+String paths use ASCII characters. Vector paths can use named Hammerspoon keys.
+
+Each distinct key has one modal binding. Its callback looks up the key in the current menu, so the same key can perform different actions in different branches.
+
+This first version is not a general keyboard event filter:
+
+- A registered menu key with no entry in the current branch does nothing.
+- Other keys can still reach the focused application.
+- Modified menu keys are not supported yet.
 
 #+begin_src fennel :tangle keybindings.fnl
-(fn spacehammer [key func message]
-  "bind KEY to FUNC in the spacehammer modal keymap, displaying an optional MESSAGE"
-  (hammer:bind [] key message func))
+(fn path-keys [path]
+  (let [keys []]
+    (match (type path)
+      :string
+      (each [key (string.gmatch path ".")]
+        (table.insert keys key))
 
-(fn in-prefix [modal] (fn [key func] (modal:bind [] key nil func)))
+      :table
+      (each [_ key (ipairs path)]
+        (table.insert keys key))
+
+      _
+      (error "A leader path must be a string or a vector."))
+    (assert (> (# keys) 0) "A leader path cannot be empty.")
+    (each [_ key (ipairs keys)]
+      (assert (and (= (type key) :string)
+                   (> (# key) 0))
+              "Each leader key must be a nonempty string.")
+      (assert (and (~= (string.lower key) :escape)
+                   (~= (string.lower key) :delete))
+              "Escape and Delete are reserved for menu navigation."))
+    keys))
+
+(fn dispatch-menu-key [key]
+  (let [node (. (current-menu) :children key)]
+    (when node
+      (if node.action
+          (node.action)
+          (do
+            (table.insert menu-stack node)
+            (draw-leader))))))
+
+(fn bind-menu-key [key]
+  (when (not (. bound-menu-keys key))
+    (hammer:bind [] key nil #(dispatch-menu-key key))
+    (tset bound-menu-keys key true)))
+
+(fn spacehammer [path action description]
+  "Bind a leader path, or name a prefix when ACTION is nil."
+  (assert (or (= action nil) (= (type action) :function))
+          "A leader action must be a function or nil.")
+  (let [keys (path-keys path)]
+    (var node menu-root)
+    (each [_ key (ipairs keys)]
+      (assert (not node.action)
+              "A leader command cannot also contain child bindings.")
+      (when (not (. node.children key))
+        (tset node.children key {:label key :children {}}))
+      (set node (. node.children key)))
+    (if action
+        (do
+          (assert (= (next node.children) nil)
+                  "A leader prefix cannot also be a command.")
+          (tset node :action action))
+        (assert (not node.action)
+                "Cannot name a command as a prefix."))
+    (when description
+      (tset node :label description))
+    (each [_ key (ipairs keys)]
+      (bind-menu-key key))
+    (when leader-active
+      (draw-leader))
+    node))
+
+(fn in-prefix [prefix]
+  "Return a binding helper whose paths are relative to PREFIX."
+  (let [base (path-keys prefix)]
+    (fn [path action description]
+      (let [keys []]
+        (each [_ key (ipairs base)]
+          (table.insert keys key))
+        (each [_ key (ipairs (path-keys path))]
+          (table.insert keys key))
+        (spacehammer keys action description)))))
 #+end_src
+
+=in-prefix= now takes a path rather than an =hs.hotkey.modal= object. There were no callers of the old helper in this config.
+
+#+begin_example
+(local windows-prefix (in-prefix :w))
+(windows-prefix :l window/right "Focus right")
+#+end_example
+
+*** TODO Support modifiers within leader paths
+
+The global modifier helpers already support modifier chords. Leader paths currently contain only unmodified keys.
+
+*** TODO Unbound keys should dismiss the menu
+
+The current modal only intercepts registered menu keys and navigation keys. Full keyboard capture, search, and other menu behavior are left for later iterations.
 
 ** Module exports
+
+Keep a reference to the modifier watcher in the returned module.
 
 #+begin_src fennel :tangle keybindings.fnl
 {: puppy-paw
@@ -197,7 +519,8 @@ TODO support modifier keys.
  : bearclaw
  : BEARCLAW
  : spacehammer
- : in-prefix}
+ : in-prefix
+ : modifier-watcher}
 #+end_src
 
 ** Reload and console bindings
@@ -207,14 +530,16 @@ Bind those keys, make that user env.
 Hammers of the spoonsmith.
 
 #+begin_src fennel :tangle config.fnl
-(BEARCLAW :r hs.reload)
+(BEARCLAW :r hs.reload "Reload configuration")
+(spacehammer :r hs.reload "Reload configuration")
 #+end_src
 
 TODO make some kind of Fennel REPL.
 
 #+begin_src fennel :tangle config.fnl
-(bearclaw :i hs.toggleConsole)
-(puppy-paw :x hs.toggleConsole)
+(bearclaw :i hs.toggleConsole "Toggle Hammerspoon console")
+(puppy-paw :x hs.toggleConsole "Toggle Hammerspoon console")
+(spacehammer :i hs.toggleConsole "Toggle Hammerspoon console")
 #+end_src
 
 * Applications
@@ -227,7 +552,9 @@ TODO Make the app shortcuts toggle instead of unconditionally focusing.
 Shift is required for Chrome so that =(bearclaw :c)= can center a window.
 
 #+begin_src fennel :tangle config.fnl
-(BEARCLAW :c #(hs.application.launchOrFocus "Google Chrome"))
+(BEARCLAW :c
+          #(hs.application.launchOrFocus "Google Chrome")
+          "Focus Chrome")
 #+end_src
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
@@ -241,12 +568,17 @@ Because the directory Emacs was launched from matters, do not use
 =(hs.application.launchOrFocus "Emacs")=.
 
 #+begin_src fennel :tangle config.fnl
-(bearclaw :e #(let [emacs (hs.application.get "Emacs")
-                    emacs-ng (hs.application.get "emacs")]
-                (if emacs (: emacs :setFrontmost)
-                    emacs-ng (: emacs-ng :setFrontmost)
-                    (alert "Bruh. How do I focus an emacs GUI if you aren't running one."))))
-(BEARCLAW :m #(hs.application.launchOrFocus "Messages"))
+(bearclaw :e
+          #(let [emacs (hs.application.get "Emacs")
+                 emacs-ng (hs.application.get "emacs")]
+             (if emacs (: emacs :setFrontmost)
+                 emacs-ng (: emacs-ng :setFrontmost)
+                 (alert "Bruh. How do I focus an emacs GUI if you aren't running one.")))
+          "Focus Emacs")
+
+(BEARCLAW :m
+          #(hs.application.launchOrFocus "Messages")
+          "Focus Messages")
 #+end_src
 
 ** Dropdown terminal
@@ -257,7 +589,9 @@ Because the directory Emacs was launched from matters, do not use
 #+end_src
 
 #+begin_src fennel :tangle config.fnl
-(bearclaw :s #(hs.application.launchOrFocus "Slack"))
+(bearclaw :s
+          #(hs.application.launchOrFocus "Slack")
+          "Focus Slack")
 #+end_src
 
 TODO deduplicate.
@@ -298,10 +632,13 @@ TODO extract to a module and import.
 *** WezTerm bindings
 
 #+begin_src fennel :tangle config.fnl
-(local wezterm-dropdown-toggle (make-dropdown-toggle :wezterm-gui [:Shell "New Window"]))
-(bearclaw :t wezterm-dropdown-toggle)
-(puppy-paw :t wezterm-dropdown-toggle)
-(puppy-paw :return wezterm-dropdown-toggle)
+(local wezterm-dropdown-toggle
+       (make-dropdown-toggle :wezterm-gui [:Shell "New Window"]))
+
+(bearclaw :t wezterm-dropdown-toggle "Toggle WezTerm")
+(puppy-paw :t wezterm-dropdown-toggle "Toggle WezTerm")
+(puppy-paw :return wezterm-dropdown-toggle "Toggle WezTerm")
+(spacehammer :t wezterm-dropdown-toggle "Toggle WezTerm")
 #+end_src
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
@@ -338,7 +675,7 @@ makes it easier to change my mind.
 #+end_src
 
 #+begin_src fennel :tangle config.fnl
-(bearclaw :g hs.grid.show)
+(bearclaw :g hs.grid.show "Show window grid")
 #+end_src
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
@@ -383,7 +720,7 @@ h :: bottom-right corner -> top of screen
 #+end_src
 
 #+begin_src fennel :tangle config.fnl
-(bearclaw :c window/center)
+(bearclaw :c window/center "Center window")
 #+end_src
 
 ** Maximizing
@@ -393,7 +730,7 @@ h :: bottom-right corner -> top of screen
 #+end_src
 
 #+begin_src fennel :tangle config.fnl
-(bearclaw :m window/fullscreen)
+(bearclaw :m window/fullscreen "Maximize window")
 #+end_src
 
 ** Half-screen placement
@@ -408,7 +745,7 @@ h :: bottom-right corner -> top of screen
 
 (local window/bottom-half
        (window-resizer (fn [window screen]
-                         (set window.x screen.x )
+                         (set window.x screen.x)
                          (set window.y (+ screen.y (/ screen.h 2)))
                          (set window.w screen.w)
                          (set window.h (/ screen.h 2)))))
@@ -429,10 +766,10 @@ h :: bottom-right corner -> top of screen
 #+end_src
 
 #+begin_src fennel :tangle config.fnl
-(bearclaw :h window/left-half)
-(bearclaw :j window/bottom-half)
-(bearclaw :k window/top-half)
-(bearclaw :l window/right-half)
+(bearclaw :h window/left-half "Place in left half")
+(bearclaw :j window/bottom-half "Place in bottom half")
+(bearclaw :k window/top-half "Place in top half")
+(bearclaw :l window/right-half "Place in right half")
 #+end_src
 
 ** Directional focus and grid resizing
@@ -447,10 +784,10 @@ h :: bottom-right corner -> top of screen
 #+end_src
 
 #+begin_src fennel :tangle config.fnl
-(puppy-paw :h window/left)
-(puppy-paw :j window/down)
-(puppy-paw :k window/up)
-(puppy-paw :l window/right)
+(puppy-paw :h window/left "Focus left")
+(puppy-paw :j window/down "Focus down")
+(puppy-paw :k window/up "Focus up")
+(puppy-paw :l window/right "Focus right")
 #+end_src
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
@@ -465,10 +802,38 @@ h :: bottom-right corner -> top of screen
 These remain after the directional focus bindings to preserve =config.fnl= order.
 
 #+begin_src fennel :tangle config.fnl
-(bearclaw :left window/left-half)
-(bearclaw :down window/bottom-half)
-(bearclaw :up window/top-half)
-(bearclaw :right window/right-half)
+(bearclaw :left window/left-half "Place in left half")
+(bearclaw :down window/bottom-half "Place in bottom half")
+(bearclaw :up window/top-half "Place in top half")
+(bearclaw :right window/right-half "Place in right half")
+#+end_src
+
+** Leader window bindings
+
+Start with a window menu and one nested placement menu. The global bindings above remain available.
+
+For example:
+
+- =leader w l= focuses the window to the right.
+- =leader w p l= places the current window in the right half.
+- After either command, the current menu remains open for another action.
+- =Delete= returns to the parent menu.
+- =Escape= closes the menu.
+
+#+begin_src fennel :tangle config.fnl
+(spacehammer :w nil "Windows")
+(spacehammer :wh window/left "Focus left")
+(spacehammer :wj window/down "Focus down")
+(spacehammer :wk window/up "Focus up")
+(spacehammer :wl window/right "Focus right")
+(spacehammer :wc window/center "Center window")
+(spacehammer :wm window/fullscreen "Maximize window")
+
+(spacehammer :wp nil "Placement")
+(spacehammer :wph window/left-half "Left half")
+(spacehammer :wpj window/bottom-half "Bottom half")
+(spacehammer :wpk window/top-half "Top half")
+(spacehammer :wpl window/right-half "Right half")
 #+end_src
 
 ** Module exports
@@ -593,7 +958,9 @@ Let 'er rip.
 
 ** Spacehammer
 
-Now, just to make it extra likely shit will break, Spacehammer.
+Now, +just to make it extra likely shit will break,+ Spacehammer.
+
+This is the external Spoon, not the custom leader menu defined under *Keyboard controls*. Keep it disabled while using the custom menu.
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
 (local Spacehammer (hs.loadSpoon :Spacehammer))
