@@ -2732,7 +2732,7 @@ are at their original heading levels, with fully-done siblings pruned."
                           "")))
               (unless (string-empty-p (string-trim kept))
                 (push (cons section-name (string-trim-right kept)) sections)))))
-        nil t 'headline)
+        nil nil 'headline)
       (nreverse sections))))
 
 (defun amb/org-dailies-header ()
