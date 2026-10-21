@@ -1,0 +1,553 @@
+#+title: Spoon Forge
+
+* Bootstrap
+** Shared imports
+
+Keep these imports first in =config.fnl=. Feature sections below contain the implementations and bindings.
+
+#+begin_src fennel :tangle config.fnl
+;; -*- mode: fennel; auto-save-default: nil -*-
+
+;; * imports
+(local {: notify
+        : alert
+        : dump
+        : log} (require :notifications))
+
+(local {: puppy-paw
+        : PUPPY-PAW
+        : bearclaw
+        : BEARCLAW
+        : spacehammer} (require :keybindings))
+
+(local {: window/center
+        : window/fullscreen
+        : window/left-half
+        : window/right-half
+        : window/top-half
+        : window/bottom-half
+        : window/left
+        : window/right
+        : window/up
+        : window/down
+        : window/enlarge
+        : window/shrink} (require :windows))
+#+end_src
+
+** Local configuration and CLI
+
+#+begin_src fennel :tangle config.fnl
+;; * load init-local.lua and CLI
+(let [localfile (.. hs.configdir "/init-local.lua")]
+  (and (hs.fs.attributes localfile)
+       (dofile localfile)))
+
+(hs.ipc.cliInstall)
+#+end_src
+
+** Fennel runtime
+*** TODO Improve this :tangle arg
+It works, but why not cache the file? Does ~url-copy-file~ handle network errors? Maybe clean up the ~:tangle~ arg itself with a ~defun~ in an "eval but don't output anything" elisp src block?
+#+begin_src emacs-lisp :tangle (progn (require 'url) (url-copy-file "https://fennel-lang.org/downloads/fennel-1.3.1.lua" (expand-file-name "fennel.lua" (file-name-directory (buffer-file-name))) t) "no")
+#+end_src
+
+*** TODO can I do better than fetching fennel?
+e.g. can I consolidate my every fennelized config (hammerspoon, wezterm, possibly nvim) on a single shared and vendorized =~/lib/lua/fennel.lua=?
+
+** Hammerspoon initialization
+
+#+begin_src lua :tangle init.lua
+-- * reload the config if any source file in the config dir changes
+function reloadConfig(files)
+  doReload = false
+  for _,file in pairs(files) do
+    if file:sub(-4) == ".lua" or file:sub(-4) == ".fnl" then
+      doReload = true
+    end
+  end
+
+  if doReload then
+    hs.reload()
+  end
+end
+
+local watcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon", reloadConfig):start()
+
+
+-- * setup fennel language support
+local fennel = require("fennel")
+table.insert(package.loaders or package.searchers, fennel.searcher)
+#+end_src
+
+-- TODO test, enable if working correctly for this version of fennel
+#+begin_src lua :tangle (or "no" "init.lua")
+
+-- debug.traceback = fennel.traceback
+#+end_src
+
+And we're off!
+#+begin_src lua :tangle init.lua
+
+require("config")
+#+end_src
+
+* Notifications and diagnostics
+
+#+begin_src fennel :tangle notifications.fnl
+(fn notify [titleText bodyText]
+  "Send a native growl notification with text"
+  (: (hs.notify.new {:title titleText :informativeText bodyText}) :send))
+
+(fn alert [text] (hs.alert.show text))
+
+(local logger (hs.logger.new :amb :debug))
+(fn log [message] (logger:i message))
+
+(fn dump [o]
+  (if (= (type o) :table)
+      (do
+        (var s "{ ")
+        (each [key v (pairs o)]
+          (var k key)
+          (if (~= (type key) :number)
+              (set k (.. "\"" k "\"")))
+          (set s (.. s "[" k "] = " (dump v) ",")))
+        (.. s "} "))
+      (tostring o)))
+
+{: notify
+ : alert
+ : dump
+ : log}
+#+end_src
+
+* Keyboard controls
+** Modifier binding helpers
+
+#+begin_src fennel :tangle keybindings.fnl
+(local {: alert} (require :notifications))
+;; Valid strings are any single-character string, or any of the following strings:
+;; - f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12,
+;;   f13, f14, f15, f16, f17, f18, f19, f20,
+;; - pad., pad*, pad+, pad/, pad-, pad=,
+;; - pad0, pad1, pad2, pad3, pad4, pad5, pad6, pad7, pad8, pad9,
+;; - padclear, padenter, return, tab, space, delete, escape, help,
+;; - home, pageup, forwarddelete, end, pagedown, left, right, down, up,
+;; - shift, rightshift, cmd, rightcmd, alt, rightalt, ctrl, rightctrl,
+;; - capslock, fn
+(fn puppy-paw [key func]
+  "bind a function func to run on cmd+alt+key"
+  (hs.hotkey.bind [:cmd :alt] key func))
+
+(fn PUPPY-PAW [key func]
+  "bind a function func to run on cmd+alt+shift+key"
+  (hs.hotkey.bind [:shift :cmd :alt] key func))
+
+(fn bearclaw [key func]
+  "bind a function func to run on bearclaw+key"
+  (hs.hotkey.bind [:cmd :alt :ctrl] key func))
+
+(fn BEARCLAW [key func]
+  "bind a function func to run on shift+bearclaw+key"
+  (hs.hotkey.bind [:shift :cmd :alt :ctrl] key func))
+#+end_src
+
+** Prefix map
+
+#+begin_src fennel :tangle keybindings.fnl
+;; TODO which-key- or rofi-style pop-up hints
+(fn def-modal-with-timeout [timeout mods key]
+  (let [modal (hs.hotkey.modal.new mods key)]
+    (var timer (hs.timer.new 4 #(modal:exit)))
+    (tset modal :entered #(timer:start))
+    (tset modal :exited #(and (timer:running) (timer:stop)))
+
+    modal))
+
+(local hammer (def-modal-with-timeout 2 [:cmd :alt :ctrl] :space))
+(hammer:bind [] :escape nil nil #(hammer:exit))
+
+;; TODO recursive bindings/prefix keys/whatever you want to call it
+;; TODO support mod keys
+(fn spacehammer [key func message]
+  "bind KEY to FUNC in the spacehammer modal keymap, displaying an optional MESSAGE"
+  (hammer:bind [] key message func))
+
+(fn in-prefix [modal] (fn [key func] (modal:bind [] key nil func)))
+#+end_src
+
+** Module exports
+
+#+begin_src fennel :tangle keybindings.fnl
+{: puppy-paw
+ : PUPPY-PAW
+ : bearclaw
+ : BEARCLAW
+ : spacehammer
+ : in-prefix}
+#+end_src
+
+** Reload and console bindings
+
+#+begin_src fennel :tangle config.fnl
+;; * bind those keys, make that user env
+;; ** hammers of the spoonsmith
+(BEARCLAW :r hs.reload)
+
+;; ;; TODO make some kind of fennel repl
+(bearclaw :i hs.toggleConsole)
+(puppy-paw :x hs.toggleConsole)
+#+end_src
+
+* Applications
+** Application focus bindings
+
+#+begin_src fennel :tangle config.fnl
+;; ** open specific apps
+;; ;; TODO Make the apps shortcuts toggle instead of unconditionally focusing
+;; shift required so I can use (bearclaw :c) to center a window
+(BEARCLAW :c #(hs.application.launchOrFocus "Google Chrome"))
+;; (bearclaw :c #(hs.application.launchOrFocus "Google Chrome"))
+;; (BEARCLAW :c #(let [cypress (hs.application.get "Cypress")]
+;;                 ;; because the directory emacs was launched from matters, don't use
+;;                 ;; (hs.application.launchOrFocus "Emacs")
+;;                 (if cypress (: cypress :setFrontmost)
+;;                     (alert "Bruh. How do I focus cypress if you aren't running it."))))
+(bearclaw :e #(let [emacs (hs.application.get "Emacs")
+                    emacs-ng (hs.application.get "emacs")]
+                ;; because the directory emacs was launched from matters, don't use
+                ;; (hs.application.launchOrFocus "Emacs")
+                (if emacs (: emacs :setFrontmost)
+                    emacs-ng (: emacs-ng :setFrontmost)
+                    (alert "Bruh. How do I focus an emacs GUI if you aren't running one."))))
+(BEARCLAW :m #(hs.application.launchOrFocus "Messages"))
+#+end_src
+
+** Dropdown terminal
+*** Space detection
+
+#+begin_src fennel :tangle config.fnl
+;; ;; (bearclaw :t #(hs.application.launchOrFocus "iTerm"))
+(bearclaw :s #(hs.application.launchOrFocus "Slack"))
+;; TODO dedup lmao
+;; *** wezterm, let's go to weztown
+;; TODO extract to a module and don't import
+(fn in-current-space [window]
+  (let [focused-space (hs.spaces.focusedSpace)
+        window-spaces (hs.spaces.windowSpaces window)]
+    (when (and focused-space window-spaces)
+      (each [_ space (ipairs window-spaces)]
+        (when (= space focused-space) (lua "return true"))))
+    false))
+#+end_src
+
+*** Toggle implementation
+
+#+begin_src fennel :tangle config.fnl
+;; TODO extract to a module and import
+(fn make-dropdown-toggle [app-name new-window-menu-path]
+  (fn []
+    (var app (hs.application.get app-name))
+    (if app (if (not (app:mainWindow)) (app:selectMenuItem new-window-menu-path)
+                (not (in-current-space (app:mainWindow))) (do (hs.spaces.moveWindowToSpace (app:mainWindow) (hs.spaces.focusedSpace))
+                                                              (app:setFrontmost))
+                (app:isFrontmost) (app:hide)
+                (app:activate))
+        (do
+          (hs.application.launchOrFocus app-name)
+          (set app (hs.application.get app-name))))
+    (: (app:mainWindow) :moveToUnit "[100,100,0,0]")))
+#+end_src
+
+*** WezTerm bindings
+
+#+begin_src fennel :tangle config.fnl
+(local wezterm-dropdown-toggle (make-dropdown-toggle :wezterm-gui [:Shell "New Window"]))
+(bearclaw :t wezterm-dropdown-toggle)
+(puppy-paw :t wezterm-dropdown-toggle)
+(puppy-paw :return wezterm-dropdown-toggle)
+
+;; (puppy-paw :z #(hs.application.launchOrFocus "zoom.us"))
+#+end_src
+
+* Window management
+** Grid configuration
+
+#+begin_src fennel :tangle windows.fnl
+;; First we set the grid, then we define helper functions for export
+(hs.grid.setGrid :3x2)
+;; TODO needs geometry argument
+(hs.grid.setMargins [0 0])
+
+;; Underdocumented: the grid *must* include at least 5 rows, regardless of how many rows
+;; you actually need. Ergo ipso facto, since I only actually want to use
+;;     [[:u :i :o] [:j :k :l]],
+;; I need to define the grid hints to be those *plus* all the rows above and below. The
+;; unused hint keys don't strictly need to be adjacent, but why would I make it
+;; unnecessarily painful to change my mind?
+(set hs.grid.HINTS [[:f2 :f3 :f4]
+                    [:2  :3  :4]
+                    [:w  :e  :r]
+                    [:s  :d  :f]
+                    [:x  :c  :v]])
+#+end_src
+
+#+begin_src fennel :tangle config.fnl
+;; ** window management
+(bearclaw :g hs.grid.show)
+;; (puppy-paw "." window/enlarge)
+;; (puppy-paw "," window/shrink)
+#+end_src
+
+** Shared window helpers
+
+#+begin_src fennel :tangle windows.fnl
+;; helper functions here on out
+(fn current []
+  "Returns the frontmost window. current being 'Current window' should be clear from the
+  filename, eh?"
+  (hs.window.frontmostWindow))
+
+(fn window-resizer [dimension-setter]
+  "Returns a function which will resize the focused window based on the
+`dimension-setter` function you pass in. It is
+called with two arguments: the focused window's frame, used to set the
+new dimensions; and the screen frame, a reference for calculating the intended dimensions.
+
+there are four numbers giving a window's position:
+x :: top-left corner -> left edge of screen
+y :: top-left corner -> top of screen
+w :: bottom-right corner -> left edge of screen
+h :: bottom-right corner -> top of screen
+"
+  (fn []
+    (let [win (current)
+          window (win:frame)
+          windscreen (win:screen)
+          screen (windscreen:frame)]
+
+      (dimension-setter window screen)
+      (win:setFrame window))))
+#+end_src
+
+** Centering
+
+#+begin_src fennel :tangle windows.fnl
+(fn window/center [] (: (current) :centerOnScreen))
+#+end_src
+
+#+begin_src fennel :tangle config.fnl
+(bearclaw :c window/center)
+#+end_src
+
+** Maximizing
+
+#+begin_src fennel :tangle windows.fnl
+(fn window/fullscreen [] (: (current) :maximize))
+#+end_src
+
+#+begin_src fennel :tangle config.fnl
+(bearclaw :m window/fullscreen)
+#+end_src
+
+** Half-screen placement
+
+#+begin_src fennel :tangle windows.fnl
+(local window/left-half
+       (window-resizer (fn [window screen]
+                         (set window.x screen.x)
+                         (set window.y screen.y)
+                         (set window.w (/ screen.w 2))
+                         (set window.h screen.h))))
+
+(local window/bottom-half
+       (window-resizer (fn [window screen]
+                         (set window.x screen.x )
+                         (set window.y (+ screen.y (/ screen.h 2)))
+                         (set window.w screen.w)
+                         (set window.h (/ screen.h 2)))))
+
+(local window/top-half
+       (window-resizer (fn [window screen]
+                         (set window.x screen.x)
+                         (set window.y screen.y)
+                         (set window.w screen.w)
+                         (set window.h (/ screen.h 2)))))
+
+(local window/right-half
+       (window-resizer (fn [window screen]
+                         (set window.x (+ screen.x (/ screen.w 2)))
+                         (set window.y screen.y)
+                         (set window.w (/ screen.w 2))
+                         (set window.h screen.h))))
+#+end_src
+
+#+begin_src fennel :tangle config.fnl
+(bearclaw :h window/left-half)
+(bearclaw :j window/bottom-half)
+(bearclaw :k window/top-half)
+(bearclaw :l window/right-half)
+#+end_src
+
+** Directional focus and grid resizing
+
+#+begin_src fennel :tangle windows.fnl
+(local window/left #(: (current) :focusWindowWest))
+(local window/right #(: (current) :focusWindowEast))
+(local window/up #(: (current) :focusWindowNorth))
+(local window/down #(: (current) :focusWindowSouth))
+(local window/enlarge #(hs.grid.resizeWindowWider (current)))
+(local window/shrink #(hs.grid.resizeWindowThinner (current)))
+#+end_src
+
+#+begin_src fennel :tangle config.fnl
+(puppy-paw :h window/left)
+(puppy-paw :j window/down)
+(puppy-paw :k window/up)
+(puppy-paw :l window/right)
+;; (bearclaw :h window/left)
+;; (bearclaw :j window/down)
+;; (puppy-paw :k window/up)
+;; (puppy-paw :l window/right)
+#+end_src
+
+** Arrow-key placement bindings
+
+These remain after the directional focus bindings to preserve =config.fnl= order.
+
+#+begin_src fennel :tangle config.fnl
+(bearclaw :left window/left-half)
+(bearclaw :down window/bottom-half)
+(bearclaw :up window/top-half)
+(bearclaw :right window/right-half)
+#+end_src
+
+** Module exports
+
+#+begin_src fennel :tangle windows.fnl
+{: window/center
+ : window/fullscreen
+ : window/left-half
+ : window/right-half
+ : window/top-half
+ : window/bottom-half
+ : window/left
+ : window/right
+ : window/up
+ : window/down
+ : window/enlarge
+ : window/shrink}
+#+end_src
+
+* Optional window managers
+** PaperWM
+*** Loading and configuration
+
+#+begin_src fennel :tangle config.fnl
+;; * PaperWM
+;; (local PaperWM (hs.loadSpoon :PaperWM))
+
+;; ;; ** configure PaperWM variables
+;; (set PaperWM.window_gap 4)
+;; ;; ¼, golden/ratio, halfsies, ratio/golden, ¾, 95%, fill 'er up
+;; (set PaperWM.window_ratios [0.25 0.38195 0.5 0.61804 0.75 0.95 1])
+#+end_src
+
+*** Toggle implementation
+
+#+begin_src fennel :tangle config.fnl
+;; ;; ** set up toggle function
+;; (var paperwm-on false)
+;; (fn start-paperwm []
+;;   (set paperwm-on true)
+;;   (PaperWM:start))
+;; (fn stop-paperwm []
+;;   (set paperwm-on false)
+;;   (PaperWM:stop))
+;; (fn toggle-paperwm []
+;;   (if paperwm-on
+;;       (stop-paperwm)
+;;       (start-paperwm)))
+#+end_src
+
+*** Bindings
+
+#+begin_src fennel :tangle config.fnl
+;; ;; ** keybindings
+;; (PaperWM:bindHotkeys {:focus_left     [[:ctrl :alt :cmd] :h]
+;;                       :focus_down     [[:ctrl :alt :cmd] :j]
+;;                       :focus_up       [[:ctrl :alt :cmd] :k]
+;;                       :focus_right    [[:ctrl :alt :cmd] :l]
+
+;;                       :swap_left      [[:ctrl :alt :cmd :shift] :h]
+;;                       :swap_down      [[:ctrl :alt :cmd :shift] :j]
+;;                       :swap_up        [[:ctrl :alt :cmd :shift] :k]
+;;                       :swap_right     [[:ctrl :alt :cmd :shift] :l]
+
+;;                       :full_width     [[:ctrl :alt :cmd] :f]
+;;                       :center_window  [[:ctrl :alt :cmd] :c]
+
+;;                       :switch_space_1 [[:ctrl :alt :cmd] :1]
+;;                       :switch_space_2 [[:ctrl :alt :cmd] :2]
+;;                       :switch_space_3 [[:ctrl :alt :cmd] :3]
+;;                       :switch_space_4 [[:ctrl :alt :cmd] :4]
+;;                       :switch_space_5 [[:ctrl :alt :cmd] :5]
+;;                       :switch_space_6 [[:ctrl :alt :cmd] :6]
+;;                       :switch_space_7 [[:ctrl :alt :cmd] :7]
+;;                       :switch_space_8 [[:ctrl :alt :cmd] :8]
+;;                       :switch_space_9 [[:ctrl :alt :cmd] :9]
+
+;;                       :move_window_1  [[:ctrl :alt :cmd :shift] :1]
+;;                       :move_window_2  [[:ctrl :alt :cmd :shift] :2]
+;;                       :move_window_3  [[:ctrl :alt :cmd :shift] :3]
+;;                       :move_window_4  [[:ctrl :alt :cmd :shift] :4]
+;;                       :move_window_5  [[:ctrl :alt :cmd :shift] :5]
+;;                       :move_window_6  [[:ctrl :alt :cmd :shift] :6]
+;;                       :move_window_7  [[:ctrl :alt :cmd :shift] :7]
+;;                       :move_window_8  [[:ctrl :alt :cmd :shift] :8]
+;;                       :move_window_9  [[:ctrl :alt :cmd :shift] :9]
+
+;;                       :slurp_in       [[:ctrl :alt :cmd] :i]
+;;                       :barf_out       [[:ctrl :alt :cmd] :o]})
+
+;; (puppy-paw :left PaperWM.actions.focus_left)
+;; (PUPPY-PAW :left PaperWM.actions.swap_left)
+;; (bearclaw :left PaperWM.actions.focus_left)
+;; (puppy-paw :right PaperWM.actions.focus_right)
+;; (PUPPY-PAW :right PaperWM.actions.swap_right)
+;; (bearclaw :right PaperWM.actions.focus_right)
+;; (bearclaw :up PaperWM.actions.focus_up)
+;; (puppy-paw :up PaperWM.actions.focus_up)
+;; (PUPPY-PAW :up PaperWM.actions.swap_up)
+;; (bearclaw :down PaperWM.actions.focus_down)
+;; (puppy-paw :down PaperWM.actions.focus_down)
+;; (PUPPY-PAW :down PaperWM.actions.swap_down)
+;; (bearclaw :r PaperWM.actions.cycle_width)
+;; (puppy-paw :r PaperWM.actions.reverse_cycle_width)
+
+;; (BEARCLAW :p toggle-paperwm)
+#+end_src
+
+*** Activation
+
+#+begin_src fennel :tangle config.fnl
+;; ** let 'er rip
+;(start-paperwm)
+#+end_src
+
+** Spacehammer
+
+#+begin_src fennel :tangle config.fnl
+;; * now, just to make it extra likely shit will break, spacehammer
+;; (local Spacehammer (hs.loadSpoon :Spacehammer))
+;; (Spacehammer:start)
+#+end_src
+
+* Startup notification
+
+Keep this last in =config.fnl=.
+
+#+begin_src fennel :tangle config.fnl
+;; * You're fresh and you know it. Let 'em know.
+(alert "hammer: spooned")
+#+end_src
