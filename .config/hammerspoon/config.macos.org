@@ -431,7 +431,7 @@ Caps Lock does not affect group selection. Fn suppresses modifier hints. The lea
 
 ** Prefix map
 
-=Cmd+Alt+Ctrl+Space= opens the leader menu. Release the activation modifiers before typing a menu path.
+=Cmd+Alt+Space= opens the leader menu. Release the activation modifiers before typing a menu path.
 
 - =Escape= dismisses the menu.
 - =Delete= goes to the parent menu; at the root, it dismisses the menu.
@@ -531,7 +531,7 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
                      (draw-leader))
                    (hammer:exit))))
 
-(bearclaw :space
+(puppy-paw :space
           (fn []
             (if leader-active
                 (hammer:exit)
