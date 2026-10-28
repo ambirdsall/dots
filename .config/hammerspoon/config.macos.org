@@ -115,7 +115,7 @@ Return the installed path on success, or nil after a warning."
   (let* ((target (expand-file-name "fennel.lua" directory))
          (shared (expand-file-name "~/lib/lua/fennel.lua"))
          (version "1.3.1")
-         (url (format "https://fennel-lang.org/downloads/fennel-%s.lua"
+         (url (format "https://fennel-lang.org/downloads/fennel-%s"
                       version)))
     (if (spoon-forge--usable-runtime-p target)
         target
