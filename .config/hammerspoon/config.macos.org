@@ -279,7 +279,7 @@ The screen is selected when the panel is drawn. This first version does not trac
         column-width (/ (- width 32) columns)]
     (set canvas
          (hs.canvas.new {:x (+ screen.x (/ (- screen.w width) 2))
-                         :y (+ screen.y (- screen.h height 24))
+                         :y (+ screen.y (/ (- screen.h height) 2))
                          :w width
                          :h height}))
     (canvas:level hs.canvas.windowLevels.overlay)
