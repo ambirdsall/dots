@@ -836,12 +836,15 @@ adjacent makes it easier and more predictable to change the grid dimensions on t
 
 #+begin_src fennel :tangle config.fnl
 (bearclaw :g hs.grid.show "Show window grid")
+(windows-menu :g hs.grid.show "Resize by grid")
 #+end_src
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
 (puppy-paw "." window/enlarge)
 (puppy-paw "," window/shrink)
 #+end_src
+
+*** TODO create a wrapper command that dynamically selects between =:3x2= and =:2x3= grids based on the focused monitor's height/width
 
 ** Shared window helpers
 
@@ -976,27 +979,25 @@ For example:
 
 - =leader w l= focuses the window to the right.
 - =leader w p l= places the current window in the right half.
-- After either command, the current menu remains open for another action.
+- In persistent mode, the current menu remains open after either command.
 - =Delete= returns to the parent menu.
 - =Escape= closes the menu.
 
 The helper names the window prefix and makes these binding paths relative to =w=.
 
 #+begin_src fennel :tangle config.fnl
-(local windows-prefix (spacehammer-prefix :w "Windows"))
+(windows-menu :h window/left-half "Left half")
+(windows-menu :j window/bottom-half "Bottom half")
+(windows-menu :k window/top-half "Top half")
+(windows-menu :l window/right-half "Right half")
+(windows-menu :c window/center "Center window")
+(windows-menu :z window/fullscreen "Maximize window")
 
-(windows-prefix :h window/left "Focus left")
-(windows-prefix :j window/down "Focus down")
-(windows-prefix :k window/up "Focus up")
-(windows-prefix :l window/right "Focus right")
-(windows-prefix :c window/center "Center window")
-(windows-prefix :m window/fullscreen "Maximize window")
-
-(windows-prefix :p nil "Placement")
-(windows-prefix :ph window/left-half "Left half")
-(windows-prefix :pj window/bottom-half "Bottom half")
-(windows-prefix :pk window/top-half "Top half")
-(windows-prefix :pl window/right-half "Right half")
+(windows-menu :m nil "Jump to another window")
+(windows-menu :mh window/left "Focus left")
+(windows-menu :mj window/down "Focus down")
+(windows-menu :mk window/up "Focus up")
+(windows-menu :ml window/right "Focus right")
 #+end_src
 
 ** Module exports
