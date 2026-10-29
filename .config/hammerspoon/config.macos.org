@@ -1,5 +1,9 @@
 #+title: Spoon Forge
 
+#+begin_src elisp :results none :tangle no
+(org-babel-tangle-file (buffer-file-name))
+#+end_src
+
 * Bootstrap
 ** Shared imports
 Keep these imports first in =config.fnl=. Feature sections below contain the implementations and bindings.
