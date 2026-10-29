@@ -717,63 +717,66 @@ TODO make some kind of Fennel REPL.
 
 * Applications
 ** Application focus bindings
+#+begin_src fennel :tangle config.fnl
+(local apps-menu (spacehammer-prefix :a "Apps"))
+(fn app [app-name] (hs.application.launchOrFocus app-name))
+#+end_src
 
-Open specific apps.
-
-TODO Make the app shortcuts toggle instead of unconditionally focusing.
-
-Shift is required for Chrome so that =(bearclaw :c)= can center a window.
+*** Browsers
+n.b. Shift is required for Chrome so that =(bearclaw :c)= can center a window.
 
 #+begin_src fennel :tangle config.fnl
-(BEARCLAW :c
-          #(hs.application.launchOrFocus "Google Chrome")
-          "Focus Chrome")
+(BEARCLAW :c #(app "Google Chrome") "Chrome")
+(apps-menu :c #(app "Google Chrome") "Chrome")
 #+end_src
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
-(bearclaw :c #(hs.application.launchOrFocus "Google Chrome"))
+(bearclaw :c #(app "Google Chrome"))
 (BEARCLAW :c #(let [cypress (hs.application.get "Cypress")]
                 (if cypress (: cypress :setFrontmost)
                     (alert "Bruh. How do I focus cypress if you aren't running it."))))
 #+end_src
 
+*** Slack
+#+begin_src fennel :tangle config.fnl
+(bearclaw :s #(app "Slack") "Slack")
+(apps-menu :s #(app "Slack") "Slack")
+#+end_src
+
+*** Emacsen
 Because the directory Emacs was launched from matters, do not use
 =(hs.application.launchOrFocus "Emacs")=.
 
 #+begin_src fennel :tangle config.fnl
-(bearclaw :e
-          #(let [emacs (hs.application.get "Emacs")
-                 emacs-ng (hs.application.get "emacs")]
-             (if emacs (: emacs :setFrontmost)
-                 emacs-ng (: emacs-ng :setFrontmost)
-                 (alert "Bruh. How do I focus an emacs GUI if you aren't running one.")))
-          "Focus Emacs")
+(fn goto-emacs []
+  (let [emacs (hs.application.get "Emacs")
+        emacs-ng (hs.application.get "emacs")]
+    (if emacs (: emacs :setFrontmost)
+        emacs-ng (: emacs-ng :setFrontmost)
+        (alert "Bruh. How do I focus an emacs GUI if you aren't running one."))))
 
-(BEARCLAW :m
-          #(hs.application.launchOrFocus "Messages")
-          "Focus Messages")
+(bearclaw :e goto-emacs "Emacs")
+(apps-menu :e goto-emacs "Emacs")
 #+end_src
 
-** Dropdown terminal
-*** Space detection
+*** Messages
+#+begin_src fennel :tangle config.fnl
+(BEARCLAW :m #(app "Messages") "Messages")
+(apps-menu :m #(app "Messages") "Messages")
+#+end_src
+
+*** Terminal
+
+#+begin_src fennel :tangle config.fnl
+(local goto-terminal-window #(app "Ghostty"))
+
+(spacehammer [:return] goto-terminal-window "Terminal")
+(apps-menu :t goto-terminal-window "Terminal")
+#+end_src
+
+**** TODO Fullscreen toggle utility (half-done spike on universal dropdown terminal)
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
-(bearclaw :t #(hs.application.launchOrFocus "iTerm"))
-#+end_src
-
-#+begin_src fennel :tangle config.fnl
-(bearclaw :s
-          #(hs.application.launchOrFocus "Slack")
-          "Focus Slack")
-#+end_src
-
-TODO deduplicate.
-
-WezTerm, let's go to Weztown.
-
-TODO extract to a module and don't import.
-
-#+begin_src fennel :tangle config.fnl
 (fn in-current-space [window]
   (let [focused-space (hs.spaces.focusedSpace)
         window-spaces (hs.spaces.windowSpaces window)]
@@ -781,13 +784,7 @@ TODO extract to a module and don't import.
       (each [_ space (ipairs window-spaces)]
         (when (= space focused-space) (lua "return true"))))
     false))
-#+end_src
 
-*** Toggle implementation
-
-TODO extract to a module and import.
-
-#+begin_src fennel :tangle config.fnl
 (fn make-dropdown-toggle [app-name new-window-menu-path]
   (fn []
     (var app (hs.application.get app-name))
@@ -802,42 +799,32 @@ TODO extract to a module and import.
     (: (app:mainWindow) :moveToUnit "[100,100,0,0]")))
 #+end_src
 
-*** WezTerm bindings
 
+*** Zoom
 #+begin_src fennel :tangle config.fnl
-(local wezterm-dropdown-toggle
-       (make-dropdown-toggle :wezterm-gui [:Shell "New Window"]))
-
-(bearclaw :t wezterm-dropdown-toggle "Toggle WezTerm")
-(puppy-paw :t wezterm-dropdown-toggle "Toggle WezTerm")
-(puppy-paw :return wezterm-dropdown-toggle "Toggle WezTerm")
-(spacehammer :t wezterm-dropdown-toggle "Toggle WezTerm")
+(puppy-paw :z #(app "zoom.us") "Zoom")
+(apps-menu :z #(app "zoom.us") "Zoom")
 #+end_src
 
-#+begin_src fennel :tangle (or "no" "config.fnl")
-(puppy-paw :z #(hs.application.launchOrFocus "zoom.us"))
-#+end_src
 
 * Window management
-** Grid configuration
+This is, by some margin, the most important (or at least frequently-used) submenu I use:
+#+begin_src fennel :tangle config.fnl
+(local windows-menu (spacehammer-prefix :w "Windows"))
+#+end_src
 
-First set the grid, then define helper functions for export.
+** Resize by grid
+What grid? This one:
 
 #+begin_src fennel :tangle windows.fnl
 (hs.grid.setGrid :3x2)
-#+end_src
 
-TODO needs geometry argument.
-
-#+begin_src fennel :tangle windows.fnl
 (hs.grid.setMargins [0 0])
 #+end_src
 
-Underdocumented: the grid must include at least five rows, regardless of how many
-rows you actually need. Since I only want to use =[[:u :i :o] [:j :k :l]]=,
-I need to define the grid hints to include all the rows above and below.
-The unused hint keys do not need to be adjacent, but keeping them adjacent
-makes it easier to change my mind.
+Underdocumented: the grid hints must include at least five rows, regardless of how many
+rows you actually need. The unused hint keys do not need to be adjacent, but keeping them
+adjacent makes it easier and more predictable to change the grid dimensions on the fly.
 
 #+begin_src fennel :tangle windows.fnl
 (set hs.grid.HINTS [[:f2 :f3 :f4]
