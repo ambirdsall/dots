@@ -342,7 +342,7 @@ Valid key strings are any single-character string, or any of the following strin
 The existing two-argument calls still work. An optional third argument supplies the hint:
 
 #+begin_example
-(puppy-paw :t wezterm-dropdown-toggle "Toggle terminal")
+(puppy-paw :f do-foo "Run example foo command")
 #+end_example
 
 Without a description, the hint displays the key itself.
@@ -410,10 +410,9 @@ Caps Lock does not affect group selection. Fn suppresses modifier hints. The lea
      (if flags.ctrl 4 0)
      (if flags.shift 8 0)))
 
-(fn refresh-held-hints []
+(fn refresh-held-hints [flags]
   (when (not leader-active)
-    (let [flags (hs.eventtap.checkKeyboardModifiers)
-          group (and (not flags.fn)
+    (let [group (and (not flags.fn)
                      (. modifier-groups (modifier-id flags)))]
       (if group
           (let [entries []]
@@ -427,21 +426,22 @@ Caps Lock does not affect group selection. Fn suppresses modifier hints. The lea
 (local modifier-watcher
        (: (hs.eventtap.new
             [hs.eventtap.event.types.flagsChanged]
-            (fn [_]
-              (refresh-held-hints)
+            (fn [event]
+              (refresh-held-hints (event:getFlags))
               false))
           :start))
 #+end_src
 
 ** Prefix map
 
-=Cmd+Alt+Space= opens the leader menu. Release the activation modifiers before typing a menu path.
+=Cmd+Alt+Space= opens the leader menu in one-shot mode; =Cmd+Alt+Ctrl+Space= opens it in persistent mode. Release the activation modifiers before typing a menu path.
 
 - =Escape= dismisses the menu.
 - =Delete= goes to the parent menu; at the root, it dismisses the menu.
-- The activation chord also toggles the menu off.
+- Either activation chord also toggles the menu off.
+- =Ctrl+Space= switches an open menu between one-shot and persistent modes.
 - Selecting a prefix shows its children.
-- Running a command leaves the current menu open.
+- Running a command closes a one-shot menu and leaves a persistent menu open.
 - There is no timeout.
 
 *** Key-defining API
@@ -494,6 +494,7 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
 (local hammer (hs.hotkey.modal.new))
 (local menu-root {:label "Spacehammer" :children {}})
 (var menu-stack [menu-root])
+(var persistent false)
 (local bound-menu-keys {})
 
 (fn current-menu []
@@ -511,7 +512,10 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
                                 (if node.action "" " ›"))}))
     (hints.show (table.concat route " / ")
                 entries
-                "Esc: close   Delete: back   Commands keep this menu open")))
+                (.. "Esc: close   Delete: back   Ctrl+Space: "
+                    (if persistent
+                        "one-shot (now persistent)"
+                        "persistent (now one-shot)")))))
 
 (tset hammer :entered
       (fn []
@@ -523,7 +527,7 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
       (fn []
         (set leader-active false)
         (set menu-stack [menu-root])
-        (refresh-held-hints)))
+        (refresh-held-hints (hs.eventtap.checkKeyboardModifiers))))
 
 (hammer:bind [] :escape nil #(hammer:exit))
 
@@ -535,12 +539,20 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
                      (draw-leader))
                    (hammer:exit))))
 
-(puppy-paw :space
-          (fn []
-            (if leader-active
-                (hammer:exit)
-                (hammer:enter)))
-          "Toggle leader menu")
+(hammer:bind [:ctrl] :space nil
+             (fn []
+               (set persistent (not persistent))
+               (draw-leader)))
+
+(fn toggle-leader [mode-persistent]
+  (if leader-active
+      (hammer:exit)
+      (do
+        (set persistent mode-persistent)
+        (hammer:enter))))
+
+(puppy-paw :space #(toggle-leader false) "Leader menu (one-shot)")
+(bearclaw :space #(toggle-leader true) "Leader menu (persistent)")
 #+end_src
 
 *** Paths and registration
@@ -583,7 +595,10 @@ This first version is not a general keyboard event filter:
   (let [node (. (current-menu) :children key)]
     (when node
       (if node.action
-          (node.action)
+          (do
+            (when (not persistent)
+              (hammer:exit))
+            (node.action))
           (do
             (table.insert menu-stack node)
             (draw-leader))))))
