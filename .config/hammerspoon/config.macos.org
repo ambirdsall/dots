@@ -44,7 +44,10 @@ Keep these imports first in =config.fnl=. Feature sections below contain the imp
         : window/shrink
         : window/show-screen-numbers
         : window/hide-screen-numbers
-        : window/to-screen} (require :windows))
+        : window/to-screen
+        : window/jump
+        : window/choose
+        : window/choose-anywhere} (require :windows))
 #+end_src
 
 ** Local configuration and CLI
@@ -1111,6 +1114,78 @@ These remain after the directional focus bindings to preserve =config.fnl= order
 (bearclaw :right window/right-half "Place in right half")
 #+end_src
 
+** Window jumping
+
+=window/jump= shows a hint letter on each visible window, with its title. The default hint style keeps hints to one letter for up to 26 windows. In the =vimperator= style, an app with one window gets a two-letter hint but is selected after the first letter.
+
+#+begin_src fennel :tangle windows.fnl
+(set hs.hints.style :default)
+(set hs.hints.showTitleThresh 100)
+(set hs.hints.titleMaxSize 40)
+(set hs.hints.fontSize 20)
+
+(fn jumpable-windows []
+  (hs.fnutils.filter (hs.window.orderedWindows)
+                     #(and ($:isStandard) ($:isVisible))))
+
+(fn window/jump []
+  (hs.hints.windowHints (jumpable-windows)))
+#+end_src
+
+=window/choose= lists windows in a chooser, most recently used first. The query is split on spaces, and each word must match the title or app name with its letters in order, e.g. =ff gh= matches a Firefox window titled "GitHub".
+
+#+begin_src fennel :tangle windows.fnl
+(var window-choices [])
+(var chooser-windows {})
+
+(fn fuzzy-pattern [word]
+  (pick-values 1 (word:gsub "." #(.. (if (string.match $ "%w") $ (.. "%" $)) ".-"))))
+
+(fn fuzzy-match? [query text]
+  (let [text (text:lower)]
+    (accumulate [matched true word (string.gmatch (query:lower) "%S+")]
+      (and matched (not= nil (string.find text (fuzzy-pattern word)))))))
+
+(local window-chooser
+       (hs.chooser.new (fn [choice]
+                         (let [win (and choice (. chooser-windows choice.id))]
+                           (when win (win:focus))))))
+
+(window-chooser:queryChangedCallback
+ (fn [query]
+   (window-chooser:choices
+    (icollect [_ choice (ipairs window-choices)]
+      (when (fuzzy-match? query (.. choice.text " " choice.subText))
+        choice)))))
+
+(fn show-window-chooser [windows]
+  (set chooser-windows {})
+  (set window-choices
+       (icollect [_ win (ipairs windows)]
+         (let [app (win:application)]
+           (tset chooser-windows (win:id) win)
+           {:text (win:title)
+            :subText (app:name)
+            :image (hs.image.imageFromAppBundle (app:bundleID))
+            :id (win:id)})))
+  (window-chooser:query "")
+  (window-chooser:choices window-choices)
+  (window-chooser:show))
+
+(fn window/choose []
+  (show-window-chooser (jumpable-windows)))
+#+end_src
+
+=window/choose-anywhere= also lists windows on Spaces that aren't currently shown. Unlike =hs.window.allWindows=, a window filter tracks windows on other Spaces, but it omits minimized windows.
+
+#+begin_src fennel :tangle windows.fnl
+(local all-spaces-filter (: (hs.window.filter.new) :setCurrentSpace nil))
+
+(fn window/choose-anywhere []
+  (show-window-chooser
+   (all-spaces-filter:getWindows hs.window.filter.sortByFocusedLast)))
+#+end_src
+
 ** Monitor numbers
 
 With more than one monitor connected, each one shows its =hs.screen.allScreens= index in its top-right corner. Moving a window keeps its size.
@@ -1193,6 +1268,10 @@ The helper names the window prefix and makes these binding paths relative to =w=
 
 (windows-menu [:S-=] window/enlarge "Widen")
 (windows-menu "-" window/shrink "Narrow")
+
+(windows-menu :w window/choose "Search windows")
+(windows-menu [:S-w] window/choose-anywhere "Search windows on all Spaces")
+(windows-menu [:C-w] window/jump "Jump to window")
 #+end_src
 
 ** Module exports
@@ -1219,7 +1298,10 @@ The helper names the window prefix and makes these binding paths relative to =w=
  : window/shrink
  : window/show-screen-numbers
  : window/hide-screen-numbers
- : window/to-screen}
+ : window/to-screen
+ : window/jump
+ : window/choose
+ : window/choose-anywhere}
 #+end_src
 
 * Deprecated window managers, included largely for reference
