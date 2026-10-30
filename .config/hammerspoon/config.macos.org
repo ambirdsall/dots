@@ -32,6 +32,10 @@ Keep these imports first in =config.fnl=. Feature sections below contain the imp
         : window/right-half
         : window/top-half
         : window/bottom-half
+        : window/to-left-edge
+        : window/to-bottom-edge
+        : window/to-top-edge
+        : window/to-right-edge
         : window/left
         : window/right
         : window/up
@@ -933,9 +937,9 @@ functions.
 (windows-menu :g window/grid "Resize by grid")
 #+end_src
 
-#+begin_src fennel :tangle (or "no" "config.fnl")
-(puppy-paw "." window/enlarge)
-(puppy-paw "," window/shrink)
+#+begin_src fennel :tangle config.fnl
+(puppy-paw "." window/enlarge "Widen current window")
+(puppy-paw "," window/shrink "Narrow current window")
 #+end_src
 
 ** Shared window helpers
@@ -1034,6 +1038,26 @@ Maximizing along one axis leaves the other axis's position and size unchanged.
                          (set window.h screen.h))))
 #+end_src
 
+Moving to an edge keeps the window's size and its position along the other axis.
+
+#+begin_src fennel :tangle windows.fnl
+(local window/to-left-edge
+       (window-resizer (fn [window screen]
+                         (set window.x screen.x))))
+
+(local window/to-bottom-edge
+       (window-resizer (fn [window screen]
+                         (set window.y (+ screen.y (- screen.h window.h))))))
+
+(local window/to-top-edge
+       (window-resizer (fn [window screen]
+                         (set window.y screen.y))))
+
+(local window/to-right-edge
+       (window-resizer (fn [window screen]
+                         (set window.x (+ screen.x (- screen.w window.w))))))
+#+end_src
+
 #+begin_src fennel :tangle config.fnl
 (bearclaw :h window/left-half "Place in left half")
 (bearclaw :j window/bottom-half "Place in bottom half")
@@ -1041,15 +1065,25 @@ Maximizing along one axis leaves the other axis's position and size unchanged.
 (bearclaw :l window/right-half "Place in right half")
 #+end_src
 
-** Directional focus and grid resizing
+** Directional focus and width resizing
+
+Width steps are 10% of the screen width. The width stays between one step and the full screen width, and the window shifts left if needed to stay on screen.
 
 #+begin_src fennel :tangle windows.fnl
 (local window/left #(: (current) :focusWindowWest))
 (local window/right #(: (current) :focusWindowEast))
 (local window/up #(: (current) :focusWindowNorth))
 (local window/down #(: (current) :focusWindowSouth))
-(local window/enlarge #(hs.grid.resizeWindowWider (current)))
-(local window/shrink #(hs.grid.resizeWindowThinner (current)))
+(fn width-stepper [steps]
+  (window-resizer (fn [window screen]
+                    (let [step (* 0.1 screen.w)]
+                      (set window.w (math.min screen.w
+                                              (math.max step (+ window.w (* steps step)))))
+                      (set window.x (math.min window.x
+                                              (+ screen.x (- screen.w window.w))))))))
+
+(local window/enlarge (width-stepper 1))
+(local window/shrink (width-stepper -1))
 #+end_src
 
 #+begin_src fennel :tangle config.fnl
@@ -1151,6 +1185,14 @@ The helper names the window prefix and makes these binding paths relative to =w=
 (windows-menu [:C-j] window/down "Focus down")
 (windows-menu [:C-k] window/up "Focus up")
 (windows-menu [:C-l] window/right "Focus right")
+
+(windows-menu [:S-h] window/to-left-edge "Move to left edge")
+(windows-menu [:S-j] window/to-bottom-edge "Move to bottom edge")
+(windows-menu [:S-k] window/to-top-edge "Move to top edge")
+(windows-menu [:S-l] window/to-right-edge "Move to right edge")
+
+(windows-menu [:S-=] window/enlarge "Widen")
+(windows-menu "-" window/shrink "Narrow")
 #+end_src
 
 ** Module exports
@@ -1165,6 +1207,10 @@ The helper names the window prefix and makes these binding paths relative to =w=
  : window/right-half
  : window/top-half
  : window/bottom-half
+ : window/to-left-edge
+ : window/to-bottom-edge
+ : window/to-top-edge
+ : window/to-right-edge
  : window/left
  : window/right
  : window/up
