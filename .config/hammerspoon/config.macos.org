@@ -35,7 +35,10 @@ Keep these imports first in =config.fnl=. Feature sections below contain the imp
         : window/up
         : window/down
         : window/enlarge
-        : window/shrink} (require :windows))
+        : window/shrink
+        : window/show-screen-numbers
+        : window/hide-screen-numbers
+        : window/to-screen} (require :windows))
 #+end_src
 
 ** Local configuration and CLI
@@ -476,6 +479,12 @@ This is equivalent to:
 (windows-prefix :l window/right "Focus right")
 #+end_example
 
+An optional third argument attaches hooks, e.g. for functions that run when the prefix submenu is entered and left:
+
+#+begin_example
+(spacehammer-prefix :w "Windows" {:on-enter show-overlay :on-exit hide-overlay})
+#+end_example
+
 Without a description, creating the helper does not register or rename a menu entry. Its first binding creates any missing prefixes, just as =spacehammer= does.
 
 With a description, the prefix is registered immediately, even if it has no children yet. An existing prefix keeps its children and receives the supplied label. An existing command cannot be declared as a prefix.
@@ -513,6 +522,17 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
                         "one-shot (now persistent)"
                         "persistent (now one-shot)")))))
 
+(fn run-hooks [node hook]
+  (each [_ func (ipairs (or (?. node :-hooks hook) []))]
+    (func)))
+
+(fn enter-menu [node]
+  (table.insert menu-stack node)
+  (run-hooks node :on-enter))
+
+(fn leave-menu []
+  (run-hooks (table.remove menu-stack) :on-exit))
+
 (tset hammer :entered
       (fn []
         (set leader-active true)
@@ -522,7 +542,8 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
 (tset hammer :exited
       (fn []
         (set leader-active false)
-        (set menu-stack [menu-root])
+        (while (> (# menu-stack) 1)
+          (leave-menu))
         (refresh-held-hints (hs.eventtap.checkKeyboardModifiers))))
 
 (hammer:bind [] :escape nil #(hammer:exit))
@@ -531,7 +552,7 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
              (fn []
                (if (> (# menu-stack) 1)
                    (do
-                     (table.remove menu-stack)
+                     (leave-menu)
                      (draw-leader))
                    (hammer:exit))))
 
@@ -596,7 +617,7 @@ This first version is not a general keyboard event filter:
               (hammer:exit))
             (node.action))
           (do
-            (table.insert menu-stack node)
+            (enter-menu node)
             (draw-leader))))))
 
 (fn bind-menu-key [key]
@@ -632,20 +653,44 @@ This first version is not a general keyboard event filter:
     node))
 #+end_src
 
+*** Prefix hooks
+
+A prefix node stores its hooks under =:-hooks=, as a map from hook name to a list of functions. =spacehammer-add-hook= appends a function to one of those lists, creating the prefix if needed.
+
+The navigation code runs two hooks:
+
+- =:on-enter= runs when the prefix is entered, before the menu is drawn, so it can register children for that prefix.
+- =:on-exit= runs when the prefix is left: =Delete=, =Escape=, the activation chord, or a one-shot command closing the menu.
+
+#+begin_src fennel :tangle keybindings.fnl
+(fn spacehammer-add-hook [menu hook func]
+  "Append FUNC to the HOOK functions, e.g. :on-enter, of the prefix at path MENU."
+  (let [node (spacehammer menu nil)
+        hooks (or (. node :-hooks) {})]
+    (tset node :-hooks hooks)
+    (when (not (. hooks hook))
+      (tset hooks hook []))
+    (table.insert (. hooks hook) func)
+    node))
+#+end_src
+
 *** Relative binding helper
 
-=spacehammer-prefix= replaces =in-prefix=. It uses =spacehammer= to register an optional description, so prefix validation and hint updates follow the same rules as direct registrations.
+=spacehammer-prefix= replaces =in-prefix=. It uses =spacehammer= to register an optional description and =spacehammer-add-hook= to attach optional hooks, so prefix validation and hint updates follow the same rules as direct registrations.
 
 The helper copies the prefix keys when it is created. Each call builds a fresh combined path.
 
 #+begin_src fennel :tangle keybindings.fnl
-(fn spacehammer-prefix [prefix description]
-  "Return a relative binding helper; optionally name PREFIX in the menu."
+(fn spacehammer-prefix [prefix description hooks]
+  "Return a relative binding helper; optionally name PREFIX in the menu
+and attach HOOKS of the form {:on-enter f :on-exit g} to it."
   (assert (or (= description nil) (= (type description) :string))
           "A prefix description must be a string or nil.")
   (let [base (path-keys prefix)]
     (when (~= description nil)
       (spacehammer base nil description))
+    (each [hook func (pairs (or hooks {}))]
+      (spacehammer-add-hook base hook func))
     (fn [path action description]
       (let [keys []]
         (each [_ key (ipairs base)]
@@ -689,6 +734,7 @@ Keep a reference to the modifier watcher in the returned module.
  : BEARCLAW
  : spacehammer
  : spacehammer-prefix
+ : spacehammer-add-hook
  : modifier-watcher}
 #+end_src
 
@@ -806,8 +852,19 @@ Because the directory Emacs was launched from matters, do not use
 * Window management
 This is, by some margin, the most important (or at least frequently-used) submenu I use:
 #+begin_src fennel :tangle config.fnl
-(local windows-menu (spacehammer-prefix :w "Windows"))
+(fn enter-windows-menu []
+  (window/show-screen-numbers)
+  (each [i (ipairs (hs.screen.allScreens))]
+    (when (<= i 9)
+      (spacehammer [:w (tostring i)] #(window/to-screen i) (.. "Monitor " i)))))
+
+(local windows-menu
+       (spacehammer-prefix :w "Windows"
+                           {:on-enter enter-windows-menu
+                            :on-exit window/hide-screen-numbers}))
 #+end_src
+
+Entering the menu labels each monitor with its number and registers that number as a command to move the focused window there. See [[*Monitor numbers][Monitor numbers]].
 
 ** Resize by grid
 What grid? This one, by default:
@@ -977,6 +1034,48 @@ These remain after the directional focus bindings to preserve =config.fnl= order
 (bearclaw :right window/right-half "Place in right half")
 #+end_src
 
+** Monitor numbers
+
+With more than one monitor connected, each one shows its =hs.screen.allScreens= index in its top-right corner. Moving a window keeps its size.
+
+The windows menu registers =1= through =9= when entered. Entries for monitors that have since been disconnected stay in the menu and do nothing.
+
+#+begin_src fennel :tangle windows.fnl
+(var screen-number-canvases [])
+
+(fn window/hide-screen-numbers []
+  (each [_ canvas (ipairs screen-number-canvases)]
+    (canvas:delete))
+  (set screen-number-canvases []))
+
+(fn window/show-screen-numbers []
+  (window/hide-screen-numbers)
+  (let [screens (hs.screen.allScreens)]
+    (when (> (# screens) 1)
+      (each [i screen (ipairs screens)]
+        (let [frame (screen:frame)
+              size (/ frame.w 10)
+              canvas (hs.canvas.new {:x (- (+ frame.x frame.w) size 20)
+                                     :y (+ frame.y 20)
+                                     :w size
+                                     :h (* size 1.3)})]
+          (canvas:level hs.canvas.windowLevels.overlay)
+          (canvas:appendElements
+            {:type :text
+             :text (tostring i)
+             :textSize size
+             :textAlignment :right
+             :textColor {:red 1 :green 0.5 :blue 0 :alpha 1}
+             :withShadow true})
+          (canvas:show)
+          (table.insert screen-number-canvases canvas))))))
+
+(fn window/to-screen [i]
+  (let [screen (. (hs.screen.allScreens) i)]
+    (when screen
+      (: (current) :moveToScreen screen true))))
+#+end_src
+
 ** Leader window bindings
 
 Start with a window menu and one nested placement menu. The global bindings above remain available.
@@ -1021,7 +1120,10 @@ The helper names the window prefix and makes these binding paths relative to =w=
  : window/up
  : window/down
  : window/enlarge
- : window/shrink}
+ : window/shrink
+ : window/show-screen-numbers
+ : window/hide-screen-numbers
+ : window/to-screen}
 #+end_src
 
 * Deprecated window managers, included largely for reference
