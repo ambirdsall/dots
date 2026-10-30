@@ -25,6 +25,7 @@ Keep these imports first in =config.fnl=. Feature sections below contain the imp
 
 (local {: window/center
         : window/fullscreen
+        : window/grid
         : window/left-half
         : window/right-half
         : window/top-half
@@ -814,8 +815,7 @@ This is, by some margin, the most important (or at least frequently-used) submen
 #+end_src
 
 ** Resize by grid
-What grid? This one:
-
+What grid? This one, by default:
 #+begin_src fennel :tangle windows.fnl
 (hs.grid.setGrid :3x2)
 
@@ -834,17 +834,28 @@ adjacent makes it easier and more predictable to change the grid dimensions on t
                     [:x  :c  :v]])
 #+end_src
 
+Here's a small wrapper for =hs.grid.show= which adapts to the dimensions of your current
+monitor: it shows a =:3x2= grid on landscape monitors, =:2x3= for portrait ones. The global
+=:3x2= above remains so there's a sane default in case I work with any other =hs.grid=
+functions.
+
+#+begin_src fennel :tangle windows.fnl
+(fn window/grid []
+  (let [screen (hs.screen.mainScreen)
+        frame (screen:frame)]
+    (hs.grid.setGrid (if (> frame.w frame.h) :3x2 :2x3) screen)
+    (hs.grid.show)))
+#+end_src
+
 #+begin_src fennel :tangle config.fnl
-(bearclaw :g hs.grid.show "Show window grid")
-(windows-menu :g hs.grid.show "Resize by grid")
+(bearclaw :g window/grid "Show window grid")
+(windows-menu :g window/grid "Resize by grid")
 #+end_src
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
 (puppy-paw "." window/enlarge)
 (puppy-paw "," window/shrink)
 #+end_src
-
-*** TODO create a wrapper command that dynamically selects between =:3x2= and =:2x3= grids based on the focused monitor's height/width
 
 ** Shared window helpers
 
@@ -1005,6 +1016,7 @@ The helper names the window prefix and makes these binding paths relative to =w=
 #+begin_src fennel :tangle windows.fnl
 {: window/center
  : window/fullscreen
+ : window/grid
  : window/left-half
  : window/right-half
  : window/top-half
