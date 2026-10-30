@@ -198,11 +198,6 @@ local watcher = hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon", reloadC
 #+begin_src lua :tangle init.lua
 local fennel = require("fennel")
 table.insert(package.loaders or package.searchers, fennel.searcher)
-#+end_src
-
-*** TODO test this code snippet out and enable it if working correctly for this version of Fennel
-
-#+begin_src lua :tangle (or "no" "init.lua")
 debug.traceback = fennel.traceback
 #+end_src
 
