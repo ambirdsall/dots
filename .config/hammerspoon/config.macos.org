@@ -25,6 +25,8 @@ Keep these imports first in =config.fnl=. Feature sections below contain the imp
 
 (local {: window/center
         : window/fullscreen
+        : window/maximize-horizontal
+        : window/maximize-vertical
         : window/grid
         : window/left-half
         : window/right-half
@@ -454,10 +456,11 @@ Caps Lock does not affect group selection. Fn suppresses modifier hints. The lea
 
 Invoke the second binding with =Cmd+Alt+Ctrl+Space=, then =w l=.
 
-Use a vector for named keys:
+Use a vector for named keys and modified keys:
 
 #+begin_example
 (spacehammer [:w :right] window/right "Focus right")
+(spacehammer [:w :C-l] window/right "Focus right")
 #+end_example
 
 A nil function declares a prefix. Prefix declarations are optional, but they give the menu a useful name. Missing prefixes are created automatically.
@@ -502,6 +505,34 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
 (var persistent false)
 (local bound-menu-keys {})
 
+(local chord-modifiers {:C :ctrl :M :alt :s :cmd :S :shift})
+
+(fn key-chord [key]
+  "Split an Emacs-style KEY such as \"C-M-h\" into a set of modifiers and a key."
+  (let [mods {}]
+    (var base key)
+    (while (string.match base "^[CMsS]%-.")
+      (tset mods (. chord-modifiers (base:sub 1 1)) true)
+      (set base (base:sub 3)))
+    (values mods base)))
+
+(fn canonical-key [key]
+  "Rewrite KEY's modifiers in C-M-S-s- order, without duplicates."
+  (let [(mods base) (key-chord key)]
+    (.. (if mods.ctrl "C-" "")
+        (if mods.alt "M-" "")
+        (if mods.shift "S-" "")
+        (if mods.cmd "s-" "")
+        base)))
+
+(fn key-label [key]
+  (let [(mods base) (key-chord key)]
+    (.. (if mods.ctrl "⌃" "")
+        (if mods.alt "⌥" "")
+        (if mods.shift "⇧" "")
+        (if mods.cmd "⌘" "")
+        base)))
+
 (fn current-menu []
   (. menu-stack (# menu-stack)))
 
@@ -512,7 +543,7 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
       (table.insert route node.label))
     (each [key node (pairs (. (current-menu) :children))]
       (table.insert entries
-                    {:key key
+                    {:key (key-label key)
                      :label (.. node.label
                                 (if node.action "" " ›"))}))
     (hints.show (table.concat route " / ")
@@ -574,7 +605,7 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
 
 *** Paths and registration
 
-String paths use ASCII characters. Vector paths can use named Hammerspoon keys.
+String paths use ASCII characters. Vector paths can use named Hammerspoon keys and Emacs-style modifier prefixes: =C-= is Ctrl, =M-= is Alt, =s-= is Cmd and =S-= is Shift, e.g. =[:C-h]= or =[:C-M-return]=. The hint panel shows modifiers as Mac symbols, e.g. =⌃h=.
 
 Each distinct key has one modal binding. Its callback looks up the key in the current menu, so the same key can perform different actions in different branches.
 
@@ -582,7 +613,7 @@ This first version is not a general keyboard event filter:
 
 - A registered menu key with no entry in the current branch does nothing.
 - Other keys can still reach the focused application.
-- Modified menu keys are not supported yet.
+- =C-space= is reserved for the persistence toggle.
 
 #+begin_src fennel :tangle keybindings.fnl
 (fn path-keys [path]
@@ -594,7 +625,7 @@ This first version is not a general keyboard event filter:
 
       :table
       (each [_ key (ipairs path)]
-        (table.insert keys key))
+        (table.insert keys (canonical-key key)))
 
       _
       (error "A leader path must be a string or a vector."))
@@ -604,8 +635,9 @@ This first version is not a general keyboard event filter:
                    (> (# key) 0))
               "Each leader key must be a nonempty string.")
       (assert (and (~= (string.lower key) :escape)
-                   (~= (string.lower key) :delete))
-              "Escape and Delete are reserved for menu navigation."))
+                   (~= (string.lower key) :delete)
+                   (~= key :C-space))
+              "Escape, Delete and C-space are reserved for menu navigation."))
     keys))
 
 (fn dispatch-menu-key [key]
@@ -622,7 +654,8 @@ This first version is not a general keyboard event filter:
 
 (fn bind-menu-key [key]
   (when (not (. bound-menu-keys key))
-    (hammer:bind [] key nil #(dispatch-menu-key key))
+    (let [(mods base) (key-chord key)]
+      (hammer:bind (icollect [mod (pairs mods)] mod) base nil #(dispatch-menu-key key)))
     (tset bound-menu-keys key true)))
 
 (fn spacehammer [path action description]
@@ -714,10 +747,6 @@ For a separate helper at the nested prefix, supply its full path:
 (local placement-prefix (spacehammer-prefix :wp "Placement"))
 (placement-prefix :l window/right-half "Right half")
 #+end_example
-
-*** TODO Support modifiers within leader paths
-
-The global modifier helpers already support modifier chords. Leader paths currently contain only unmodified keys.
 
 *** TODO Unbound keys should dismiss the menu
 
@@ -955,6 +984,20 @@ h :: bottom-right corner -> top of screen
 (fn window/fullscreen [] (: (current) :maximize))
 #+end_src
 
+Maximizing along one axis leaves the other axis's position and size unchanged.
+
+#+begin_src fennel :tangle windows.fnl
+(local window/maximize-horizontal
+       (window-resizer (fn [window screen]
+                         (set window.x screen.x)
+                         (set window.w screen.w))))
+
+(local window/maximize-vertical
+       (window-resizer (fn [window screen]
+                         (set window.y screen.y)
+                         (set window.h screen.h))))
+#+end_src
+
 #+begin_src fennel :tangle config.fnl
 (bearclaw :m window/fullscreen "Maximize window")
 #+end_src
@@ -1082,8 +1125,9 @@ Start with a window menu and one nested placement menu. The global bindings abov
 
 For example:
 
-- =leader w l= focuses the window to the right.
-- =leader w p l= places the current window in the right half.
+- =leader w l= places the current window in the right half.
+- =leader w C-l= focuses the window to the right.
+- =leader w m h= maximizes the current window horizontally.
 - In persistent mode, the current menu remains open after either command.
 - =Delete= returns to the parent menu.
 - =Escape= closes the menu.
@@ -1098,11 +1142,15 @@ The helper names the window prefix and makes these binding paths relative to =w=
 (windows-menu :c window/center "Center window")
 (windows-menu :z window/fullscreen "Maximize window")
 
-(windows-menu :m nil "Jump to another window")
-(windows-menu :mh window/left "Focus left")
-(windows-menu :mj window/down "Focus down")
-(windows-menu :mk window/up "Focus up")
-(windows-menu :ml window/right "Focus right")
+(windows-menu :m nil "Maximize window")
+(windows-menu :mh window/maximize-horizontal "Maximize horizontally")
+(windows-menu :mv window/maximize-vertical "Maximize vertically")
+(windows-menu :mm window/fullscreen "Maximize")
+
+(windows-menu [:C-h] window/left "Focus left")
+(windows-menu [:C-j] window/down "Focus down")
+(windows-menu [:C-k] window/up "Focus up")
+(windows-menu [:C-l] window/right "Focus right")
 #+end_src
 
 ** Module exports
@@ -1110,6 +1158,8 @@ The helper names the window prefix and makes these binding paths relative to =w=
 #+begin_src fennel :tangle windows.fnl
 {: window/center
  : window/fullscreen
+ : window/maximize-horizontal
+ : window/maximize-vertical
  : window/grid
  : window/left-half
  : window/right-half
