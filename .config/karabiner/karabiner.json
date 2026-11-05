@@ -96,6 +96,7 @@
                     },
                     {
                         "description": "Hold tab for command+alt+control",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": {
