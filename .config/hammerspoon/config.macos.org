@@ -884,7 +884,6 @@ Because the directory Emacs was launched from matters, do not use
 (apps-menu :z #(app "zoom.us") "Zoom")
 #+end_src
 
-
 * Window management
 This is, by some margin, the most important (or at least frequently-used) submenu I use:
 #+begin_src fennel :tangle config.fnl
@@ -1304,118 +1303,215 @@ The helper names the window prefix and makes these binding paths relative to =w=
  : window/choose-anywhere}
 #+end_src
 
-* Deprecated window managers, included largely for reference
-** PaperWM
-*** Loading and configuration
+* Musical chairs
+I made this as a one-off for playing a musical-chairs-style game with my kids. The keybinding to trigger the control popup is commented out, but the code remains in place as a living reference for messing with webview UIs in hammerspoon.
 
-#+begin_src fennel :tangle (or "no" "config.fnl")
-(local PaperWM (hs.loadSpoon :PaperWM))
+=musical-chairs= toggles a popup titled "WHEN THE MUSIC STOPS...". Clicking PLAY presses play on whatever media track is queued, then pauses it after a random delay between the popup's min and max seconds. The binding's arguments are the initial min and max. The media key toggles play/pause, so start from a paused track. When the music stops, the popup shows "STOP!" and how long it played for 5 seconds, then returns to PLAY. Clicking STOP! starts another round immediately.
+
+The popup is a webview so that min and max can be typed in. The page posts PLAY clicks to the =chairs= message port, and Lua pushes state changes back with =setState=.
+
+#+begin_src css :tangle no :noweb-ref chairs-css
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  color: #fff;
+  font-family: Menlo, monospace;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+.panel {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(20, 23, 31, 0.96);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: normal;
+  color: #a6a6a6;
+}
+
+.state {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.state.on {
+  display: flex;
+}
+
+button {
+  font: inherit;
+  font-size: 48px;
+  color: #fff;
+  background: none;
+  cursor: pointer;
+  border: 2px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 4px 36px;
+}
+
+.bounds {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #a6a6a6;
+}
+
+input {
+  font: inherit;
+  width: 4em;
+  padding: 2px 4px;
+  color: #fff;
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+
+.stop {
+  font-size: 64px;
+}
+
+.secs {
+  font-size: 18px;
+  color: #a6a6a6;
+}
+
+.notes {
+  font-size: 40px;
+  color: #a6a6a6;
+}
 #+end_src
 
-Configure PaperWM variables.
+#+begin_src js :tangle no :noweb-ref chairs-js
+function setState(state, seconds) {
+  for (const el of document.querySelectorAll('.state')) el.classList.toggle('on', el.id === state);
+  document.getElementById('secs').textContent = seconds.toFixed(1) + ' seconds';
+}
 
-#+begin_src fennel :tangle (or "no" "config.fnl")
-(set PaperWM.window_gap 4)
+function play() {
+  webkit.messageHandlers.chairs.postMessage({
+    min: document.getElementById('min').value,
+    max: document.getElementById('max').value });
+}
+
+for (const input of document.querySelectorAll('input'))
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') play(); });
+
+setState('{{state}}', {{seconds}});
 #+end_src
 
-¼, golden/ratio, halfsies, ratio/golden, ¾, 95%, fill 'er up.
-
-#+begin_src fennel :tangle (or "no" "config.fnl")
-(set PaperWM.window_ratios [0.25 0.38195 0.5 0.61804 0.75 0.95 1])
+#+begin_src html :tangle no :noweb yes :noweb-ref chairs-html
+<style>
+  <<chairs-css>>
+</style>
+<div class='panel'>
+  <h1>WHEN THE MUSIC STOPS...</h1>
+  <div id='idle' class='state'>
+    <button onclick='play()'>PLAY</button>
+    <div class='bounds'>
+      <label>min <input id='min' type='number' min='0' step='any' value='{{min}}'></label>
+      <label>max <input id='max' type='number' min='0' step='any' value='{{max}}'></label>
+    </div>
+  </div>
+  <div id='playing' class='state'><div class='notes'>♪ ♪ ♪</div></div>
+  <div id='stopped' class='state' onclick='play()'>
+    <div class='stop'>STOP!</div>
+    <div class='secs' id='secs'></div>
+  </div>
+</div>
+<script>
+  <<chairs-js>>
+</script>
 #+end_src
 
-*** Toggle implementation
+#+begin_src fennel :tangle config.fnl :noweb yes
+(local chairs-html "
+<<chairs-html>>")
 
-Set up the toggle function.
+(local chairs-width 360)
+(local chairs-height 240)
+(var chairs-view nil)
+(var chairs-state :idle)
+(var chairs-seconds 0)
+(var chairs-bounds nil)
+(var chairs-timer nil)
+(var chairs-reset-timer nil)
 
-#+begin_src fennel :tangle (or "no" "config.fnl")
-(var paperwm-on false)
-(fn start-paperwm []
-  (set paperwm-on true)
-  (PaperWM:start))
-(fn stop-paperwm []
-  (set paperwm-on false)
-  (PaperWM:stop))
-(fn toggle-paperwm []
-  (if paperwm-on
-      (stop-paperwm)
-      (start-paperwm)))
-#+end_src
+(fn press-play-pause []
+  (: (hs.eventtap.event.newSystemKeyEvent :PLAY true) :post)
+  (: (hs.eventtap.event.newSystemKeyEvent :PLAY false) :post))
 
-*** Bindings
+(fn set-chairs-state [state]
+  (set chairs-state state)
+  (when chairs-view
+    (chairs-view:evaluateJavaScript (.. "setState('" state "', " chairs-seconds ")"))))
 
-#+begin_src fennel :tangle (or "no" "config.fnl")
-(PaperWM:bindHotkeys {:focus_left     [[:ctrl :alt :cmd] :h]
-                      :focus_down     [[:ctrl :alt :cmd] :j]
-                      :focus_up       [[:ctrl :alt :cmd] :k]
-                      :focus_right    [[:ctrl :alt :cmd] :l]
+(fn start-chairs-round [body]
+  (let [min-seconds (tonumber body.min)
+        max-seconds (tonumber body.max)]
+    (when (and min-seconds max-seconds
+               (<= 0 min-seconds max-seconds)
+               (not= chairs-state :playing))
+      (set chairs-bounds [min-seconds max-seconds])
+      (when chairs-reset-timer
+        (chairs-reset-timer:stop))
+      (set chairs-seconds (+ min-seconds (* (math.random) (- max-seconds min-seconds))))
+      (press-play-pause)
+      (set-chairs-state :playing)
+      (set chairs-timer
+           (hs.timer.doAfter chairs-seconds
+                             (fn []
+                               (press-play-pause)
+                               (set-chairs-state :stopped)
+                               (set chairs-reset-timer
+                                    (hs.timer.doAfter 5 #(set-chairs-state :idle)))))))))
 
-                      :swap_left      [[:ctrl :alt :cmd :shift] :h]
-                      :swap_down      [[:ctrl :alt :cmd :shift] :j]
-                      :swap_up        [[:ctrl :alt :cmd :shift] :k]
-                      :swap_right     [[:ctrl :alt :cmd :shift] :l]
+(local chairs-content
+       (: (hs.webview.usercontent.new :chairs) :setCallback
+          #(start-chairs-round $.body)))
 
-                      :full_width     [[:ctrl :alt :cmd] :f]
-                      :center_window  [[:ctrl :alt :cmd] :c]
+(fn musical-chairs [min-seconds max-seconds]
+  (when (not chairs-bounds)
+    (set chairs-bounds [min-seconds max-seconds]))
+  (if chairs-view
+      (do
+        (chairs-view:delete)
+        (set chairs-view nil))
+      (let [screen (: (hs.screen.mainScreen) :frame)
+            [lo hi] chairs-bounds
+            html (chairs-html:gsub "{{(%w+)}}" {:min lo
+                                                :max hi
+                                                :state chairs-state
+                                                :seconds chairs-seconds})]
+        (set chairs-view
+             (doto (hs.webview.new {:x (+ screen.x (/ (- screen.w chairs-width) 2))
+                                    :y (+ screen.y (/ (- screen.h chairs-height) 2))
+                                    :w chairs-width
+                                    :h chairs-height}
+                                   {}
+                                   chairs-content)
+               (: :windowStyle [:borderless])
+               (: :transparent true)
+               (: :allowTextEntry true)
+               (: :level hs.drawing.windowLevels.overlay)
+               (: :behaviorAsLabels [:canJoinAllSpaces :stationary])
+               (: :html html)
+               (: :show))))))
 
-                      :switch_space_1 [[:ctrl :alt :cmd] :1]
-                      :switch_space_2 [[:ctrl :alt :cmd] :2]
-                      :switch_space_3 [[:ctrl :alt :cmd] :3]
-                      :switch_space_4 [[:ctrl :alt :cmd] :4]
-                      :switch_space_5 [[:ctrl :alt :cmd] :5]
-                      :switch_space_6 [[:ctrl :alt :cmd] :6]
-                      :switch_space_7 [[:ctrl :alt :cmd] :7]
-                      :switch_space_8 [[:ctrl :alt :cmd] :8]
-                      :switch_space_9 [[:ctrl :alt :cmd] :9]
-
-                      :move_window_1  [[:ctrl :alt :cmd :shift] :1]
-                      :move_window_2  [[:ctrl :alt :cmd :shift] :2]
-                      :move_window_3  [[:ctrl :alt :cmd :shift] :3]
-                      :move_window_4  [[:ctrl :alt :cmd :shift] :4]
-                      :move_window_5  [[:ctrl :alt :cmd :shift] :5]
-                      :move_window_6  [[:ctrl :alt :cmd :shift] :6]
-                      :move_window_7  [[:ctrl :alt :cmd :shift] :7]
-                      :move_window_8  [[:ctrl :alt :cmd :shift] :8]
-                      :move_window_9  [[:ctrl :alt :cmd :shift] :9]
-
-                      :slurp_in       [[:ctrl :alt :cmd] :i]
-                      :barf_out       [[:ctrl :alt :cmd] :o]})
-
-(puppy-paw :left PaperWM.actions.focus_left)
-(PUPPY-PAW :left PaperWM.actions.swap_left)
-(bearclaw :left PaperWM.actions.focus_left)
-(puppy-paw :right PaperWM.actions.focus_right)
-(PUPPY-PAW :right PaperWM.actions.swap_right)
-(bearclaw :right PaperWM.actions.focus_right)
-(bearclaw :up PaperWM.actions.focus_up)
-(puppy-paw :up PaperWM.actions.focus_up)
-(PUPPY-PAW :up PaperWM.actions.swap_up)
-(bearclaw :down PaperWM.actions.focus_down)
-(puppy-paw :down PaperWM.actions.focus_down)
-(PUPPY-PAW :down PaperWM.actions.swap_down)
-(bearclaw :r PaperWM.actions.cycle_width)
-(puppy-paw :r PaperWM.actions.reverse_cycle_width)
-
-(BEARCLAW :p toggle-paperwm)
-#+end_src
-
-*** Activation
-
-Let 'er rip.
-
-#+begin_src fennel :tangle (or "no" "config.fnl")
-;(start-paperwm)
-#+end_src
-
-** Spacehammer
-
-Now, +just to make it extra likely shit will break,+ Spacehammer.
-
-This is the external Spoon, not the custom leader menu defined under *Keyboard controls*. Keep it disabled while using the custom menu.
-
-#+begin_src fennel :tangle (or "no" "config.fnl")
-(local Spacehammer (hs.loadSpoon :Spacehammer))
-(Spacehammer:start)
+;; (bearclaw :p #(musical-chairs 3 25) "Toggle musical chairs")
 #+end_src
 
 * Startup notification
