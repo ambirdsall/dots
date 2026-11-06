@@ -304,7 +304,7 @@ The screen is selected when the panel is drawn. This first version does not trac
        :roundedRectRadii {:xRadius 12 :yRadius 12}}
       {:type :text
        :text title
-       :textFont "Menlo"
+       :textFont :Menlo
        :textSize 18
        :textColor {:white 1 :alpha 1}
        :frame {:x 16 :y 12 :w (- width 32) :h 28}})
@@ -315,7 +315,7 @@ The screen is selected when the panel is drawn. This first version does not trac
         (canvas:appendElements
           {:type :text
            :text (string.format "%-7s %s" entry.key entry.label)
-           :textFont "Menlo"
+           :textFont :Menlo
            :textSize 15
            :textColor {:white 0.9 :alpha 1}
            :frame {:x (+ 16 (* column column-width))
@@ -325,7 +325,7 @@ The screen is selected when the panel is drawn. This first version does not trac
     (canvas:appendElements
       {:type :text
        :text footer
-       :textFont "Menlo"
+       :textFont :Menlo
        :textSize 12
        :textColor {:white 0.65 :alpha 1}
        :frame {:x 16 :y (- height 28) :w (- width 32) :h 20}})
@@ -529,18 +529,18 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
 (fn canonical-key [key]
   "Rewrite KEY's modifiers in C-M-S-s- order, without duplicates."
   (let [(mods base) (key-chord key)]
-    (.. (if mods.ctrl "C-" "")
-        (if mods.alt "M-" "")
-        (if mods.shift "S-" "")
-        (if mods.cmd "s-" "")
+    (.. (if mods.ctrl :C- "")
+        (if mods.alt :M- "")
+        (if mods.shift :S- "")
+        (if mods.cmd :s- "")
         base)))
 
 (fn key-label [key]
   (let [(mods base) (key-chord key)]
-    (.. (if mods.ctrl "⌃" "")
-        (if mods.alt "⌥" "")
-        (if mods.shift "⇧" "")
-        (if mods.cmd "⌘" "")
+    (.. (if mods.ctrl :⌃ "")
+        (if mods.alt :⌥ "")
+        (if mods.shift :⇧ "")
+        (if mods.cmd :⌘ "")
         base)))
 
 (fn current-menu []
@@ -812,15 +812,15 @@ n.b. Shift is required for Chrome so that =(bearclaw :c)= can center a window.
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
 (bearclaw :c #(app "Google Chrome"))
-(BEARCLAW :c #(let [cypress (hs.application.get "Cypress")]
+(BEARCLAW :c #(let [cypress (hs.application.get :Cypress)]
                 (if cypress (: cypress :setFrontmost)
                     (alert "Bruh. How do I focus cypress if you aren't running it."))))
 #+end_src
 
 ** Slack
 #+begin_src fennel :tangle config.fnl
-(bearclaw :s #(app "Slack") "Slack")
-(apps-menu :s #(app "Slack") "Slack")
+(bearclaw :s #(app :Slack) "Slack")
+(apps-menu :s #(app :Slack) "Slack")
 #+end_src
 
 ** Emacsen
@@ -829,8 +829,8 @@ Because the directory Emacs was launched from matters, do not use
 
 #+begin_src fennel :tangle config.fnl
 (fn goto-emacs []
-  (let [emacs (hs.application.get "Emacs")
-        emacs-ng (hs.application.get "emacs")]
+  (let [emacs (hs.application.get :Emacs)
+        emacs-ng (hs.application.get :emacs)]
     (if emacs (: emacs :setFrontmost)
         emacs-ng (: emacs-ng :setFrontmost)
         (alert "Bruh. How do I focus an emacs GUI if you aren't running one."))))
@@ -841,14 +841,14 @@ Because the directory Emacs was launched from matters, do not use
 
 ** Messages
 #+begin_src fennel :tangle config.fnl
-(BEARCLAW :m #(app "Messages") "Messages")
-(apps-menu :m #(app "Messages") "Messages")
+(BEARCLAW :m #(app :Messages) "Messages")
+(apps-menu :m #(app :Messages) "Messages")
 #+end_src
 
 ** Terminal
 
 #+begin_src fennel :tangle config.fnl
-(local goto-terminal-window #(app "Ghostty"))
+(local goto-terminal-window #(app :Ghostty))
 
 (spacehammer [:return] goto-terminal-window "Terminal")
 (apps-menu :t goto-terminal-window "Terminal")
@@ -881,13 +881,13 @@ Because the directory Emacs was launched from matters, do not use
 
 ** Zoom
 #+begin_src fennel :tangle config.fnl
-(puppy-paw :z #(app "zoom.us") "Zoom")
-(apps-menu :z #(app "zoom.us") "Zoom")
+(puppy-paw :z #(app :zoom.us) "Zoom")
+(apps-menu :z #(app :zoom.us) "Zoom")
 #+end_src
 
 ** media
 #+begin_src fennel :tangle config.fnl
-(apps-menu :S #(app "Spotify"))
+(apps-menu :S #(app :Spotify))
 #+end_src
 
 * Window management
@@ -1290,7 +1290,7 @@ The helper names the window prefix and makes these binding paths relative to =w=
 (windows-menu :L window/to-right-edge "Move to right edge")
 
 (windows-menu [:S-=] window/enlarge "Widen")
-(windows-menu "-" window/shrink "Narrow")
+(windows-menu :- window/shrink "Narrow")
 
 (windows-menu :w window/choose "Search windows")
 (windows-menu :W window/choose-anywhere "Search windows on all Spaces")
