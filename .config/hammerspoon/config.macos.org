@@ -521,6 +521,9 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
     (while (string.match base "^[CMsS]%-.")
       (tset mods (. chord-modifiers (base:sub 1 1)) true)
       (set base (base:sub 3)))
+    (when (string.match base "^%u$")
+      (set mods.shift true)
+      (set base (base:lower)))
     (values mods base)))
 
 (fn canonical-key [key]
@@ -612,7 +615,7 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
 
 *** Paths and registration
 
-String paths use ASCII characters. Vector paths can use named Hammerspoon keys and Emacs-style modifier prefixes: =C-= is Ctrl, =M-= is Alt, =s-= is Cmd and =S-= is Shift, e.g. =[:C-h]= or =[:C-M-return]=. The hint panel shows modifiers as Mac symbols, e.g. =⌃h=.
+String paths use ASCII characters. Vector paths can use named Hammerspoon keys and Emacs-style modifier prefixes: =C-= is Ctrl, =M-= is Alt, =s-= is Cmd and =S-= is Shift, e.g. =[:C-h]= or =[:C-M-return]=. An uppercase letter is shorthand for Shift, so =:H= is =[:S-h]=. The hint panel shows modifiers as Mac symbols, e.g. =⌃h=.
 
 Each distinct key has one modal binding. Its callback looks up the key in the current menu, so the same key can perform different actions in different branches.
 
@@ -628,7 +631,7 @@ This first version is not a general keyboard event filter:
     (match (type path)
       :string
       (each [key (string.gmatch path ".")]
-        (table.insert keys key))
+        (table.insert keys (canonical-key key)))
 
       :table
       (each [_ key (ipairs path)]
@@ -884,7 +887,7 @@ Because the directory Emacs was launched from matters, do not use
 
 ** media
 #+begin_src fennel :tangle config.fnl
-(apps-menu [:S-s] #(app "Spotify"))
+(apps-menu :S #(app "Spotify"))
 #+end_src
 
 * Window management
@@ -1281,16 +1284,16 @@ The helper names the window prefix and makes these binding paths relative to =w=
 (windows-menu [:C-k] window/up "Focus up")
 (windows-menu [:C-l] window/right "Focus right")
 
-(windows-menu [:S-h] window/to-left-edge "Move to left edge")
-(windows-menu [:S-j] window/to-bottom-edge "Move to bottom edge")
-(windows-menu [:S-k] window/to-top-edge "Move to top edge")
-(windows-menu [:S-l] window/to-right-edge "Move to right edge")
+(windows-menu :H window/to-left-edge "Move to left edge")
+(windows-menu :J window/to-bottom-edge "Move to bottom edge")
+(windows-menu :K window/to-top-edge "Move to top edge")
+(windows-menu :L window/to-right-edge "Move to right edge")
 
 (windows-menu [:S-=] window/enlarge "Widen")
 (windows-menu "-" window/shrink "Narrow")
 
 (windows-menu :w window/choose "Search windows")
-(windows-menu [:S-w] window/choose-anywhere "Search windows on all Spaces")
+(windows-menu :W window/choose-anywhere "Search windows on all Spaces")
 (windows-menu [:C-w] window/jump "Jump to window")
 #+end_src
 
