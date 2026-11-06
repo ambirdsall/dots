@@ -1107,9 +1107,13 @@ Steps wrap around at either end, and the window shifts left if needed to stay on
 
 #+begin_src fennel :tangle config.fnl
 (puppy-paw :h window/left "Focus left")
+(puppy-paw :left window/left "Focus left")
 (puppy-paw :j window/down "Focus down")
+(puppy-paw :down window/down "Focus down")
 (puppy-paw :k window/up "Focus up")
+(puppy-paw :up window/up "Focus up")
 (puppy-paw :l window/right "Focus right")
+(puppy-paw :right window/right "Focus right")
 #+end_src
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
