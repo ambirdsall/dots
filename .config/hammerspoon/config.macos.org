@@ -1071,21 +1071,35 @@ Moving to an edge keeps the window's size and its position along the other axis.
 #+end_src
 
 ** Directional focus and width resizing
+Width steps snap to the next larger or smaller screen-width ratio, from the following list:
+- ¼
+- golden/ratio
+- halfsies
+- ratio/golden
+- ¾
+- 95%
+- fill 'er up
 
-Width steps are 10% of the screen width. The width stays between one step and the full screen width, and the window shifts left if needed to stay on screen.
+Steps wrap around at either end, and the window shifts left if needed to stay on screen.
 
 #+begin_src fennel :tangle windows.fnl
 (local window/left #(: (current) :focusWindowWest))
 (local window/right #(: (current) :focusWindowEast))
 (local window/up #(: (current) :focusWindowNorth))
 (local window/down #(: (current) :focusWindowSouth))
-(fn width-stepper [steps]
+(local width-ratios [0.25 0.38195 0.5 0.61804 0.75 0.95 1])
+(fn next-width-ratio [ratio direction]
+  "The nearest of width-ratios beyond RATIO in DIRECTION (1 or -1), wrapping around at the ends."
+  (let [beyond (icollect [_ r (ipairs width-ratios)]
+                 (when (> (* direction (- r ratio)) 0.01) r))]
+    (if (> direction 0)
+        (or (. beyond 1) (. width-ratios 1))
+        (or (. beyond (length beyond)) (. width-ratios (length width-ratios))))))
+(fn width-stepper [direction]
   (window-resizer (fn [window screen]
-                    (let [step (* 0.1 screen.w)]
-                      (set window.w (math.min screen.w
-                                              (math.max step (+ window.w (* steps step)))))
-                      (set window.x (math.min window.x
-                                              (+ screen.x (- screen.w window.w))))))))
+                    (set window.w (* screen.w (next-width-ratio (/ window.w screen.w) direction)))
+                    (set window.x (math.min window.x
+                                            (+ screen.x (- screen.w window.w)))))))
 
 (local window/enlarge (width-stepper 1))
 (local window/shrink (width-stepper -1))
