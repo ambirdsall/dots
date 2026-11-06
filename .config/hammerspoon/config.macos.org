@@ -794,13 +794,12 @@ TODO make some kind of Fennel REPL.
 #+end_src
 
 * Applications
-** Application focus bindings
 #+begin_src fennel :tangle config.fnl
 (local apps-menu (spacehammer-prefix :a "Apps"))
 (fn app [app-name] (hs.application.launchOrFocus app-name))
 #+end_src
 
-*** Browsers
+** Browsers
 n.b. Shift is required for Chrome so that =(bearclaw :c)= can center a window.
 
 #+begin_src fennel :tangle config.fnl
@@ -815,13 +814,13 @@ n.b. Shift is required for Chrome so that =(bearclaw :c)= can center a window.
                     (alert "Bruh. How do I focus cypress if you aren't running it."))))
 #+end_src
 
-*** Slack
+** Slack
 #+begin_src fennel :tangle config.fnl
 (bearclaw :s #(app "Slack") "Slack")
 (apps-menu :s #(app "Slack") "Slack")
 #+end_src
 
-*** Emacsen
+** Emacsen
 Because the directory Emacs was launched from matters, do not use
 =(hs.application.launchOrFocus "Emacs")=.
 
@@ -837,13 +836,13 @@ Because the directory Emacs was launched from matters, do not use
 (apps-menu :e goto-emacs "Emacs")
 #+end_src
 
-*** Messages
+** Messages
 #+begin_src fennel :tangle config.fnl
 (BEARCLAW :m #(app "Messages") "Messages")
 (apps-menu :m #(app "Messages") "Messages")
 #+end_src
 
-*** Terminal
+** Terminal
 
 #+begin_src fennel :tangle config.fnl
 (local goto-terminal-window #(app "Ghostty"))
@@ -852,7 +851,7 @@ Because the directory Emacs was launched from matters, do not use
 (apps-menu :t goto-terminal-window "Terminal")
 #+end_src
 
-**** TODO Fullscreen toggle utility (half-done spike on universal dropdown terminal)
+*** TODO Fullscreen toggle utility (half-done spike on universal dropdown terminal)
 
 #+begin_src fennel :tangle (or "no" "config.fnl")
 (fn in-current-space [window]
@@ -877,11 +876,15 @@ Because the directory Emacs was launched from matters, do not use
     (: (app:mainWindow) :moveToUnit "[100,100,0,0]")))
 #+end_src
 
-
-*** Zoom
+** Zoom
 #+begin_src fennel :tangle config.fnl
 (puppy-paw :z #(app "zoom.us") "Zoom")
 (apps-menu :z #(app "zoom.us") "Zoom")
+#+end_src
+
+** media
+#+begin_src fennel :tangle config.fnl
+(apps-menu [:S-s] #(app "Spotify"))
 #+end_src
 
 * Window management
