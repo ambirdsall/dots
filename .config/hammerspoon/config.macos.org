@@ -1041,6 +1041,8 @@ functions.
 #+begin_src fennel :tangle config.fnl
 (puppy-paw "." window/enlarge "Widen current window")
 (puppy-paw "," window/shrink "Narrow current window")
+(bearclaw "." window/enlarge "Widen current window")
+(bearclaw "," window/shrink "Narrow current window")
 #+end_src
 
 ** Shared window helpers
@@ -1223,15 +1225,22 @@ Steps wrap around at either end, and the window shifts left if needed to stay on
 (puppy-paw :l window/right)
 #+end_src
 
-** Arrow-key placement bindings
+** Arrow-key edge bindings
+
+=bearclaw= and =PUPPY-PAW= arrows move the window to an edge. Half-screen placement stays on =bearclaw= =hjkl=.
 
 These remain after the directional focus bindings to preserve =config.fnl= order.
 
 #+begin_src fennel :tangle config.fnl
-(bearclaw :left window/left-half "Place in left half")
-(bearclaw :down window/bottom-half "Place in bottom half")
-(bearclaw :up window/top-half "Place in top half")
-(bearclaw :right window/right-half "Place in right half")
+(bearclaw :left window/to-left-edge "Move to left edge")
+(bearclaw :down window/to-bottom-edge "Move to bottom edge")
+(bearclaw :up window/to-top-edge "Move to top edge")
+(bearclaw :right window/to-right-edge "Move to right edge")
+
+(PUPPY-PAW :left window/to-left-edge "Move to left edge")
+(PUPPY-PAW :down window/to-bottom-edge "Move to bottom edge")
+(PUPPY-PAW :up window/to-top-edge "Move to top edge")
+(PUPPY-PAW :right window/to-right-edge "Move to right edge")
 #+end_src
 
 ** Window jumping
