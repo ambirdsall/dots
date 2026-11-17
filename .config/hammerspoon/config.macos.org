@@ -904,6 +904,67 @@ Because the directory Emacs was launched from matters, do not use
 (apps-menu :S #(app :Spotify))
 #+end_src
 
+** Background apps
+=toggle-bundle-in-bg= quits a running app, or launches it without leaving its window in front. Some apps activate themselves and open a window even when launched with =open -g -j=, so the function closes the app's standard windows once they appear and refocuses the previously focused window. Expect a brief flash. Non-standard windows, such as floating status panels, stay open.
+
+Apps are launched by bundle ID because =open -a NAME= can exit 0 without launching anything, while =open -b= works.
+
+#+begin_src fennel :tangle config.fnl
+(var bg-launch-waiter nil)
+
+(fn standard-windows [bundle-id]
+  (let [app (hs.application.get bundle-id)]
+    (if app (hs.fnutils.filter (app:allWindows) #($:isStandard)) [])))
+
+(fn toggle-bundle-in-bg [bundle-id]
+  "Quit the app with BUNDLE-ID if it is running. Otherwise launch it, close
+the standard windows it opens within 10 seconds, and refocus the previous window."
+  (let [running (hs.application.get bundle-id)]
+    (if running
+        (running:kill)
+        (let [previous (hs.window.focusedWindow)
+              deadline (+ (hs.timer.secondsSinceEpoch) 10)]
+          (hs.execute (.. "/usr/bin/open -g -j -b " bundle-id))
+          (set bg-launch-waiter
+               (hs.timer.waitUntil
+                 #(or (> (hs.timer.secondsSinceEpoch) deadline)
+                      (> (# (standard-windows bundle-id)) 0))
+                 (fn []
+                   (each [_ win (ipairs (standard-windows bundle-id))]
+                     (win:close))
+                   (when previous (previous:focus)))
+                 0.05))))))
+#+end_src
+
+The =toggle-app-in-bg= macro takes an app name and expands to a toggle command. The command reads the bundle ID from =/Applications/NAME.app= once, when the config loads. The lookup cannot run at compile time because Fennel's macro sandbox hides =hs= and =io=. A missing app shows an alert at load, and its command does nothing.
+
+#+begin_src fennel :tangle config.fnl
+(fn app-bundle-id [app-name]
+  "Bundle ID of /Applications/APP-NAME.app, or nil after an alert."
+  (let [info (hs.application.infoForBundlePath (.. "/Applications/" app-name ".app"))]
+    (or (?. info :CFBundleIdentifier)
+        (do (alert (.. "No bundle ID for " app-name)) nil))))
+
+(macro toggle-app-in-bg [app-name]
+  `(let [bundle-id# (app-bundle-id ,app-name)]
+     #(when bundle-id# (toggle-bundle-in-bg bundle-id#))))
+#+end_src
+
+*** TODO Make window closing opt-in
+Add an optional argument to choose between two launch modes:
+
+- A plain =open -g -j -b= launch, without the window waiter. This should be the default if most apps respect =-g=.
+- The current launch, which closes the app's standard windows and refocuses the previous window. Wispr Flow needs this mode.
+
+For example, =(toggle-app-in-bg "Wispr Flow" {:close-windows? true})= would pass the option through to =toggle-bundle-in-bg=, which would skip the =bg-launch-waiter= when the option is unset. Test the plain launch on a few apps before making it the default.
+
+*** Wispr Flow
+Closing the main window leaves Wispr Flow running in the menu bar with its status pill.
+
+#+begin_src fennel :tangle config.fnl
+(apps-menu :w (toggle-app-in-bg "Wispr Flow") "Wispr Flow (toggle)")
+#+end_src
+
 * Window management
 :PROPERTIES:
 :VISIBILITY: folded
