@@ -5,6 +5,10 @@
 #+end_src
 
 * Bootstrap
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+
 ** Shared imports
 Keep these imports first in =config.fnl=. Feature sections below contain the implementations and bindings.
 
@@ -219,6 +223,9 @@ require("config")
 #+end_src
 
 * Notifications and diagnostics
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
 
 #+begin_src fennel :tangle notifications.fnl
 (fn notify [titleText bodyText]
@@ -249,6 +256,9 @@ require("config")
 #+end_src
 
 * Keyboard controls
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
 ** Floating hint display
 
 Both kinds of hints use the same non-activating =hs.canvas= panel. The panel does not take keyboard focus.
@@ -797,6 +807,10 @@ TODO make some kind of Fennel REPL.
 #+end_src
 
 * Applications
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+
 #+begin_src fennel :tangle config.fnl
 (local apps-menu (spacehammer-prefix :a "Apps"))
 (fn app [app-name] (hs.application.launchOrFocus app-name))
@@ -891,6 +905,10 @@ Because the directory Emacs was launched from matters, do not use
 #+end_src
 
 * Window management
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+
 This is, by some margin, the most important (or at least frequently-used) submenu I use:
 #+begin_src fennel :tangle config.fnl
 (fn enter-windows-menu []
@@ -1328,6 +1346,10 @@ The helper names the window prefix and makes these binding paths relative to =w=
 #+end_src
 
 * Musical chairs
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+
 I made this as a one-off for playing a musical-chairs-style game with my kids. The keybinding to trigger the control popup is commented out, but the code remains in place as a living reference for messing with webview UIs in hammerspoon.
 
 =musical-chairs= toggles a popup titled "WHEN THE MUSIC STOPS...". Clicking PLAY presses play on whatever media track is queued, then pauses it after a random delay between the popup's min and max seconds. The binding's arguments are the initial min and max. The media key toggles play/pause, so start from a paused track. When the music stops, the popup shows "STOP!" and how long it played for 5 seconds, then returns to PLAY. Clicking STOP! starts another round immediately.
@@ -1539,6 +1561,10 @@ setState('{{state}}', {{seconds}});
 #+end_src
 
 * Startup notification
+:PROPERTIES:
+:VISIBILITY: folded
+:END:
+
 
 Keep this last in =config.fnl=.
 
