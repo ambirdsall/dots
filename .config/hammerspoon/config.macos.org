@@ -524,8 +524,16 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
 
 (local chord-modifiers {:C :ctrl :M :alt :s :cmd :S :shift})
 
+(local shifted-labels
+       {"`" "~" "1" "!" "2" "@" "3" "#" "4" "$" "5" "%" "6" "^" "7" "&"
+        "8" "*" "9" "(" "0" ")" "-" "_" "=" "+" "[" "{" "]" "}" "\\" "|"
+        ";" ":" "'" "\"" "," "<" "." ">" "/" "?"})
+
+(local unshifted-keys (collect [base shifted (pairs shifted-labels)] shifted base))
+
 (fn key-chord [key]
-  "Split an Emacs-style KEY such as \"C-M-h\" into a set of modifiers and a key."
+  "Split an Emacs-style KEY such as \"C-M-h\" into a set of modifiers and a key.
+An uppercase letter or a US-layout shifted character, e.g. +, implies Shift."
   (let [mods {}]
     (var base key)
     (while (string.match base "^[CMsS]%-.")
@@ -534,6 +542,9 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
     (when (string.match base "^%u$")
       (set mods.shift true)
       (set base (base:lower)))
+    (when (. unshifted-keys base)
+      (set mods.shift true)
+      (set base (. unshifted-keys base)))
     (values mods base)))
 
 (fn canonical-key [key]
@@ -546,12 +557,15 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
         base)))
 
 (fn key-label [key]
-  (let [(mods base) (key-chord key)]
+  "Display KEY with Mac modifier symbols, folding Shift into the base key
+when it has a shifted character on a US layout, e.g. S-= as +."
+  (let [(mods base) (key-chord key)
+        shifted (and mods.shift (. shifted-labels base))]
     (.. (if mods.ctrl :⌃ "")
         (if mods.alt :⌥ "")
-        (if mods.shift :⇧ "")
+        (if (and mods.shift (not shifted)) :⇧ "")
         (if mods.cmd :⌘ "")
-        base)))
+        (or shifted base))))
 
 (fn current-menu []
   (. menu-stack (# menu-stack)))
@@ -625,7 +639,7 @@ Both the prefix and the relative paths accept strings or vectors. The returned h
 
 *** Paths and registration
 
-String paths use ASCII characters. Vector paths can use named Hammerspoon keys and Emacs-style modifier prefixes: =C-= is Ctrl, =M-= is Alt, =s-= is Cmd and =S-= is Shift, e.g. =[:C-h]= or =[:C-M-return]=. An uppercase letter is shorthand for Shift, so =:H= is =[:S-h]=. The hint panel shows modifiers as Mac symbols, e.g. =⌃h=.
+String paths use ASCII characters. Vector paths can use named Hammerspoon keys and Emacs-style modifier prefixes: =C-= is Ctrl, =M-= is Alt, =s-= is Cmd and =S-= is Shift, e.g. =[:C-h]= or =[:C-M-return]=. An uppercase letter is shorthand for Shift, so =:H= is =[:S-h]=. The hint panel shows modifiers as Mac symbols, e.g. =⌃h=. Shift on a key with a US-layout shifted character shows that character instead, e.g. =[:S-=]= shows =+= and =[:C-S-1]= shows =⌃!=. The reverse also works when binding: a shifted character is translated to Shift plus its base key, so =[:+]= or the string ="w+"= binds ~S-=~, and =[:C-!]= binds =C-S-1=.
 
 Each distinct key has one modal binding. Its callback looks up the key in the current menu, so the same key can perform different actions in different branches.
 
@@ -1162,7 +1176,7 @@ Width steps snap to the next larger or smaller screen-width ratio, from the foll
 - 95%
 - fill 'er up
 
-Steps wrap around at either end, and the window shifts left if needed to stay on screen.
+Steps wrap around at either end, and the window shifts left if needed to stay on screen. A window touching only the right edge of the screen stays against that edge. Otherwise the left edge stays put. "Touching" allows 2px of slack.
 
 #+begin_src fennel :tangle windows.fnl
 (local window/left #(: (current) :focusWindowWest))
@@ -1179,9 +1193,13 @@ Steps wrap around at either end, and the window shifts left if needed to stay on
         (or (. beyond (length beyond)) (. width-ratios (length width-ratios))))))
 (fn width-stepper [direction]
   (window-resizer (fn [window screen]
-                    (set window.w (* screen.w (next-width-ratio (/ window.w screen.w) direction)))
-                    (set window.x (math.min window.x
-                                            (+ screen.x (- screen.w window.w)))))))
+                    (let [right-edge (+ screen.x screen.w)
+                          at-left? (< (math.abs (- window.x screen.x)) 2)
+                          at-right? (< (math.abs (- (+ window.x window.w) right-edge)) 2)]
+                      (set window.w (* screen.w (next-width-ratio (/ window.w screen.w) direction)))
+                      (set window.x (if (and at-right? (not at-left?))
+                                        (- right-edge window.w)
+                                        (math.min window.x (- right-edge window.w))))))))
 
 (local window/enlarge (width-stepper 1))
 (local window/shrink (width-stepper -1))
